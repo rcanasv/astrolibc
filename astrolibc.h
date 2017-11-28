@@ -1,10 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+/*
+ *  \file astrolibc.h
+ *  \brief Header file for the library
+ *
+ */
+
+#ifndef ASTROLIBC_H
+#define ASTROLIBC_H
+
+
+#include "base.h"
+
 
 #include "particle.h"
+#include "structure.h"
 
 
-#define NAME_LENGTH 256
-#define LONG_LENGTH 3000
+#include "finders.h"
+#include "simcodes.h"
+
+
+#endif    /*  FINDERS_H  */

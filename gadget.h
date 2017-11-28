@@ -1,12 +1,15 @@
 /*
  *  \file gadget.h
- *  \brief  header file for code finders structures
+ *  \brief  This file contains all GADGET related stuff
  *
  */
 
 #ifndef GADGET_H
 #define GADGET_H
 
+//
+//  Gadget-2  header
+//
 typedef struct gheader
 {
   int      npart[6];

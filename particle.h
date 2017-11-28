@@ -8,6 +8,9 @@
 #define PARTICLE_H
 
 
+#include "base.h"
+
+
 typedef struct pdata_d
 {
   double   Pos[3];
