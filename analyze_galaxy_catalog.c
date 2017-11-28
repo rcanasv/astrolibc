@@ -53,8 +53,6 @@ char   format       [NAME_LENGTH];
 char   output_fname [NAME_LENGTH];
 
 
-
-
 int NUMFILES;
 
 int load_stf_extended_output (char * prefix, int filenum);
@@ -65,7 +63,7 @@ void read_gal_file (char * filename);
 void read_gadget_snapshot(char * snapshot);
 void read_ramses_snapshot(char * dir, char * snapshot, int numfile);
 
-void write_snapshot(pdata_s * pg, int particles, struct io_header_1 header, char * output_name);
+void write_snapshot(pdata_s * pg, int particles, gheader header, char * output_name);
 
 void free_extended_arrays (void);
 void free_ramses_arrays   (void);
@@ -826,8 +824,7 @@ void read_gadget_snapshot(char * snapshot)
 }
 
 //---------- Write Snapshot File ----------//
-
-void write_snapshot(struct pdata_s * pg, int particles, struct io_header_1 header, char * output_name)
+void write_snapshot(struct pdata_s * pg, int particles, gheader header, char * output_name)
 {
   FILE * snap_file;
 

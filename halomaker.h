@@ -12,6 +12,7 @@
 #include "particle.h"
 #include "structure.h"
 
+
 typedef struct hmProps
 {
   int      nparts;
@@ -65,7 +66,7 @@ typedef struct hmOutput
   int          nstructs;
   int          ntotal;
   hmProps    * strctProps;
-  pdata     ** strctParts;
+  pdata_s   ** strctParts;
 } hmOutput;
 
 
