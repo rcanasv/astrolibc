@@ -4,13 +4,16 @@
  *
  */
 
+#ifndef PARTICLE_H
+#define PARTICLE_H
+
 
 typedef struct pdata_d
 {
   double   Pos[3];
   double   Vel[3];
   double   Mass;
-  long     Id;
+  int      Id;
   double   Age;
   double   Metal;
   double   Chem;
@@ -29,3 +32,6 @@ typedef struct pdata_s
   float   Chem;
   int     Type;
 } pdata_s;
+
+
+#endif    /*  PARTICLE_H  */
