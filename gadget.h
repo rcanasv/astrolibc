@@ -7,6 +7,10 @@
 #ifndef GADGET_H
 #define GADGET_H
 
+
+#include "base.h"
+
+
 //
 //  Gadget-2  header
 //
@@ -27,5 +31,7 @@ typedef struct gheader
   double   HubbleParam;
   char     fill[256 - 6*4 - 6*8 - 2*8 - 2*4 - 6*4 - 2*4 - 4*8];      /* fills to 256 Bytes */
 } gheader;
+
+
 
 #endif    /*  GADGET_H  */
