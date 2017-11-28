@@ -35,23 +35,7 @@ int     * ramses_id;
 int     * ramses_lvl;
 
 
-struct io_header_1
-{
-  int      npart[6];
-  double   mass[6];
-  double   time;
-  double   redshift;
-  int      flag_sfr;
-  int      flag_feedback;
-  int      npartTotal[6];
-  int      flag_cooling;
-  int      num_files;
-  double   BoxSize;
-  double   Omega0;
-  double   OmegaLambda;
-  double   HubbleParam;
-  char     fill[256 - 6*4 - 6*8 - 2*8 - 2*4 - 6*4 - 2*4 - 4*8];      /* fills to 256 Bytes */
-} header1;
+gheader header1;
 
 pdata_s ** P, * p;
 
@@ -69,45 +53,6 @@ char   format       [NAME_LENGTH];
 char   output_fname [NAME_LENGTH];
 
 
-struct objProps
-{
-  int      ID;
-  int      DirectHostID;
-  int      HostID;
-  int      NumSubs;
-  int      Type;
-  int      NumPart;
-  double   TotMass;
-  double   Pos[3];
-  double   Vel[3];
-  double   Efrac;
-  double   Rsize;
-  double   RHalfMass;
-  double   Vmax;
-  double   Rvmax;
-  double   Vdisp;
-  double   Lambda;
-  double   L[3];
-  int    * SubIDs;
-  int      NumFiles;
-  int    * FilesOfGroup;
-  int      NumProg;
-  int    * ProgIDs;
-  double * ProgMrrts;
-  int      dummy;
-};
-
-
-struct stfOutput
-{
-  char              prefix[NAME_LENGTH];
-  int               nstruct;
-  int               nprocs;
-  int               iprops;
-  int               iparts;
-  struct objProps * strctProps;
-  pdata_s        ** strctParts;
-};
 
 
 int NUMFILES;
@@ -1088,7 +1033,7 @@ void read_gal_file (char * filename)
 
   //
   // Data is stored in double
-  //  
+  //
   if (!(p = malloc (nlist * sizeof(struct pdata_d))))
   {
     printf ("Cannot allocate memory for particle information\n");

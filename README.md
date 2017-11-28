@@ -3,12 +3,13 @@
 This library is a collection of routines written to analyze numerical simulations in Astronomy.
 
 Most of its content is oriented towards cosmological simulations, with [Gadget][Gadget website] code,
-but it also includes routines for [Ramses][Ramses website], as well as [HDF5][HDF5 website] support to some degree. 
+but it also includes routines for [Ramses][Ramses website], as well as [HDF5][HDF5 website] support to some degree.
 
 
 [Gadget website]: http://wwwmpa.mpa-garching.mpg.de/gadget/
 [Ramses website]: http://www.ics.uzh.ch/~teyssier/ramses/RAMSES.html
 [HDF5 website]:   https://www.hdfgroup.org/
+
 
 
 
@@ -127,7 +128,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c6
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags).
 
 ## Authors
 
@@ -144,4 +145,3 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * Hat tip to anyone who's code was used
 * Inspiration
 * etc
-
