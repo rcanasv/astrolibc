@@ -1,11 +1,11 @@
 /*
  *  \file particle.h
  *  \brief  header file for particle properties structure
- * 
+ *
  */
 
 
-struct pdata_d
+typedef struct pdata_d
 {
   double   Pos[3];
   double   Vel[3];
@@ -15,10 +15,10 @@ struct pdata_d
   double   Metal;
   double   Chem;
   int      Type;
-};
+} pdata_d;
 
 
-struct pdata_s
+typedef struct pdata_s
 {
   float   Pos[3];
   float   Vel[3];
@@ -28,5 +28,4 @@ struct pdata_s
   float   Metal;
   float   Chem;
   int     Type;
-};
-
+} pdata_s;
