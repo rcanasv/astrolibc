@@ -10,32 +10,8 @@
  *
  */
 
-#include "astrolibc.h"
+#include "cross_match_catalogs.h"
 
-
-#define NAME_LENGTH 256
-#define LONG_LENGTH 3000
-//#define NUMFILES 41
-
-
-gheader header1;
-
-pdata_s ** P, * p;
-
-int * ID;
-int NumPart;
-int outType;
-
-char   buffer       [NAME_LENGTH];
-char   longbuffer   [LONG_LENGTH];
-char   stfprefix    [NAME_LENGTH];
-char   galprefix    [NAME_LENGTH];
-char   outprefix    [NAME_LENGTH];
-char   directory    [NAME_LENGTH];
-char   format       [NAME_LENGTH];
-char   output_fname [NAME_LENGTH];
-
-int NUMFILES;
 
 int main (int argc, char ** argv)
 {
@@ -553,6 +529,64 @@ int main (int argc, char ** argv)
 
   return (0);
 }
+
+
+//
+//  Options
+//
+int options_crossMatchCatalogs (int argc, char ** argv)
+{
+  int   myopt;
+  int   index;
+  int   flag = 0;
+
+  extern char * optarg;
+  extern int    opterr;
+  extern int    optopt;
+
+  struct option lopts[] = {
+    {"help",    0, NULL, 'h'},
+    {"verbose", 0, NULL, 'v'},
+    {"input",   1, NULL, 'i'},
+    {"output",  1, NULL, 'o'},
+    {"mode",    1, NULL, 'm'},
+    {0,         0, NULL, 0}
+  };
+
+  while ((myopt = getopt_long (argc, argv, "i:o:m:vh", lopts, &index)) != -1)
+  {
+    switch (myopt)
+    {
+      case 'v':
+	opt.iVerbose = 1;
+	break;
+      case 'i':
+	strcpy (opt.inputname, optarg);
+	flag++;
+	break;
+      case 'o':
+	strcpy (opt.outputname, optarg);
+	flag++;
+	break;
+      case 'm':
+	strcpy (opt.mode, optarg);
+	flag++;
+	break;
+      case 'h':
+	usage_convertUnits (0, argv);
+	break;
+      default:
+	usage_convertUnits (1, argv);
+    }
+  }
+  if (flag == 0)
+    usage_convertUnits (1, argv);
+
+  if (flag != 3)
+    usage_convertUnits (2, argv);
+}
+
+
 
 //     FILE * ff;
 //     int PID, STID, HSTID, IGMID;

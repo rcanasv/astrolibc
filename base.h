@@ -12,7 +12,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
+#include <getopt.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
 
 #define NAME_LENGTH 256
 #define LONG_LENGTH 3000
