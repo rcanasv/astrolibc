@@ -4,15 +4,17 @@
  *
  */
 
-#ifndef FINDERS_H
-#define FINDERS_H
+#ifndef FINDER_H
+#define FINDER_H
 
 
 #include "base.h"
+#include "archive.h"
+#include "particle.h"
+#include "structure.h"
 
 
-#include "stf.h"
-#include "halomaker.h"
+
 
 
 #endif    /*  FINDERS_H  */

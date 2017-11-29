@@ -21,10 +21,10 @@
 //} Options;
 
 
-gheader header1;
+//gheader header1;
 
 
-pdata_s ** P, * p;
+//pdata_s ** P, * p;
 
 
 int * ID;
@@ -34,13 +34,6 @@ int outType;
 
 char   buffer       [NAME_LENGTH];
 char   longbuffer   [LONG_LENGTH];
-char   stfprefix    [NAME_LENGTH];
-char   galprefix    [NAME_LENGTH];
-char   outprefix    [NAME_LENGTH];
-char   directory    [NAME_LENGTH];
-char   format       [NAME_LENGTH];
-char   output_fname [NAME_LENGTH];
-
 
 int NUMFILES;
 

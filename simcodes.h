@@ -11,9 +11,7 @@
 
 
 #include "base.h"
-
-
-#include "snapshot.h"
+#include "archive.h"
 #include "gadget.h"
 #include "ramses.h"
 

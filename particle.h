@@ -11,6 +11,7 @@
 #include "base.h"
 
 
+/*
 typedef struct pdata_d
 {
   double   Pos[3];
@@ -22,9 +23,9 @@ typedef struct pdata_d
   double   Chem;
   int      Type;
 } pdata_d;
+*/
 
-
-typedef struct pdata_s
+typedef struct Particle
 {
   float   Pos[3];
   float   Vel[3];
@@ -34,7 +35,7 @@ typedef struct pdata_s
   float   Metal;
   float   Chem;
   int     Type;
-} pdata_s;
+} Particle;
 
 
 #endif    /*  PARTICLE_H  */

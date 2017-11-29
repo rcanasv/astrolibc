@@ -8,14 +8,17 @@
 #define STF_H
 
 
+#include "allvars.h"
 #include "base.h"
 #include "particle.h"
 #include "structure.h"
+#include "archive.h"
+#include "catalog.h"
 
-
+/*
 typedef struct stfOutput
 {
-  char           prefix [NAME_LENGTH];
+  Archive        stf;
   int            nstruct;
   int            nprocs;
   int            iprops;
@@ -23,6 +26,20 @@ typedef struct stfOutput
   objProps     * strctProps;
   pdata_s     ** strctParts;
 } stfOutput;
+*/
+
+
+int * extended_oIndex;
+int * extended_IdStruct;
+int * extended_IdHost;
+int * extended_IdIGM;
+
+void stf_read_properties (Catalog * stf);
+
+//int load_stf_extended_output (char * prefix, int filenum);
+//void free_extended_arrays (void);
+//int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct);
+//int load_treefrog (char * tffile, int strct_id, int ** prog_ids, float ** prog_mrrts);
 
 
 #endif    /*  FINDERS_H  */

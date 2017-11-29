@@ -12,7 +12,7 @@
 #include "base.h"
 
 
-typedef struct objProps
+typedef struct Structure
 {
   int      ID;
   int      DirectHostID;
@@ -38,7 +38,7 @@ typedef struct objProps
   int    * ProgIDs;
   double * ProgMrrts;
   int      dummy;
-} objProps;
+} Structure;
 
 
 #endif    /*  STRUCTURE_H  */

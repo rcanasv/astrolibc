@@ -18,14 +18,15 @@
 typedef struct Options
 {
   int         verbose;
-  int         numFinders;
-  Archive  *  finder;
+  Archive     param;
+  int         numCatalogs;
+  Catalog  *  catalog;
   Archive     snapshot;
   char        outprefix   [NAME_LENGTH];
 } Options;
 
 
-int options_ctlgMatch (int argc, char ** argv, Options opt);
+int options_ctlgMatch (int argc, char ** argv, Options * opt);
 
 void usage_ctlgMatch  (int opt, char ** argv);
 

@@ -13,9 +13,9 @@
 
 #include "particle.h"
 #include "structure.h"
+#include "catalog.h"
 
-
-#include "finders.h"
+#include "finder.h"
 #include "simcodes.h"
 
 
