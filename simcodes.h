@@ -13,6 +13,7 @@
 #include "base.h"
 
 
+#include "snapshot.h"
 #include "gadget.h"
 #include "ramses.h"
 

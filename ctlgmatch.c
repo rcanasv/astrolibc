@@ -1,4 +1,3 @@
-
 /*
  *
  *  \file    cross_match_catalogs.c
@@ -15,6 +14,7 @@
 
 int main (int argc, char ** argv)
 {
+
     if (argc < 5)
     {
       printf ("ERROR: Input Parameters missing \n");
@@ -24,15 +24,6 @@ int main (int argc, char ** argv)
 
     FILE * f;
     int    i, j, k;
-
-    strcpy (stfprefix, argv[1]);
-    strcpy (directory, argv[2]);
-    strcpy (galprefix, argv[3]);
-    strcpy (outprefix, argv[4]);
-    strcpy (format,    argv[5]);
-    NUMFILES = atoi (argv[6]);
-    int ID = atoi (argv[7]);
-
 
     if ( (strcmp(format, "gadget") != 0) && (strcmp(format,"ramses") != 0) )
     {
@@ -534,7 +525,7 @@ int main (int argc, char ** argv)
 //
 //  Options
 //
-int options_crossMatchCatalogs (int argc, char ** argv)
+int options_ctlgMatch (int argc, char ** argv, Options opt)
 {
   int   myopt;
   int   index;
@@ -547,45 +538,90 @@ int options_crossMatchCatalogs (int argc, char ** argv)
   struct option lopts[] = {
     {"help",    0, NULL, 'h'},
     {"verbose", 0, NULL, 'v'},
-    {"input",   1, NULL, 'i'},
-    {"output",  1, NULL, 'o'},
-    {"mode",    1, NULL, 'm'},
+    {"input",   0, NULL, 'i'},
     {0,         0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "i:o:m:vh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "i:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
       case 'v':
-	opt.iVerbose = 1;
-	break;
+      	opt.iVerbose = 1;
+      	break;
+
       case 'i':
-	strcpy (opt.inputname, optarg);
-	flag++;
-	break;
-      case 'o':
-	strcpy (opt.outputname, optarg);
-	flag++;
-	break;
-      case 'm':
-	strcpy (opt.mode, optarg);
-	flag++;
-	break;
+      	strcpy (opt.inputname, optarg);
+        flag++;
+        break;
+
       case 'h':
-	usage_convertUnits (0, argv);
-	break;
+      	usage_ctlgMatch (0, argv);
+        break;
+
       default:
-	usage_convertUnits (1, argv);
+      	usage_ctlgMatch (1, argv);
     }
   }
   if (flag == 0)
-    usage_convertUnits (1, argv);
+    usage_ctlgMatch (1, argv);
 
   if (flag != 3)
-    usage_convertUnits (2, argv);
+    usage_ctlgMatch (2, argv);
 }
 
+
+
+void usage_ctlgMatch (int opt, char ** argv)
+{
+  if (opt == 0)
+  {
+    printf ("                                                                         \n");
+    printf ("  ctlgmatch.c                                                            \n");
+    printf ("                                                                         \n");
+    printf ("  Author:            Rodrigo Can\\~as                                    \n");
+    printf ("  Last edition:      29 - 11 - 2017                                      \n");
+    printf ("  Description:       This code cross matches two catalogs of structures  \n");
+    printf ("                     (e.g. dark matter haloes, galaxies, streams, etc)   \n");
+    printf ("                     of the same snapshot, and produces a list of the    \n");
+    printf ("                     matched structures' properties.                     \n");
+    printf ("                                                                         \n");
+    printf ("                     This is meant to be useful to compare a catalog     \n");
+    printf ("                     produced by e.g. VELOCIraptor and HaloMaker.        \n");
+    printf ("                                                                         \n");
+    printf ("                     Currently the code supports the following formats:  \n");
+    printf ("                                                                         \n");
+    printf ("                         Finders:                                        \n");
+    printf ("                                     VELOCIraptor  (Elahi+2011)          \n");
+    printf ("                                     HaloMaker     (Tweed+2009)          \n");
+    printf ("                                                                         \n");
+    printf ("                         Simulations:                                    \n");
+    printf ("                                                                         \n");
+    printf ("                                     Gadget-2 ++   (Springel 2005)       \n");
+    printf ("                                     RAMSES        (Teyssier 2002)       \n");
+    printf ("                                                                         \n");
+    printf ("                                                                         \n");
+    printf ("  Usage:             %s [Option] [Parameter [argument]] ...\n",      argv[0]);
+    printf ("                                                                         \n");
+    printf ("  Parameters:                                                            \n");
+    printf ("                                                                         \n");
+    printf ("            -i    --input    [string]   Name of input file               \n");
+    printf ("                                                                         \n");
+    printf ("  Options:                                                               \n");
+    printf ("            -v    --verbose             activate verbose                 \n");
+    printf ("            -h    --help                displays description             \n");
+    printf ("                                                                         \n");
+    exit (0);
+  }
+  else
+  {
+    if (opt == 2)
+      printf ("\t Error:           Some parameters are missing ...\n");
+    printf ("\t Usage:           %s [Option] [Option [argument]] ...\n", argv[0]);
+    printf ("\t For help try:    %s --help             \n", argv[0]);
+    exit (0);
+  }
+}
 
 
 //     FILE * ff;
