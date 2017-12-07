@@ -24,6 +24,8 @@
 
 void halomaker_read_properties (Catalog * hmkr);
 
+void halomaker_read_galfile (char * filename);
+
 
 #endif    /*  HALOMAKER_H  */
 

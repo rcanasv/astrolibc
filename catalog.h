@@ -12,10 +12,12 @@
 #include "archive.h"
 #include "particle.h"
 #include "structure.h"
+#include "cosmology.h"
 
 typedef struct Catalog
 {
   Archive        archive;
+  Cosmology      cosmology;
   int            nstruct;
   int            nprocs;
   int            iprops;
