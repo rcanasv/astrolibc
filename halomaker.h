@@ -1,17 +1,34 @@
 /*
  *  \file halomaker.h
- *  \brief This file contains all HaloMaker stuff
+ *  \brief  This file contains all HaloMaker related stuff
+ *              -  Treebricks
+ *              -  gal_XXXX_XXXX files
  *
  */
 
-#ifndef HALOMAKER_H
-#define HALOMAKER_H
+ #ifndef HALOMAKER_H
+ #define HALOMAKER_H
 
 
+#include "allvars.h"
 #include "base.h"
 #include "particle.h"
 #include "structure.h"
+#include "archive.h"
+#include "catalog.h"
 
+
+#define HMKR_SKIP  fread  (&dummy, sizeof(int), 1, f);
+#define HMKR_PSKIP printf ("%d \n", dummy);
+
+
+void halomaker_read_properties (Catalog * hmkr);
+
+
+#endif    /*  HALOMAKER_H  */
+
+
+/*
 
 typedef struct hmProps
 {
@@ -69,5 +86,4 @@ typedef struct hmOutput
   pdata_s   ** strctParts;
 } hmOutput;
 
-
-#endif    /*  FINDERS_H  */
+*/

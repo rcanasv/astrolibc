@@ -32,11 +32,18 @@ void Catalog_load (Catalog * catalog)
     stf_read_properties (catalog);
   }
   else
-  {
-    printf ("Format %s not supported\n", catalog->archive.format);
-    printf ("Exiting...\n");
-    exit (0);
-  }
+    if ((!strcmp(catalog->archive.format, "hmkr"))      ||  \
+        (!strcmp(catalog->archive.format, "HaloMaker")) ||  \
+        (!strcmp(catalog->archive.format, "halomaker")))
+    {
+      halomaker_read_properties (catalog);
+    }
+    else
+    {
+      printf ("Format %s not supported\n", catalog->archive.format);
+      printf ("Exiting...\n");
+      exit (0);
+    }
 }
 
 

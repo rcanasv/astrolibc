@@ -42,4 +42,4 @@ void stf_read_properties (Catalog * stf);
 //int load_treefrog (char * tffile, int strct_id, int ** prog_ids, float ** prog_mrrts);
 
 
-#endif    /*  FINDERS_H  */
+#endif    /*  STF_H  */
