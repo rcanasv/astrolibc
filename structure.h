@@ -52,6 +52,8 @@ typedef struct Structure
   int    * ProgIDs;
   double * ProgMrrts;
   int      dummy;
+  int      dummyi;
+  double   dummyd;
 } Structure;
 
 

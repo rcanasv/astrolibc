@@ -55,6 +55,7 @@ int main (int argc, char ** argv)
   }
 
 
+  /*
   for (i = 0; i < opt.numCatalogs; i++)
   {
     printf ("%s\n", opt.catalog[i].archive.name);
@@ -81,8 +82,85 @@ int main (int argc, char ** argv)
       printf ("\n");
     }
   }
+  */
 
+  Structure * strct1;
+  Structure * strct2;
+  double      dx, dy, dz, dr;
+  double      minR = 1e6;
+  double      maxM = 0;
 
+  for (i = 1; i < opt.catalog[0].nstruct; i++)
+//  for (i = 1; i < 10000; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct1->dummyi = 0;
+    minR = 100;
+    if (strct1->Type != 7)
+    {
+      for (j = 1; j < opt.catalog[1].nstruct; j++)
+      {
+        strct2 = &opt.catalog[1].strctProps[j];
+
+        if (strct2->dummyi == 0)
+        {
+          dx = strct1->Pos[0] - strct2->Pos[0];
+          dy = strct1->Pos[1] - strct2->Pos[1];
+          dz = strct1->Pos[2] - strct2->Pos[2];
+          dr = dx*dx + dy*dy + dz*dz;
+
+          if ( dr < minR)
+          {
+            minR = dr;
+            strct1->dummyi = strct2->ID;
+          }
+        }
+      }
+      opt.catalog[1].strctProps[strct1->dummyi].dummyi = strct1->ID;
+    }
+
+    if (strct1->Type != 7 && strct1->dummyi > 0)
+    {
+      strct1 = &opt.catalog[0].strctProps[i];
+      strct2 = &opt.catalog[1].strctProps[opt.catalog[0].strctProps[i].dummyi];
+      printf ("%7d   ", strct1->ID);
+      printf ("%7d   ", strct2->ID);
+      printf ("%e    ", strct1->TotMass);
+      printf ("%e    ", strct2->TotMass);
+      printf ("%e    ", strct1->Rsize);
+      printf ("%e    ", strct2->Rsize);
+      printf ("%e    ", strct1->Pos[0]);
+      printf ("%e    ", strct2->Pos[0]);
+      printf ("%e    ", strct1->Pos[1]);
+      printf ("%e    ", strct2->Pos[1]);
+      printf ("%e    ", strct1->Pos[2]);
+      printf ("%e    ", strct2->Pos[2]);
+      printf ("\n");
+    }
+  }
+
+/*
+  for (i = 1; i < opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    if (strct1->Type != 7)
+    {
+      strct1 = &opt.catalog[0].strctProps[i];
+      strct2 = &opt.catalog[1].strctProps[opt.catalog[0].strctProps[i].dummyi];
+      printf ("%7d   ", strct1->ID);
+      printf ("%7d   ", strct2->ID);
+      printf ("%e    ", strct1->TotMass);
+      printf ("%e    ", strct2->TotMass);
+      printf ("%e    ", strct1->Pos[0]);
+      printf ("%e    ", strct2->Pos[0]);
+      printf ("%e    ", strct1->Pos[1]);
+      printf ("%e    ", strct2->Pos[1]);
+      printf ("%e    ", strct1->Pos[2]);
+      printf ("%e    ", strct2->Pos[2]);
+      printf ("\n");
+    }
+  }
+*/
 
   for (i = 0; i < opt.numCatalogs; i++)
     Catalog_free (&opt.catalog[i]);

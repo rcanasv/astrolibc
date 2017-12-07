@@ -105,6 +105,8 @@ void halomaker_read_properties (Catalog * hmkr)
       fseek (f, dummy, SEEK_CUR);
     HMKR_SKIP
 
+    hmkr->strctProps[i].dummyi = 0;
+
     // Structure ID
     HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
     hmkr->strctProps[i].ID = dummyi;
