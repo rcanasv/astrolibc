@@ -1,13 +1,15 @@
 /*
- *  \file   halomakerio.c
+ *  \file   halomaker.c
  *  \brief  This file contains Gadget input-output routines
  *
  *
  */
 
 #include "base.h"
+#include "particle.h"
+#include "structure.h"
+#include "catalog.h"
 #include "halomaker.h"
-#include "halomakerio.h"
 
 
 //---------- Read Propertes File ----------//
@@ -39,24 +41,20 @@ void halomaker_read_properties (Catalog * hmkr)
   //
   // Open treebricks file to read properties
   //
-  sprintf (treebricks_fname, "%s/%s.properties", hmkr->archive.path, hmkr->archive.prefix);
+  sprintf (treebricks_fname, "%s/%s", hmkr->archive.path, hmkr->archive.prefix);
   if ((f = fopen (treebricks_fname, "r")) == NULL)
   {
-    sprintf (propts_fname, "%s/%s.properties.0", hmkr->archive.path, hmkr->archive.prefix);
-    if ((f = fopen (propts_fname, "r")) == NULL)
-    {
-      printf ("ERROR: Cannot open file  %s\n", propts_fname);
-      exit (0);
-    }
+    printf ("ERROR: Cannot open file  %s\n", treebricks_fname);
+    exit (0);
   }
 
-  HMKR_SKIP  fread (&nparts,   sizeof(int),   1, f);   HMKR_SKIP
-  HMKR_SKIP  fread (&massres,  sizeof(float), 1, f);   HMKR_SKIP
-  HMKR_SKIP  fread (&aexp,     sizeof(float), 1, f);   HMKR_SKIP
-  HMKR_SKIP  fread (&omegam,   sizeof(float), 1, f);   HMKR_SKIP
-  HMKR_SKIP  fread (&ageuniv,  sizeof(float), 1, f);   HMKR_SKIP
-  HMKR_SKIP  fread (&nstruct,  sizeof(int),   1, f);
-             fread (&nsubs,    sizeof(int),   1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&nparts,   sizeof(int),   1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&massres,  sizeof(float), 1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&aexp,     sizeof(float), 1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&omegam,   sizeof(float), 1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&ageuniv,  sizeof(float), 1, f);   HMKR_SKIP
+  HMKR_SKIP    fread (&nstruct,  sizeof(int),   1, f);
+               fread (&nsubs,    sizeof(int),   1, f);   HMKR_SKIP
 
 
   hmkr->cosmology.Aexp    = aexp;
@@ -93,7 +91,8 @@ void halomaker_read_properties (Catalog * hmkr)
   for (i = 1; i <= hmkr->nstruct; i++)
   {
     // Number of particles
-    HMKR_SKIP    fread (&hmkr->strctProps[i].NumPart, sizeof(int), 1, f);   HMKR_SKIP
+    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
+    hmkr->strctProps[i].NumPart = dummyi;
 
     // List of particles in galaxy i
     HMKR_SKIP
@@ -103,10 +102,10 @@ void halomaker_read_properties (Catalog * hmkr)
       // fread (hmo->strctProps[i].partIDs,  sizeof(int), hmo->strctProps[i].nparts, f);
     }
     else
-      fseek (f, dummyi, SEEK_CUR);
+      fseek (f, dummy, SEEK_CUR);
     HMKR_SKIP
 
-    // Number of particles
+    // Structure ID
     HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
     hmkr->strctProps[i].ID = dummyi;
 
@@ -114,45 +113,53 @@ void halomaker_read_properties (Catalog * hmkr)
     HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
     hmkr->strctProps[i].Timestep = dummyi;
 
-    // Level
-    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
-    hmkr->strctProps[i].Level = dummyi;
+    // Level, Parent ID, ID first sub, Nsubstructures, ID next sub
+    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);
+                 hmkr->strctProps[i].Level = dummyi;
+                 fread (&dummyi, sizeof(int), 1, f);
+                 hmkr->strctProps[i].DirectHostID = dummyi;
+                 fread (&dummyi, sizeof(int), 1, f);
+                 hmkr->strctProps[i].IDfirstSub = dummyi;
+                 fread (&dummyi, sizeof(int), 1, f);
+                 hmkr->strctProps[i].NumSubs = dummyi;
+                 fread (&dummyi, sizeof(int), 1, f);
+                 hmkr->strctProps[i].IDnextSub = dummyi;
+                                                        HMKR_SKIP
 
-    // Parent ID
-    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
-    hmkr->strctProps[i].DirectHostID = dummyi;
-
-    // ID first child
-    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
-    hmkr->strctProps[i].IDfirstSub = dummyi;
-
-    // Nsubstructures
-    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
-    hmkr->strctProps[i].NumSubs = dummyi;
-
-    // Id next substructure
-    HMKR_SKIP    fread (&dummyi, sizeof(int), 1, f);    HMKR_SKIP
-    hmkr->strctProps[i].IDnextSub = dummyi;
+    if (hmkr->strctProps[i].DirectHostID == hmkr->strctProps[i].ID)
+    {
+      hmkr->strctProps[i].Type         = 10;
+      hmkr->strctProps[i].HostID       = -1;
+      hmkr->strctProps[i].DirectHostID = -1;
+    }
+    else
+    {
+      hmkr->strctProps[i].Type   = 20;
+      hmkr->strctProps[i].HostID = hmkr->strctProps[i].DirectHostID;
+    }
 
     // Mass
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);  HMKR_SKIP
-    hmkr->strctProps[i].TotMass = dummyi;
+    hmkr->strctProps[i].TotMass = dummyf * 1e+11;       // Mass is now in Solar Masses
 
     // Galaxy Position
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[0] = dummyi;
+                 hmkr->strctProps[i].Pos[0] = dummyf * 1000;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[1] = dummyi;
+                 hmkr->strctProps[i].Pos[1] = dummyf * 1000;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[2] = dummyi;   HMKR_SKIP
+                 hmkr->strctProps[i].Pos[2] = dummyf * 1000;
+                                                        HMKR_SKIP
+    // Position is now in -Lbox/2 to Lbox/2 in kpc
+    double Lbox = 100000 * hmkr->cosmology.Aexp / 0.704;
 
     // Galaxy Velocity
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Vel[0] = dummyi;
+                 hmkr->strctProps[i].Vel[0] = dummyf;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Vel[1] = dummyi;
+                 hmkr->strctProps[i].Vel[1] = dummyf;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Vel[2] = dummyi;   HMKR_SKIP
+                 hmkr->strctProps[i].Vel[2] = dummyf;   HMKR_SKIP
 
     // Galaxy Angular Momentum
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);
@@ -184,7 +191,7 @@ void halomaker_read_properties (Catalog * hmkr)
 
     // Spin Parameter
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);  HMKR_SKIP
-    hmkr->strctProps[i].Lambda = dummyf
+    hmkr->strctProps[i].Lambda = dummyf;
 
     // Velocity dispersion, bulge velocity disp, bulge mass
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);
@@ -218,7 +225,7 @@ void halomaker_read_properties (Catalog * hmkr)
      // fread (hmo->strctProps[i].rbin, sizeof(float), hmo->strctProps[i].nbins, f);
    }
    else
-     fseek (f, dummyi, SEEK_CUR);
+     fseek (f, dummy, SEEK_CUR);
    HMKR_SKIP
 
    HMKR_SKIP
@@ -228,7 +235,7 @@ void halomaker_read_properties (Catalog * hmkr)
      // fread (hmo->strctProps[i].sbin, sizeof(float), hmo->strctProps[i].nbins, f);
    }
    else
-     fseek (f, dummyi, SEEK_CUR);
+     fseek (f, dummy, SEEK_CUR);
    HMKR_SKIP
  }
 

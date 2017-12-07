@@ -8,6 +8,7 @@
 
 #include "catalog.h"
 #include "stf.h"
+#include "halomaker.h"
 
 
 

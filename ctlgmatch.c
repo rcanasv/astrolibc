@@ -72,6 +72,9 @@ int main (int argc, char ** argv)
       printf ("%d   ", opt.catalog[i].strctProps[j].Type);
       printf ("%d   ", opt.catalog[i].strctProps[j].NumPart);
       printf ("%g   ", opt.catalog[i].strctProps[j].TotMass);
+      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[0]);
+      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[1]);
+      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[2]);
       printf ("\n");
     }
   }
