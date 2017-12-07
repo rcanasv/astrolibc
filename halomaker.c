@@ -143,15 +143,26 @@ void halomaker_read_properties (Catalog * hmkr)
     hmkr->strctProps[i].TotMass = dummyf * 1e+11;       // Mass is now in Solar Masses
 
     // Galaxy Position
+    double Lbox   = 100000 * hmkr->cosmology.Aexp / 0.704;
+    double Lbox_2 = Lbox / 2.0;
+
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[0] = dummyf * 1000;
+                 hmkr->strctProps[i].Pos[0] = dummyf * 1000 + Lbox_2;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[1] = dummyf * 1000;
+                 hmkr->strctProps[i].Pos[1] = dummyf * 1000 + Lbox_2;
                  fread (&dummyf, sizeof(float), 1, f);
-                 hmkr->strctProps[i].Pos[2] = dummyf * 1000;
+                 hmkr->strctProps[i].Pos[2] = dummyf * 1000 + Lbox_2;
                                                         HMKR_SKIP
-    // Position is now in -Lbox/2 to Lbox/2 in kpc
-    double Lbox = 100000 * hmkr->cosmology.Aexp / 0.704;
+
+    /*
+    while (hmkr->strctProps[i].Pos[0] < 0) hmkr->strctProps[i].Pos[0] + Lbox;
+    while (hmkr->strctProps[i].Pos[1] < 0) hmkr->strctProps[i].Pos[1] + Lbox;
+    while (hmkr->strctProps[i].Pos[2] < 0) hmkr->strctProps[i].Pos[2] + Lbox;
+
+    while (hmkr->strctProps[i].Pos[0] > Lbox) hmkr->strctProps[i].Pos[0] - Lbox;
+    while (hmkr->strctProps[i].Pos[1] > Lbox) hmkr->strctProps[i].Pos[1] - Lbox;
+    while (hmkr->strctProps[i].Pos[2] > Lbox) hmkr->strctProps[i].Pos[2] - Lbox;
+    */
 
     // Galaxy Velocity
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);

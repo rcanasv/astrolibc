@@ -65,16 +65,19 @@ int main (int argc, char ** argv)
     printf ("%d\n", opt.catalog[i].iprops);
     for (j = 1; j <= 10; j++)
     {
-      printf ("%d   ", opt.catalog[i].strctProps[j].ID);
-      printf ("%d   ", opt.catalog[i].strctProps[j].DirectHostID);
-      printf ("%d   ", opt.catalog[i].strctProps[j].HostID);
-      printf ("%d   ", opt.catalog[i].strctProps[j].NumSubs);
-      printf ("%d   ", opt.catalog[i].strctProps[j].Type);
-      printf ("%d   ", opt.catalog[i].strctProps[j].NumPart);
-      printf ("%g   ", opt.catalog[i].strctProps[j].TotMass);
-      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[0]);
-      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[1]);
-      printf ("%g   ", opt.catalog[i].strctProps[j].Pos[2]);
+      printf ("%5d   ", opt.catalog[i].strctProps[j].ID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].DirectHostID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].HostID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].NumSubs);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].Type);
+      printf ("%8d   ", opt.catalog[i].strctProps[j].NumPart);
+      printf ("%e    ", opt.catalog[i].strctProps[j].TotMass);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[0]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[1]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[2]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[0]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[1]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[2]);
       printf ("\n");
     }
   }
