@@ -55,6 +55,27 @@ int main (int argc, char ** argv)
   }
 
 
+  //
+  //  Tag isolated galaxies in VELOCIraptor
+  //
+  int * isolated_just_1strct = (int *) calloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * isolated_just_type10 = (int *) calloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    isolated_just_1strct[i] = 0;
+    isolated_just_type10[i] = 1;
+
+    if (opt.catalog[0].strctProps[i].Type == 7)
+    {
+      if (opt.catalog[0].strctProps[i].NumSubs == 1)
+        isolated_just_1strct[i] = 1;
+    }
+    else
+      if (opt.catalog[0].strctProps[i].Type > 10)
+        isolated_just_type10[opt.catalog[0].strctProps[i].HostID] = 0;
+  }
+
+
   /*
   for (i = 0; i < opt.numCatalogs; i++)
   {
@@ -95,7 +116,7 @@ int main (int argc, char ** argv)
   {
     strct1 = &opt.catalog[0].strctProps[i];
     strct1->dummyi = 0;
-    minR = 100;
+    minR = 10;
     if (strct1->Type != 7)
     {
       for (j = 1; j < opt.catalog[1].nstruct; j++)
@@ -128,7 +149,11 @@ int main (int argc, char ** argv)
       printf ("%e    ", strct1->TotMass);
       printf ("%e    ", strct2->TotMass);
       printf ("%e    ", strct1->Rsize);
-      printf ("%e    ", strct2->Rsize);
+      printf ("%e    ", strct2->Rsize*1000);
+      printf ("%e    ", strct1->Vdisp);
+      printf ("%e    ", strct2->Vdisp);
+      printf ("%e    ", isolated_just_1strct[strct1->HostID]);
+      printf ("%e    ", isolated_just_type10[strct1->HostID]);
       printf ("%e    ", strct1->Pos[0]);
       printf ("%e    ", strct2->Pos[0]);
       printf ("%e    ", strct1->Pos[1]);
@@ -139,6 +164,8 @@ int main (int argc, char ** argv)
     }
   }
 
+  free (isolated_just_type10);
+  free (isolated_just_1strct);
 /*
   for (i = 1; i < opt.catalog[0].nstruct; i++)
   {
