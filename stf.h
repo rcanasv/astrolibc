@@ -36,6 +36,10 @@ int * extended_IdIGM;
 
 void stf_read_properties (Catalog * stf);
 
+void stf_write_catalog_group (Catalog * stf);
+
+void stf_write_catalog_particles (Catalog * stf);
+
 //int load_stf_extended_output (char * prefix, int filenum);
 //void free_extended_arrays (void);
 //int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct);

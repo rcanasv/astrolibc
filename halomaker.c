@@ -12,7 +12,6 @@
 #include "halomaker.h"
 
 
-//---------- Read Propertes File ----------//
 
 void halomaker_read_properties (Catalog * hmkr)
 {
@@ -251,6 +250,99 @@ void halomaker_read_properties (Catalog * hmkr)
      fseek (f, dummy, SEEK_CUR);
    HMKR_SKIP
  }
+
+  fclose(f);
+}
+
+
+void halomaker_read_particles (Catalog * hmkr)
+{
+  int     i, j, k;
+
+  int     dummy;
+  int     dummyi;
+  long    dummyl;
+  float   dummyf;
+  double  dummyd;
+
+  FILE  * f;
+  char    treebricks_fname [NAME_LENGTH];
+
+  //
+  // Open treebricks file to read properties
+  //
+  sprintf (treebricks_fname, "%s/%s", hmkr->archive.path, hmkr->archive.prefix);
+  if ((f = fopen (treebricks_fname, "r")) == NULL)
+  {
+    printf ("ERROR: Cannot open file  %s\n", treebricks_fname);
+    exit (0);
+  }
+
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+  HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+  //
+  // Loop over structures
+  //
+  for (i = 1; i <= hmkr->nstruct; i++)
+  {
+    // Number of particles
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // List of particles in galaxy i
+    HMKR_SKIP
+      hmkr->strctProps[i].PIDs = (int *) malloc (hmkr->strctProps[i].NumPart * sizeof(int));
+      fread (hmkr->strctProps[i].PIDs,  sizeof(int)*hmkr->strctProps[i].NumPart, 1, f);
+    HMKR_SKIP
+
+    // Structure ID
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // TimeStep Number
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Level, Parent ID, ID first sub, Nsubstructures, ID next sub
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Mass
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Galaxy Position
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Galaxy Velocity
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Galaxy Angular Momentum
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Distance to most distant particle
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Kinetic Potential and Total Energy
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Spin Parameter
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Velocity dispersion, bulge velocity disp, bulge mass
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Virial Radius, Virial Mass, Virial Temp, Sound Speed
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Central Density (NFW), Characteristic Radius (NFW)
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP
+
+    // Stellar surface density profiles
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP  // nbins
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP  // radius
+    HMKR_SKIP    fseek (f, dummy, SEEK_CUR);    HMKR_SKIP  // Stellar surface density
+  }
 
   fclose(f);
 }

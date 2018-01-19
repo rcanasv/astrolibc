@@ -14,10 +14,16 @@
 #include "structure.h"
 #include "cosmology.h"
 
+
+#define  STF        1
+#define  HALOMAKER  2
+
+
 typedef struct Catalog
 {
   Archive        archive;
   Cosmology      cosmology;
+  int            format;
   int            nstruct;
   int            nprocs;
   int            iprops;
@@ -30,6 +36,10 @@ typedef struct Catalog
 void Catalog_init (Catalog * catalog);
 
 void Catalog_load (Catalog * catalog);
+
+void Catalog_load_properties (Catalog * catalog);
+
+void Catalog_load_particles (Catalog * catalog);
 
 void Catalog_free (Catalog * catalog);
 

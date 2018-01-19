@@ -54,6 +54,7 @@ typedef struct Structure
   int      dummy;
   int      dummyi;
   double   dummyd;
+  int    * PIDs;
 } Structure;
 
 

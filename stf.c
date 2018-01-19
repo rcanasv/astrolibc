@@ -117,6 +117,94 @@ void stf_read_properties (Catalog * stf)
 }
 
 
+
+void stf_write_catalog_group (Catalog * stf)
+{
+  int    i, j, k;
+  FILE * f;
+  char   fname[NAME_LENGTH];
+
+  Catalog * ctlg = stf;
+
+  sprintf (fname, "%s/%s.catalog_groups.0", stf->archive.path, stf->archive.prefix);
+  f = fopen (fname, "w");
+
+  // ThisTask   NProcs
+  fprintf (f, "%d %d\n", 0, 1);
+
+  // NThisTask  NTot
+  fprintf (f, "%d %d\n", stf->nstruct, stf->nstruct);
+
+  // Structure number of particles
+  for (i = 1; i <= stf->nstruct; i++)
+    fprintf (f, "%d\n", stf->strctProps[i].NumPart);
+
+  // Offset bound
+  stf->strctProps[i].dummyi = 0;
+  for (i = 2; i <= stf->nstruct; i++)
+    stf->strctProps[i].dummyi = stf->strctProps[i-1].NumPart + stf->strctProps[i-1].dummyi;
+
+  for (i = 1; i <= stf->nstruct; i++)
+    fprintf (f, "%d\n", stf->strctProps[i].dummyi);
+
+  // Offset unbound
+  for (i = 1; i <= stf->nstruct; i++)
+    fprintf (f, "%d\n", 0);
+
+  fclose (f);
+}
+
+
+void stf_write_catalog_particles (Catalog * stf)
+{
+  int    i, j, k;
+  FILE * f;
+  char   fname[NAME_LENGTH];
+
+  Catalog * ctlg = stf;
+
+  int    npartTot = 0;
+
+  //
+  // Write catalog_particles
+  //
+  sprintf (fname, "%s/%s.catalog_particles.0", stf->archive.path, stf->archive.prefix);
+  f = fopen (fname, "w");
+
+  for (i = 1; i <= stf->nstruct; i++)
+    npartTot += stf->strctProps[i].NumPart;
+
+  // ThisTask   NProcs
+  fprintf (f, "%d %d\n", 0, 1);
+
+  // NThisTask  NTot
+  fprintf (f, "%d %d\n", npartTot, npartTot);
+
+  // Structure number of particles
+  for (i = 1; i <= stf->nstruct; i++)
+    for (j = 0; j < stf->strctProps[i].NumPart; j++)
+      fprintf (f, "%u\n", -1*stf->strctProps[i].PIDs[j]);
+
+  fclose (f);
+
+
+  //
+  // Write catalog_particles.unbound
+  //
+  sprintf (fname, "%s/%s.catalog_particles.unbound.0", stf->archive.path, stf->archive.prefix);
+  f = fopen (fname, "w");
+
+  // ThisTask   NProcs
+  fprintf (f, "%d %d\n", 0, 1);
+
+  // NThisTask  NTot
+  fprintf (f, "%d %d\n", 0, 0);
+
+  fclose (f);
+}
+
+
+
 /*
 
 int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct)

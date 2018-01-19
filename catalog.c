@@ -20,31 +20,49 @@ void Catalog_init (Catalog * catalog)
   catalog->iparts     = 0;
   catalog->strctProps = NULL;
   catalog->strctParts = NULL;
-}
 
-
-
-void Catalog_load (Catalog * catalog)
-{
   if ((!strcmp(catalog->archive.format, "stf"))          ||  \
       (!strcmp(catalog->archive.format, "VELOCIraptor")) ||  \
       (!strcmp(catalog->archive.format, "velociraptor")))
-  {
-    stf_read_properties (catalog);
-  }
+    catalog->format = STF;
   else
     if ((!strcmp(catalog->archive.format, "hmkr"))      ||  \
         (!strcmp(catalog->archive.format, "HaloMaker")) ||  \
         (!strcmp(catalog->archive.format, "halomaker")))
-    {
-      halomaker_read_properties (catalog);
-    }
+      catalog->format = HALOMAKER;
     else
     {
       printf ("Format %s not supported\n", catalog->archive.format);
       printf ("Exiting...\n");
       exit (0);
     }
+}
+
+
+
+void Catalog_load (Catalog * catalog)
+{
+  Catalog_load_properties (catalog);
+  Catalog_load_particles  (catalog);
+}
+
+
+
+void Catalog_load_properties (Catalog * catalog)
+{
+  if (catalog->format == STF)         stf_read_properties (catalog);
+  if (catalog->format == HALOMAKER)   halomaker_read_properties (catalog);
+}
+
+
+
+void Catalog_load_particles (Catalog * catalog)
+{
+  if (!catalog->iprops)
+    Catalog_load_properties (catalog);
+
+  //if (catalog->format == STF)         stf_read_particles (catalog);
+  if (catalog->format == HALOMAKER)   halomaker_read_particles (catalog);
 }
 
 

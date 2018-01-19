@@ -6,3 +6,6 @@ analyze_galaxy_catalog: analyze_galaxy_catalog.c
 
 ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c
 	gcc ctlgmatch.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/ctlgMatch
+
+convert: convert.c archive.c catalog.c stf.c halomaker.c
+	gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
