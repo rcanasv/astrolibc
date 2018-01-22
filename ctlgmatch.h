@@ -21,7 +21,7 @@ typedef struct Options
   Archive     param;
   int         numCatalogs;
   Catalog  *  catalog;
-  Archive     snapshot;
+  Archive     arx;
   char        outprefix   [NAME_LENGTH];
 } Options;
 

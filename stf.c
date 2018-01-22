@@ -57,9 +57,9 @@ void stf_read_properties (Catalog * stf)
 
   for (i = 1; i <= stf->nstruct; i++)
   {
-    stf->strctProps[i].SubIDs    = NULL;
-    stf->strctProps[i].ProgIDs   = NULL;
-    stf->strctProps[i].ProgMrrts = NULL;
+    stf->strctProps[i].SubIDs     = NULL;
+    stf->strctProps[i].MatchIDs   = NULL;
+    stf->strctProps[i].MatchMrrts = NULL;
   }
 
   //
@@ -233,55 +233,56 @@ int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct)
 
   return nfiles;
 }
+*/
 
 
 
-
-int load_treefrog (char * tffile, int strct_id, int ** prog_ids, float ** prog_mrrts)
+void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 {
   int i, j, k;
   FILE * f;
 
   int tmpid;
-  int nprogs;
+  int nmatch;
 
   char buffer [LONG_LENGTH];
 
-  f = fopen (tffile, "r");
+  f = fopen (tfrog->name, "r");
 
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
 
-  do
+  int    * MatchIDs;
+  double * MatchMrrts;
+
+  for (i = 1; i <= stf->nstruct; i++)
   {
     fgets (buffer, LONG_LENGTH, f);
-    sscanf (buffer, "%d  %d", &tmpid, &nprogs);
+    sscanf (buffer, "%d  %d", &tmpid, &nmatch);
 
-    if (tmpid != strct_id)
-      for (i = 0; i < nprogs; i++)
-        fgets (buffer, LONG_LENGTH, f);
+    stf->strctProps[i].NumMatch = nmatch;
+
+    if (nmatch > 0)
+    {
+      stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
+      stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
+      for (j = 0; j < nmatch; j++)
+      {
+        fgets  (buffer, LONG_LENGTH, f);
+        sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
+                                  &stf->strctProps[i].MatchMrrts[j]);
+      }
+    }
   }
-  while (tmpid != strct_id);
 
-
-  *prog_ids   = (int *)   malloc (nprogs * sizeof(int));
-  *prog_mrrts = (float *) malloc (nprogs * sizeof(float));
-
-  for (i = 0; i < nprogs; i++)
-  {
-    fgets (buffer, LONG_LENGTH, f);
-    sscanf (buffer, "%d  %f", &prog_ids[0][i], &prog_mrrts[0][i]);
-  }
   fclose (f);
-
-  return nprogs;
 }
 
 
 
-
+/*
 int load_stf_extended_output (char * prefix, int filenum)
 {
     FILE * f;

@@ -78,11 +78,11 @@ void Catalog_free (Catalog * catalog)
       if (catalog->strctProps[i].SubIDs != NULL)
         free (catalog->strctProps[i].SubIDs);
 
-      if (catalog->strctProps[i].ProgIDs != NULL)
-        free (catalog->strctProps[i].ProgIDs);
+      if (catalog->strctProps[i].MatchIDs != NULL)
+        free (catalog->strctProps[i].MatchIDs);
 
-      if (catalog->strctProps[i].ProgMrrts != NULL)
-        free (catalog->strctProps[i].ProgMrrts);
+      if (catalog->strctProps[i].MatchMrrts != NULL)
+        free (catalog->strctProps[i].MatchMrrts);
     }
     free (catalog->strctProps);
   }

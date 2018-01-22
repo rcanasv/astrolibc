@@ -48,9 +48,9 @@ typedef struct Structure
   int    * SubIDs;
   int      NumFiles;
   int    * FilesOfGroup;
-  int      NumProg;
-  int    * ProgIDs;
-  double * ProgMrrts;
+  int      NumMatch;
+  int    * MatchIDs;
+  float  * MatchMrrts;
   int      dummy;
   int      dummyi;
   double   dummyd;

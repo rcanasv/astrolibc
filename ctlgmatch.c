@@ -11,7 +11,7 @@
 
 
 #include "ctlgmatch.h"
-
+#include "stf.h"
 
 int main (int argc, char ** argv)
 {
@@ -42,6 +42,11 @@ int main (int argc, char ** argv)
     fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.catalog[i].archive, buffer);
     fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.catalog[i].archive, buffer);
   }
+
+  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.arx, buffer);
+                                          Archive_prefix (&opt.arx, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.arx, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.arx, buffer);
   fclose (opt.param.file);
 
 
@@ -54,37 +59,21 @@ int main (int argc, char ** argv)
     Catalog_load (&opt.catalog[i]);
   }
 
-
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
-  int * isolated_just_1strct = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
-  int * isolated_just_type10 = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
-  int * isolated_nosubs      = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * isolated = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
-    isolated_just_1strct[i] = 0;
-    isolated_just_type10[i] = 1;
-    isolated_nosubs[i]      = 1;
+    isolated[i] = 0;
 
-    if (opt.catalog[0].strctProps[i].Type == 7)
-    {
-      if (opt.catalog[0].strctProps[i].NumSubs == 1)
-        isolated_just_1strct[i] = 1;
-    }
-
-    if (opt.catalog[0].strctProps[i].Type > 10)
-    {
-      isolated_just_type10[opt.catalog[0].strctProps[i].HostID] = 0;
-      isolated_nosubs[opt.catalog[0].strctProps[i].ID] = 0;
-    }
-
-    if (opt.catalog[0].strctProps[i].NumSubs > 0)
-      isolated_nosubs[opt.catalog[0].strctProps[i].ID] = 0;
+    if ((opt.catalog[0].strctProps[i].Type == 10) && \
+        (opt.catalog[0].strctProps[i].NumSubs == 0))
+      isolated[i] = 1;
   }
 
-
-  /*
+/*
   for (i = 0; i < opt.numCatalogs; i++)
   {
     printf ("%s\n", opt.catalog[i].archive.name);
@@ -112,6 +101,19 @@ int main (int argc, char ** argv)
     }
   }
   */
+
+
+  stf_read_treefrog (&opt.arx, &opt.catalog[0]);
+
+  for (i = 5530; i < 5540; i++)
+    if (opt.catalog[0].strctProps[i].NumMatch)
+      printf ("%d  %d  %d  %f\n", i, opt.catalog[0].strctProps[i].NumMatch,    \
+    opt.catalog[0].strctProps[i].MatchIDs[0], \
+    opt.catalog[0].strctProps[i].MatchMrrts[0]);
+
+
+  // FINE TILL HERE !
+  exit (0);
 
   Structure * strct1;
   Structure * strct2;
@@ -160,9 +162,7 @@ int main (int argc, char ** argv)
       printf ("%e    ", strct2->Rsize*1000);
       printf ("%e    ", strct1->Vdisp);
       printf ("%e    ", strct2->Vdisp);
-      printf ("%7d   ", isolated_just_1strct[strct1->HostID]);
-      printf ("%7d   ", isolated_just_type10[strct1->HostID]);
-      printf ("%7d   ", isolated_nosubs[strct1->ID]);
+      printf ("%7d   ", isolated[strct1->ID]);
       printf ("%e    ", strct1->Pos[0]);
       printf ("%e    ", strct2->Pos[0]);
       printf ("%e    ", strct1->Pos[1]);
@@ -173,9 +173,8 @@ int main (int argc, char ** argv)
     }
   }
 
-  free (isolated_just_type10);
-  free (isolated_just_1strct);
-  free (isolated_nosubs);
+  free (isolated);
+
 /*
   for (i = 1; i < opt.catalog[0].nstruct; i++)
   {

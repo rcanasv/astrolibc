@@ -78,9 +78,9 @@ void halomaker_read_properties (Catalog * hmkr)
 
   for (i = 1; i <= hmkr->nstruct; i++)
   {
-    hmkr->strctProps[i].SubIDs    = NULL;
-    hmkr->strctProps[i].ProgIDs   = NULL;
-    hmkr->strctProps[i].ProgMrrts = NULL;
+    hmkr->strctProps[i].SubIDs     = NULL;
+    hmkr->strctProps[i].MatchIDs   = NULL;
+    hmkr->strctProps[i].MatchMrrts = NULL;
   }
 
 
