@@ -35,7 +35,11 @@ typedef struct Particle
   float   Metal;
   float   Chem;
   int     Type;
+  float   Radius;
 } Particle;
+
+
+int particle_rad_compare (const void * a, const void * b);
 
 
 #endif    /*  PARTICLE_H  */

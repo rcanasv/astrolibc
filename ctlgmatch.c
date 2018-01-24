@@ -33,6 +33,8 @@ int main (int argc, char ** argv)
     printf ("Exiting...\n");
     exit (0);
   }
+
+  // Catalogs to load
   fscanf (opt.param.file, "%d", &opt.numCatalogs);
   opt.catalog = (Catalog *) malloc (opt.numCatalogs * sizeof(Catalog));
   for (i = 0; i < opt.numCatalogs; i++)
@@ -43,10 +45,17 @@ int main (int argc, char ** argv)
     fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.catalog[i].archive, buffer);
   }
 
-  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.arx, buffer);
-                                          Archive_prefix (&opt.arx, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.arx, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.arx, buffer);
+  // TreeFrog input
+  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.input, buffer);
+                                          Archive_prefix (&opt.input, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.input, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.input, buffer);
+
+  // ASCII Output
+  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.output, buffer);
+                                          Archive_prefix (&opt.output, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.output, buffer);
+  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.output, buffer);
   fclose (opt.param.file);
 
 
@@ -73,134 +82,45 @@ int main (int argc, char ** argv)
       isolated[i] = 1;
   }
 
-/*
-  for (i = 0; i < opt.numCatalogs; i++)
-  {
-    printf ("%s\n", opt.catalog[i].archive.name);
-    printf ("%s\n", opt.catalog[i].archive.path);
-    printf ("%s\n", opt.catalog[i].archive.format);
-    printf ("%d\n", opt.catalog[i].nstruct);
-    printf ("%d\n", opt.catalog[i].nprocs);
-    printf ("%d\n", opt.catalog[i].iprops);
-    for (j = 1; j <= 10; j++)
-    {
-      printf ("%5d   ", opt.catalog[i].strctProps[j].ID);
-      printf ("%4d   ", opt.catalog[i].strctProps[j].DirectHostID);
-      printf ("%4d   ", opt.catalog[i].strctProps[j].HostID);
-      printf ("%4d   ", opt.catalog[i].strctProps[j].NumSubs);
-      printf ("%4d   ", opt.catalog[i].strctProps[j].Type);
-      printf ("%8d   ", opt.catalog[i].strctProps[j].NumPart);
-      printf ("%e    ", opt.catalog[i].strctProps[j].TotMass);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[0]);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[1]);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[2]);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[0]);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[1]);
-      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[2]);
-      printf ("\n");
-    }
-  }
-  */
-
-
-  stf_read_treefrog (&opt.arx, &opt.catalog[0]);
-
-  for (i = 5530; i < 5540; i++)
-    if (opt.catalog[0].strctProps[i].NumMatch)
-      printf ("%d  %d  %d  %f\n", i, opt.catalog[0].strctProps[i].NumMatch,    \
-    opt.catalog[0].strctProps[i].MatchIDs[0], \
-    opt.catalog[0].strctProps[i].MatchMrrts[0]);
-
-
-  // FINE TILL HERE !
-  exit (0);
+  stf_read_treefrog (&opt.input, &opt.catalog[0]);
 
   Structure * strct1;
   Structure * strct2;
-  double      dx, dy, dz, dr;
-  double      minR = 1e6;
-  double      maxM = 0;
-
-  for (i = 1; i < opt.catalog[0].nstruct; i++)
-//  for (i = 1; i < 10000; i++)
+  FILE * f = fopen (opt.output.name, "w");
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
     strct1 = &opt.catalog[0].strctProps[i];
-    strct1->dummyi = 0;
-    minR = 10;
-    if (strct1->Type != 7)
+    if ((strct1->Type > 7) && (strct1->NumMatch))
     {
-      for (j = 1; j < opt.catalog[1].nstruct; j++)
+      if (strct1->MatchMrrts[0] > 0.1)
       {
-        strct2 = &opt.catalog[1].strctProps[j];
-
-        if (strct2->dummyi == 0)
-        {
-          dx = strct1->Pos[0] - strct2->Pos[0];
-          dy = strct1->Pos[1] - strct2->Pos[1];
-          dz = strct1->Pos[2] - strct2->Pos[2];
-          dr = dx*dx + dy*dy + dz*dz;
-
-          if ( dr < minR)
-          {
-            minR = dr;
-            strct1->dummyi = strct2->ID;
-          }
-        }
+        strct2 = &opt.catalog[1].strctProps[strct1->MatchIDs[0]];
+        fprintf (f, "%7d   ", strct1->ID);
+        fprintf (f, "%7d   ", strct2->ID);
+        fprintf (f, "%7d   ", isolated[strct1->ID]);
+        fprintf (f, "%e    ", strct1->MatchMrrts[0]);
+        fprintf (f, "%7d   ", strct1->Type);
+        fprintf (f, "%e    ", strct1->TotMass);
+        fprintf (f, "%e    ", strct2->TotMass);
+        fprintf (f, "%e    ", strct1->Rsize);
+        fprintf (f, "%e    ", strct2->Rsize*1000);
+        fprintf (f, "%e    ", strct1->Vdisp);
+        fprintf (f, "%e    ", strct2->Vdisp);
+        fprintf (f, "%e    ", strct1->Pos[0]);
+        fprintf (f, "%e    ", strct2->Pos[0]);
+        fprintf (f, "%e    ", strct1->Pos[1]);
+        fprintf (f, "%e    ", strct2->Pos[1]);
+        fprintf (f, "%e    ", strct1->Pos[2]);
+        fprintf (f, "%e    ", strct2->Pos[2]);
+        fprintf (f, "\n");
       }
-      opt.catalog[1].strctProps[strct1->dummyi].dummyi = strct1->ID;
-    }
-
-    if (strct1->Type != 7 && strct1->dummyi > 0)
-    {
-      strct1 = &opt.catalog[0].strctProps[i];
-      strct2 = &opt.catalog[1].strctProps[opt.catalog[0].strctProps[i].dummyi];
-      printf ("%7d   ", strct1->ID);
-      printf ("%7d   ", strct2->ID);
-      printf ("%e    ", strct1->TotMass);
-      printf ("%e    ", strct2->TotMass);
-      printf ("%e    ", strct1->Rsize);
-      printf ("%e    ", strct2->Rsize*1000);
-      printf ("%e    ", strct1->Vdisp);
-      printf ("%e    ", strct2->Vdisp);
-      printf ("%7d   ", isolated[strct1->ID]);
-      printf ("%e    ", strct1->Pos[0]);
-      printf ("%e    ", strct2->Pos[0]);
-      printf ("%e    ", strct1->Pos[1]);
-      printf ("%e    ", strct2->Pos[1]);
-      printf ("%e    ", strct1->Pos[2]);
-      printf ("%e    ", strct2->Pos[2]);
-      printf ("\n");
     }
   }
-
+  fclose (f);
   free (isolated);
-
-/*
-  for (i = 1; i < opt.catalog[0].nstruct; i++)
-  {
-    strct1 = &opt.catalog[0].strctProps[i];
-    if (strct1->Type != 7)
-    {
-      strct1 = &opt.catalog[0].strctProps[i];
-      strct2 = &opt.catalog[1].strctProps[opt.catalog[0].strctProps[i].dummyi];
-      printf ("%7d   ", strct1->ID);
-      printf ("%7d   ", strct2->ID);
-      printf ("%e    ", strct1->TotMass);
-      printf ("%e    ", strct2->TotMass);
-      printf ("%e    ", strct1->Pos[0]);
-      printf ("%e    ", strct2->Pos[0]);
-      printf ("%e    ", strct1->Pos[1]);
-      printf ("%e    ", strct2->Pos[1]);
-      printf ("%e    ", strct1->Pos[2]);
-      printf ("%e    ", strct2->Pos[2]);
-      printf ("\n");
-    }
-  }
-*/
 
   for (i = 0; i < opt.numCatalogs; i++)
     Catalog_free (&opt.catalog[i]);
-
 
   return (0);
 }
@@ -309,3 +229,32 @@ void usage_ctlgMatch (int opt, char ** argv)
     exit (0);
   }
 }
+
+/*
+  for (i = 0; i < opt.numCatalogs; i++)
+  {
+    printf ("%s\n", opt.catalog[i].archive.name);
+    printf ("%s\n", opt.catalog[i].archive.path);
+    printf ("%s\n", opt.catalog[i].archive.format);
+    printf ("%d\n", opt.catalog[i].nstruct);
+    printf ("%d\n", opt.catalog[i].nprocs);
+    printf ("%d\n", opt.catalog[i].iprops);
+    for (j = 1; j <= 10; j++)
+    {
+      printf ("%5d   ", opt.catalog[i].strctProps[j].ID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].DirectHostID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].HostID);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].NumSubs);
+      printf ("%4d   ", opt.catalog[i].strctProps[j].Type);
+      printf ("%8d   ", opt.catalog[i].strctProps[j].NumPart);
+      printf ("%e    ", opt.catalog[i].strctProps[j].TotMass);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[0]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[1]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Pos[2]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[0]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[1]);
+      printf ("%e    ", opt.catalog[i].strctProps[j].Vel[2]);
+      printf ("\n");
+    }
+  }
+  */

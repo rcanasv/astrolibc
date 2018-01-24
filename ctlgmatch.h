@@ -19,9 +19,10 @@ typedef struct Options
 {
   int         verbose;
   Archive     param;
+  Archive     input;
+  Archive     output;
   int         numCatalogs;
   Catalog  *  catalog;
-  Archive     arx;
   char        outprefix   [NAME_LENGTH];
 } Options;
 
