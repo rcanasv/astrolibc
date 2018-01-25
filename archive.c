@@ -13,13 +13,13 @@
 #include "archive.h"
 
 
-void Archive_fill (Archive * a, char * name, char * format, char * path, char * prefix, int nFiles)
+void Archive_fill (Archive * a, char * name, char * format, char * path, char * prefix, int nfiles)
 {
   strcpy (a->name,   name);
   strcpy (a->format, format);
   strcpy (a->path,   path);
   strcpy (a->prefix, prefix);
-  a->nFiles = nFiles;
+  a->nfiles = nfiles;
 }
 
 
@@ -47,7 +47,7 @@ void Archive_prefix (Archive * a, char * prefix)
 }
 
 
-void Archive_nFiles (Archive * a, int nFiles)
+void Archive_nfiles (Archive * a, int nfiles)
 {
-  a->nFiles = nFiles;
+  a->nfiles = nfiles;
 }

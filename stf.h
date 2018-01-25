@@ -28,19 +28,22 @@ typedef struct stfOutput
 } stfOutput;
 */
 
+typedef struct stfExtendedOutput
+{
+  int  oIndx;
+  int  IdStrct;
+  int  IdHost;
+  int  IdIGM;
+} stfExtendedOutput;
 
-int * extended_oIndex;
-int * extended_IdStruct;
-int * extended_IdHost;
-int * extended_IdIGM;
 
-void stf_read_properties (Catalog * stf);
-
-void stf_write_catalog_group (Catalog * stf);
-
-void stf_write_catalog_particles (Catalog * stf);
-
-void stf_read_treefrog (Archive * tfrog, Catalog * stf);
+void  stf_read_properties                   (Catalog * stf);
+void  stf_write_catalog_group               (Catalog * stf);
+void  stf_write_catalog_particles           (Catalog * stf);
+void  stf_read_treefrog                     (Archive * tfrog, Catalog * stf);
+void  stf_get_particle_properties           (Catalog * stf, Archive * arx);
+void  stf_catalog_get_particle_properties   (Catalog * stf, Archive * arx);
+void  stf_structure_get_particle_properties (Structure * strct, Archive * arx);
 
 //int load_stf_extended_output (char * prefix, int filenum);
 //void free_extended_arrays (void);

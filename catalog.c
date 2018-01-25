@@ -26,8 +26,9 @@ void Catalog_init (Catalog * catalog)
       (!strcmp(catalog->archive.format, "velociraptor")))
     catalog->format = STF;
   else
-    if ((!strcmp(catalog->archive.format, "hmkr"))      ||  \
-        (!strcmp(catalog->archive.format, "HaloMaker")) ||  \
+    if ((!strcmp(catalog->archive.format, "hmkr"))            ||  \
+        (!strcmp(catalog->archive.format, "hmkr_treebricks")) ||  \
+        (!strcmp(catalog->archive.format, "HaloMaker"))       ||  \
         (!strcmp(catalog->archive.format, "halomaker")))
       catalog->format = HALOMAKER;
     else
@@ -48,21 +49,28 @@ void Catalog_load (Catalog * catalog)
 
 
 
-void Catalog_load_properties (Catalog * catalog)
+void Catalog_load_properties (Catalog * ctlg)
 {
-  if (catalog->format == STF)         stf_read_properties (catalog);
-  if (catalog->format == HALOMAKER)   halomaker_read_properties (catalog);
+  if (ctlg->format == STF)         stf_read_properties (ctlg);
+  if (ctlg->format == HALOMAKER)   halomaker_read_properties (ctlg);
 }
 
 
 
-void Catalog_load_particles (Catalog * catalog)
+void Catalog_load_particles (Catalog * ctlg)
 {
-  if (!catalog->iprops)
-    Catalog_load_properties (catalog);
+  if (!ctlg->iprops)
+    Catalog_load_properties (ctlg);
 
   //if (catalog->format == STF)         stf_read_particles (catalog);
-  if (catalog->format == HALOMAKER)   halomaker_read_particles (catalog);
+  if (ctlg->format == HALOMAKER)   halomaker_read_particles (catalog);
+}
+
+
+void Catalog_get_particle_properties (Catalog * ctlg, Archive * arx)
+{
+  if (ctlg->format == STF)         stf_get_particle_properties (ctlg, arx);
+  if (ctlg->format == HALOMAKER)   halomaker_get_particle_properties (ctlg, arx);
 }
 
 

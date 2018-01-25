@@ -32,8 +32,8 @@ int NumPart;
 int outType;
 
 
-char   buffer       [NAME_LENGTH];
-char   longbuffer   [LONG_LENGTH];
+//char   buffer       [NAME_LENGTH];
+//char   longbuffer   [LONG_LENGTH];
 
 int NUMFILES;
 

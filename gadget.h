@@ -33,5 +33,7 @@ typedef struct gheader
 } gheader;
 
 
+void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part);
+
 
 #endif    /*  GADGET_H  */

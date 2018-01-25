@@ -352,12 +352,15 @@ void halomaker_read_particles (Catalog * hmkr)
 
 // ---  Read Galfile --- //
 
-/*
-void halomaker_read_galfile (Structure * strct)
+
+void halomaker_read_galfile (Archive * arx, Structure * gal)
 {
   int     dummy;
+  double  dummyd;
   int     i, j;
+
   FILE *  f;
+  char    fname[NAME_LENGTH];
 
   int      gal_number;
   int      gal_level;
@@ -367,9 +370,17 @@ void halomaker_read_galfile (Structure * strct)
   double   gal_ang[3];
   int      nlist;
 
-  if ((f = fopen (filename, "r")) == NULL)
+
+  if (gal->iPart == 1)
   {
-    printf ("Can't open file named   %s \n", filename);
+    printf ("Particle properties already loaded for this structure\n");
+    return;
+  }
+
+  sprintf (fname, "%s/%s", arx->path, arx->name);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Can't open file named   %s \n", fname);
     exit(0);
   }
 
@@ -381,7 +392,7 @@ void halomaker_read_galfile (Structure * strct)
   HMKR_SKIP  fread (&gal_ang,    sizeof(double), 3, f);  HMKR_SKIP
   HMKR_SKIP  fread (&nlist,      sizeof(int),    1, f);  HMKR_SKIP
 
-
+/*
   printf ("\n");
   printf ("my_number   %d \n", gal_number);
   printf ("Level       %d \n", gal_level);
@@ -391,28 +402,38 @@ void halomaker_read_galfile (Structure * strct)
   printf ("Ang Mom     %8.5f \t %8.5f \t %8.5f \n", gal_ang[0], gal_ang[1], gal_ang[2]);
   printf ("Nlist       %d \n", nlist);
   printf ("\n");
-
+*/
 
   //
   // Data is stored in double
   //
-  if (!(p = malloc (nlist * sizeof(struct pdata_d))))
+  gal->NumPart = nlist;
+  if (!(gal->Part = malloc (nlist * sizeof(Particle))))
   {
     printf ("Cannot allocate memory for particle information\n");
     printf ("Exiting\n");
     exit (0);
   }
+  else
+    gal->iPart = 1;
 
   // Positions
   for (j = 0; j < 3; j++)
   {
     HMKR_SKIP
     if (dummy == 8 * nlist)
+    {
       for (i = 0; i < nlist; i++)
       {
-        fread (&p[i].Pos[j], sizeof(double), 1, f);
-        p[i].Pos[j] = p[i].Pos[j] * 1000;
+        fread (&dummyd, sizeof(double), 1, f);
+        gal->Part[i].Pos[j] = dummyd;
       }
+    }
+    else
+    {
+      printf ("Number of Particles and Positions does not coincide\n");
+      return;
+    }
     HMKR_SKIP
   }
 
@@ -421,53 +442,129 @@ void halomaker_read_galfile (Structure * strct)
   {
     HMKR_SKIP
     if (dummy == 8 * nlist)
+    {
       for (i = 0; i < nlist; i++)
-      	fread (&p[i].Vel[j], sizeof(double), 1, f);
+      {
+        fread (&dummyd, sizeof(double), 1, f);
+        gal->Part[i].Vel[j] = dummyd;
+      }
+    }
+    else
+    {
+      printf ("Number of Particles and Velocities does not coincide\n");
+      return;
+    }
     HMKR_SKIP
   }
 
   // Masses
   HMKR_SKIP
   if (dummy == 8 * nlist)
+  {
     for (i = 0; i < nlist; i++)
     {
-      fread (&p[i].Mass, sizeof(double), 1, f);
-
-      // converts to M/10**10 Msun
-      p[i].Mass *= 10.0;
+      fread (&dummyd, sizeof(double), 1, f);
+      gal->Part[i].Mass = dummyd;
     }
+  }
+  else
+  {
+    printf ("Number of Particles and Masses does not coincide\n");
+    return;
+  }
   HMKR_SKIP
 
   // Ids
   HMKR_SKIP
   if (dummy == 4 * nlist)
+  {
     for (i = 0; i < nlist; i++)
-      fread (&p[i].Id, sizeof(int), 1, f);
+      fread (&gal->Part[i].Id, sizeof(int), 1, f);
+  }
+  else
+  {
+    printf ("Number of Particles and Ids does not coincide\n");
+    return;
+  }
   HMKR_SKIP
 
   // Age
   HMKR_SKIP
   if (dummy == 8 * nlist)
+  {
     for (i = 0; i < nlist; i++)
-      fread (&p[i].Age, sizeof(double), 1, f);
+    {
+      fread (&dummyd, sizeof(double), 1, f);
+      gal->Part[i].Age = dummyd;
+    }
+  }
+  else
+  {
+    printf ("Number of Particles and Birth Epoch does not coincide\n");
+    return;
+  }
   HMKR_SKIP
 
   // Metallicity
   HMKR_SKIP
   if (dummy == 8 * nlist)
+  {
     for (i = 0; i < nlist; i++)
-      fread (&p[i].Metal, sizeof(double), 1, f);
+    {
+      fread (&dummyd, sizeof(double), 1, f);
+      gal->Part[i].Metal = dummyd;
+    }
+  }
+  else
+  {
+    printf ("Number of Particles and Metallicity does not coincide\n");
+    return;
+  }
   HMKR_SKIP
 
   // Chemical Elements
   HMKR_SKIP
+  fseek (f, dummy, SEEK_CUR);
+  /*
   if (dummy == 8 * nlist)
+  {
     for (i = 0; i < nlist; i++)
-      fread (&p[i].Chem, sizeof(double), 1, f);
+      fread (&gal->Part[i].Chem, sizeof(double), 1, f);
+  }
+  else
+  {
+    printf ("Number of Particles and Chemical Elements does not coincide\n");
+    return;
+  }
+  */
   HMKR_SKIP
 
-  HMKR_SKIP HMKR_PSKIP
   fclose(f);
+
+  //
+  // Unit conversion is done here
+  //
+  for (i = 0; i < nlist; i++)
+  {
+    // convert from Mpc to kpc
+    for (j = 0; j < 3; j++)
+        gal->Part[i].Pos[j] = gal->Part[i].Pos[j] * 1000;
+
+    // converts to M/10**10 Msun
+    gal->Part[i].Mass *= 10.0;
+  }
 }
 
-*/
+
+void halomaker_get_particle_properties (Catalog * hmkr, Archive * arx)
+{
+  int   i;
+  char  fname[NAME_LENGTH];
+
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    sprintf (fname, "gal_stars_%07d", i);
+    Archive_name (arx, fname);
+    halomaker_read_galfile (arx, &gal);
+  }
+}

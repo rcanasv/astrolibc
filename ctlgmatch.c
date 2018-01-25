@@ -12,6 +12,7 @@
 
 #include "ctlgmatch.h"
 #include "stf.h"
+#include "halomaker.h"
 
 int main (int argc, char ** argv)
 {
@@ -19,45 +20,9 @@ int main (int argc, char ** argv)
   int i, j, k;
   Options opt;
 
+  ctlgMatch_options (argc, argv, &opt);
 
-  options_ctlgMatch (argc, argv, &opt);
-
-
-  //
-  //  Read parameter file
-  //
-  opt.param.file = fopen (opt.param.name, "r");
-  if (opt.param.file == NULL)
-  {
-    printf ("Couldn't open file  %s\n", opt.param.name);
-    printf ("Exiting...\n");
-    exit (0);
-  }
-
-  // Catalogs to load
-  fscanf (opt.param.file, "%d", &opt.numCatalogs);
-  opt.catalog = (Catalog *) malloc (opt.numCatalogs * sizeof(Catalog));
-  for (i = 0; i < opt.numCatalogs; i++)
-  {
-    fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.catalog[i].archive, buffer);
-                                            Archive_prefix (&opt.catalog[i].archive, buffer);
-    fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.catalog[i].archive, buffer);
-    fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.catalog[i].archive, buffer);
-  }
-
-  // TreeFrog input
-  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.input, buffer);
-                                          Archive_prefix (&opt.input, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.input, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.input, buffer);
-
-  // ASCII Output
-  fscanf (opt.param.file, "%s", buffer);  Archive_name   (&opt.output, buffer);
-                                          Archive_prefix (&opt.output, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_format (&opt.output, buffer);
-  fscanf (opt.param.file, "%s", buffer);  Archive_path   (&opt.output, buffer);
-  fclose (opt.param.file);
-
+  ctlgMatch_params  (&opt);
 
   //
   //  Load catalogs
@@ -66,6 +31,7 @@ int main (int argc, char ** argv)
   {
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
+    Catalog_get_particle_properties (&opt.catalog[i]);
   }
 
   //
@@ -82,8 +48,14 @@ int main (int argc, char ** argv)
       isolated[i] = 1;
   }
 
+  //
+  //  Read TreeFrog
+  //
   stf_read_treefrog (&opt.input, &opt.catalog[0]);
 
+  //
+  //  Print common properties
+  //
   Structure * strct1;
   Structure * strct2;
   FILE * f = fopen (opt.output.name, "w");
@@ -119,6 +91,9 @@ int main (int argc, char ** argv)
   fclose (f);
   free (isolated);
 
+  //
+  //  Free memory
+  //
   for (i = 0; i < opt.numCatalogs; i++)
     Catalog_free (&opt.catalog[i]);
 
@@ -126,11 +101,57 @@ int main (int argc, char ** argv)
 }
 
 
+//
+//  Parameters
+//
+void ctlgMatch_params (Options * opt)
+{
+  int i;
+
+  opt->param.file = fopen (opt->param.name, "r");
+  if (opt->param.file == NULL)
+  {
+    printf ("Couldn't open file  %s\n", opt->param.name);
+    printf ("Exiting...\n");
+    exit (0);
+  }
+
+  // Catalogs to load
+  fscanf (opt->param.file, "%d", &opt->numCatalogs);
+  opt->catalog = (Catalog *) malloc (opt->numCatalogs * sizeof(Catalog));
+  opt->data    = (Archive *) malloc (opt->numCatalogs * sizeof(Archive));
+  for (i = 0; i < opt->numCatalogs; i++)
+  {
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog[i].archive, buffer);
+                                             Archive_prefix (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
+
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->data[i], buffer);
+                                             Archive_prefix (&opt->data[i], buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->data[i], buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->data[i], buffer);
+  }
+
+  // TreeFrog input
+  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->mtree, buffer);
+                                           Archive_prefix (&opt->mtree, buffer);
+  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->mtree, buffer);
+  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->mtree, buffer);
+
+  // ASCII Output
+  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
+                                           Archive_prefix (&opt->output, buffer);
+  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
+  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
+  fclose (opt->param.file);
+}
+
 
 //
 //  Options
 //
-int options_ctlgMatch (int argc, char ** argv, Options * opt)
+int ctlgMatch_options (int argc, char ** argv, Options * opt)
 {
   int   myopt;
   int   index;
@@ -161,16 +182,16 @@ int options_ctlgMatch (int argc, char ** argv, Options * opt)
       	break;
 
       case 'h':
-      	usage_ctlgMatch (0, argv);
+      	ctlgMatch_usage (0, argv);
         break;
 
       default:
-      	usage_ctlgMatch (1, argv);
+      	ctlgMatch_usage (1, argv);
     }
   }
 
   if (flag == 0)
-    usage_ctlgMatch (1, argv);
+    ctlgMatch_usage (1, argv);
 
 }
 
@@ -178,7 +199,7 @@ int options_ctlgMatch (int argc, char ** argv, Options * opt)
 //
 //  Usage
 //
-void usage_ctlgMatch (int opt, char ** argv)
+void ctlgMatch_usage (int opt, char ** argv)
 {
   if (opt == 0)
   {

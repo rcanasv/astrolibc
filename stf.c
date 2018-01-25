@@ -282,45 +282,150 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 
 
 
-/*
-int load_stf_extended_output (char * prefix, int filenum)
+void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 {
-    FILE * f;
-    char buffer[NAME_LENGTH];
-    sprintf(buffer, "%s.extended.%d", prefix, filenum);
-    int nparts = 0;
-    int i;
 
-    if ((f = fopen(buffer, "r")) == NULL)
-      return 0;
+  int    i, j, k;
+  FILE * f;
+  char   fname [NAME_LENGTH];
 
+
+  stfExtendedOutput * xtndd;
+  int                 ninextended;
+  int                 id;
+  int                 indx;
+
+
+  Particle  * part;
+  Structure * strct;
+
+
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    strct = &stf->strctProps[i];
+
+    strct->dummyi = 0;
+    strct->iPart  = 0;
+    strct->Part   = NULL;
+
+    if (strct->Part = (Particle *) malloc (stf->nstruct * sizeof(Particle)) == NULL)
+    {
+      printf ("Error not enough memory to allocate Particle to Structure\n");
+      exit(0);
+    }
+    else
+      strct->iPart = 1;
+  }
+
+
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
+  if (f = fopen(fname,"r") != NULL)
+  {
+    fclose (f);
+
+    //
+    // Go through every file of simulation/extendedOutput
+    //
+    for (i = 0; i < sim->archive.nfiles; i++)
+    {
+      ninextended = stf_catalog_load_extended_output (stf, i, &xtndd);
+
+      if (ninextended)
+      {
+        Simulation_load_particles (sim, i, &part);
+
+        for (j = 0; j < ninextended; j++)
+        {
+          id    = xtndd.IdStruct[j];
+          indx  = xtndd.oIndex[j];
+          strct = &stf->strctProps[id];
+
+          strct->Part[strct->dummyi++] = part[j];
+        }
+        free (xtndd);
+        free (part);
+      }
+    }
+  }
+  else
+  {
+    // 1.  Read .catalog_* files
+
+    // 2.  Open Simulation file and assign particles
+    ;
+  }
+}
+
+
+
+void  stf_structure_get_particle_properties (Structure * strct, Archive * arx)
+{
+
+  FILE * f;
+  char fname [NAME_LENGTH];
+
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
+  if (f = fopen(fname,"r") != NULL)
+  {
+    fclose (f);
+    // Extended Output files should (in principle) exist
+    stf_structure_load_extended_output (strct, arx);
+  }
+  else
+  {
+    // 1.  Read .catalog_* files
+
+    // 2.  Open Simulation file and assign particles
+  }
+  return;
+}
+
+
+
+
+
+int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** xtndd)
+{
+
+  int    i, j, k;
+  FILE * f;
+  char   fname  [NAME_LENGTH];
+  char   buffer [NAME_LENGTH];
+  int    nparts;
+
+  stfExtendedOutput * extended;
+
+  nparts = 0;
+
+  sprintf(fname, "%s/%s.extended.%d", stf->archive.path, stf->archive.prefix, filenum);
+  if ((f = fopen(fname, "r")) != NULL)
+  {
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
     rewind(f);
 
-//     printf("nparts %d\n", nparts);
-
-    extended_oIndex   = (int *) malloc (nparts * sizeof(int));
-    extended_IdStruct = (int *) malloc (nparts * sizeof(int));
-    extended_IdHost   = (int *) malloc (nparts * sizeof(int));
-    extended_IdIGM    = (int *) malloc (nparts * sizeof(int));
-
-    for (i = 0; i < nparts; i++)
+    if (nparts > 0)
     {
-      fgets(buffer, NAME_LENGTH, f);
-      sscanf(buffer, "%d  %d  %d  %d  ", &extended_oIndex[i], &extended_IdStruct[i], &extended_IdHost[i], &extended_IdIGM[i]);
+      extended = (stfExtendedOutput *) malloc (nparts * sizeof(stfExtendedOutput));
+      for (i = 0; i < nparts; i++)
+      {
+        fgets(buffer, NAME_LENGTH, f);
+        sscanf(buffer, "%d  %d  %d  %d  ",                   \
+                       &extended[i].oIndex, &extended[i].IdStruct, \
+                       &extended[i].IdHost, &extended[i].IdIGM);
+      }
+      *(xtndd) = extended;
     }
+    else
+      extended = NULL;
 
     fclose (f);
+  }
+  else
+  {
+    printf ("Couldn't open file  %s\n", fname);
+    exit (0);
+  }
 
-    return nparts;
+  return nparts;
 }
-
-void free_extended_arrays (void)
-{
-  free (extended_oIndex);
-  free (extended_IdStruct);
-  free (extended_IdHost);
-  free (extended_IdIGM);
-}
-*/

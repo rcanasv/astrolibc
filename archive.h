@@ -22,21 +22,16 @@ typedef struct Archive
   char   format   [NAME_LENGTH];
   char   path     [NAME_LENGTH];
   char   prefix   [NAME_LENGTH];
-  int    nFiles;
+  int    nfiles;
 } Archive;
 
 
-void Archive_fill   (Archive * a, char * name, char * format, char * path, char * prefix, int nFiles);
-
+void Archive_fill   (Archive * a, char * name, char * format, char * path, char * prefix, int nfiles);
 void Archive_name   (Archive * a, char * name);
-
 void Archive_format (Archive * a, char * format);
-
 void Archive_path   (Archive * a, char * path);
-
 void Archive_prefix (Archive * a, char * prefix);
-
-void Archive_nFiles (Archive * a, int    nFiles);
+void Archive_nfiles (Archive * a, int    nfiles);
 
 
 
