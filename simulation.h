@@ -39,7 +39,7 @@ typedef struct Simulation
   int        nsink;
 } Simulation;
 
-
+void Simulation_init           (Simulation * sim);
 void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part);
 
 
