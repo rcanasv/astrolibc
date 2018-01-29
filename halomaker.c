@@ -563,17 +563,11 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
 
   if (sim->format == GALFILE)
   {
-    //for (i = 1; i <= hmkr->nstruct; i++)
-    for (i = 1; i <= 10; i++)
+    for (i = 1; i <= hmkr->nstruct; i++)
     {
       strct = &hmkr->strctProps[i];
       halomaker_read_galfile (&sim->archive, i, strct);
-for (j = 0; j < strct->NumPart; j++)
-printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[j].Pos[0], strct->Part[j].Pos[1], strct->Part[j].Pos[2], \
-strct->Part[j].Vel[0], strct->Part[j].Vel[1], strct->Part[j].Vel[2]);
-
     }
-    exit (0);
   }
   else
   {
