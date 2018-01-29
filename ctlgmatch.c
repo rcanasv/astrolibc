@@ -21,20 +21,14 @@ int main (int argc, char ** argv)
 
   ctlgMatch_options (argc, argv, &opt);
 
-printf ("Reading parameters\n");
-
   ctlgMatch_params  (&opt);
-
-printf ("Parameters successfully read\n");
 
   //
   //  Load catalogs
   //
   for (i = 0; i < opt.numCatalogs; i++)
   {
-printf ("Initializing catalogs\n");
     Catalog_init (&opt.catalog[i]);
-printf ("Loading catalogs\n");
     Catalog_load (&opt.catalog[i]);
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
@@ -158,6 +152,45 @@ void ctlgMatch_params (Options * opt)
   fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
   fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
   fclose (opt->param.file);
+
+
+  printf ("%s\n", opt->catalog[0].archive.name);
+  printf ("%s\n", opt->catalog[0].archive.path);
+  printf ("%s\n", opt->catalog[0].archive.format);
+  printf ("%d\n", opt->catalog[0].archive.nfiles);
+  printf ("\n");
+
+  printf ("%s\n", opt->simulation[0].archive.name);
+  printf ("%s\n", opt->simulation[0].archive.path);
+  printf ("%s\n", opt->simulation[0].archive.format);
+  printf ("%d\n", opt->simulation[0].archive.nfiles);
+  printf ("\n");
+
+  printf ("%s\n", opt->catalog[1].archive.name);
+  printf ("%s\n", opt->catalog[1].archive.path);
+  printf ("%s\n", opt->catalog[1].archive.format);
+  printf ("%d\n", opt->catalog[1].archive.nfiles);
+  printf ("\n");
+
+  printf ("%s\n", opt->simulation[1].archive.name);
+  printf ("%s\n", opt->simulation[1].archive.path);
+  printf ("%s\n", opt->simulation[1].archive.format);
+  printf ("%d\n", opt->simulation[1].archive.nfiles);
+  printf ("\n");
+
+  printf ("%s\n", opt->mtree.name);
+  printf ("%s\n", opt->mtree.path);
+  printf ("%s\n", opt->mtree.format);
+  printf ("%d\n", opt->mtree.nfiles);
+  printf ("\n");
+
+  printf ("%s\n", opt->output.name);
+  printf ("%s\n", opt->output.path);
+  printf ("%s\n", opt->output.format);
+  printf ("%d\n", opt->output.nfiles);
+  printf ("\n");
+
+
 }
 
 
