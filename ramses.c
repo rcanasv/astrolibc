@@ -27,6 +27,8 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
 
   FILE * f;
 
+  Particle * P;
+
   //
   //  Read Info file to get Simulation info
   //
@@ -86,6 +88,12 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
    printf ("Mstar_lost      %g\n", ramses->mstarLst);
    printf ("NumSink         %d\n", ramses->nsink);
 
+  if ((P = (Particle *) malloc (ramses->npart * sizeof(Particle))) == NULL)
+  {
+    printf ("Couldn't allocate memory for Particle array\n");
+    exit(0);
+  }
+
   //--- Pos
   for (i = 0; i < ramses->ndim; i++)
   {
@@ -93,7 +101,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
     for (j = 0; j < ramses->npart; j++)
     {
       fread(&dummyd, sizeof(double), 1, f);
-      part[0][j].Pos[i];
+      P[j].Pos[i];
     }
     RMSSSKIP
   }
@@ -105,7 +113,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
     for (j = 0; j < ramses->npart; j++)
     {
       fread(&dummyd, sizeof(double), 1, f);
-      part[0][j].Vel[i];
+      P[j].Vel[i];
     }
     RMSSSKIP
   }
@@ -115,7 +123,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyd, sizeof(double), 1, f);
-    part[0][j].Mass;
+    P[j].Mass;
   }
   RMSSSKIP
 
@@ -124,7 +132,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyi, sizeof(int), 1, f);
-    part[0][j].Id;
+    P[j].Id;
   }
   RMSSSKIP
 
@@ -133,7 +141,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyi, sizeof(int), 1, f);
-    part[0][j].Level;
+    P[j].Level;
   }
   RMSSSKIP
 
@@ -142,7 +150,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyd, sizeof(double), 1, f);
-    part[0][j].Age;
+    P[j].Age;
   }
   RMSSSKIP
 
@@ -161,16 +169,18 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //
   for (i = 0; i < ramses->npart; i++)
   {
-    part[0][i].Pos[0] *= ramses->unit_l;
-    part[0][i].Pos[1] *= ramses->unit_l;
-    part[0][i].Pos[2] *= ramses->unit_l;
+    P[i].Pos[0] *= ramses->unit_l;
+    P[i].Pos[1] *= ramses->unit_l;
+    P[i].Pos[2] *= ramses->unit_l;
 
-    part[0][i].Vel[0] *= ramses->unit_v;
-    part[0][i].Vel[1] *= ramses->unit_v;
-    part[0][i].Vel[2] *= ramses->unit_v;
+    P[i].Vel[0] *= ramses->unit_v;
+    P[i].Vel[1] *= ramses->unit_v;
+    P[i].Vel[2] *= ramses->unit_v;
 
-    part[0][i].Mass *= ramses->unit_m;
+    P[i].Mass   *= ramses->unit_m;
   }
+
+  *(part) = P;
 }
 
 
