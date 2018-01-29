@@ -336,8 +336,6 @@ printf ("Openning extendedOutput\n");
 
       if (ninextended)
       {
-        Simulation_load_particles (sim, i, &part);
-
         for (j = 0; j < ninextended; j++)
         {
           id    = xtndd[j].IdStruct;
@@ -364,6 +362,7 @@ exit (0);
     // 1.  Read .catalog_* files
 
     // 2.  Open Simulation file and assign particles
+    //     Simulation_load_particles (sim, i, &part);
     ;
   }
 }
