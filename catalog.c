@@ -67,10 +67,11 @@ void Catalog_load_particles (Catalog * ctlg)
 }
 
 
+
 void Catalog_get_particle_properties (Catalog * ctlg, Archive * arx)
 {
-  if (ctlg->format == STF)         stf_get_particle_properties (ctlg, arx);
-  if (ctlg->format == HALOMAKER)   halomaker_get_particle_properties (ctlg, arx);
+  if (ctlg->format == STF)        stf_catalog_get_particle_properties (ctlg, arx);
+  if (ctlg->format == HALOMAKER)  halomaker_catalog_get_particle_properties (ctlg, arx);
 }
 
 

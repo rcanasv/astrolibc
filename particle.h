@@ -39,7 +39,7 @@ typedef struct Particle
 } Particle;
 
 
-int particle_rad_compare (const void * a, const void * b);
-
+int Particle_rad_compare (const void * a, const void * b);
+int Particle_copy        (Particle * src, Particle * dst);
 
 #endif    /*  PARTICLE_H  */

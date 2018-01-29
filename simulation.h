@@ -12,18 +12,39 @@
 
 #include "base.h"
 #include "archive.h"
-#include "cosmology.h"
 #include "particle.h"
+
+
+#define   GADGET   1
+#define   RAMSES   2
 
 
 typedef struct Simulation
 {
   Archive    archive;
   int        format;
-  Cosmology  cosmology;
-  //
-  // Basically the header for Gadget files
-  //
+  double     z;
+  double     H0;
+  double     OmegaM;
+  double     OmegaL;
+  double     OmegaB;
+  double     OmegaK;
+  double     AgeUniv;
+  double     Lbox;
+  double     Time;
+  double     Aexp;
+  double     unit_l;
+  double     unit_d;
+  double     unit_v;
+  double     unit_t;
+  double     unit_m;
+  int        ncpu;
+  int        npart;
+  int        seed[4];
+  int        nstarTot;
+  double     mstarTot;
+  double     mstarLst;
+  int        nsink;
 } Simulation;
 
 

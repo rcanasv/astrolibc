@@ -155,6 +155,7 @@ void stf_write_catalog_group (Catalog * stf)
 }
 
 
+
 void stf_write_catalog_particles (Catalog * stf)
 {
   int    i, j, k;
@@ -340,7 +341,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
           indx  = xtndd.oIndex[j];
           strct = &stf->strctProps[id];
 
-          strct->Part[strct->dummyi++] = part[j];
+          Particle_copy (&part[j], &strct->Part[strct->dummyi++]);
         }
         free (xtndd);
         free (part);
@@ -358,7 +359,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 
 
 
-void  stf_structure_get_particle_properties (Structure * strct, Archive * arx)
+void  stf_structure_get_particle_properties (Structure * strct, Simulation * sim)
 {
 
   FILE * f;
