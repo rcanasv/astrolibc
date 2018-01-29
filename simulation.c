@@ -18,12 +18,12 @@ void Simulation_init (Simulation * sim)
   if ((!strcmp(sim->archive.format, "Gadget")) ||  \
       (!strcmp(sim->archive.format, "GADGET")) ||  \
       (!strcmp(sim->archive.format, "gadget")))
-    ctlg->format = GADGET;
+    sim->format = GADGET;
   else
     if ((!strcmp(sim->archive.format, "ramses")) ||  \
         (!strcmp(sim->archive.format, "RAMSES")) ||  \
         (!strcmp(sim->archive.format, "Ramses")))
-      ctlg->format = RAMSES;
+      sim->format = RAMSES;
     else
     {
       printf ("Format %s not supported\n", sim->archive.format);
