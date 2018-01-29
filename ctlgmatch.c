@@ -21,6 +21,8 @@ int main (int argc, char ** argv)
 
   ctlgMatch_options (argc, argv, &opt);
 
+printf ("Reading parameters\n");
+
   ctlgMatch_params  (&opt);
 
 printf ("Parameters successfully read\n");
@@ -32,7 +34,7 @@ printf ("Parameters successfully read\n");
   {
 printf ("Initializing catalogs\n");
     Catalog_init (&opt.catalog[i]);
-printf ("Loading catalogs\n");    
+printf ("Loading catalogs\n");
     Catalog_load (&opt.catalog[i]);
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
