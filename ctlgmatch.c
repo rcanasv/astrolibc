@@ -151,7 +151,6 @@ void ctlgMatch_params (Options * opt)
   fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
   fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
   fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
-  fclose (opt->param.file);
 
 
   printf ("%s\n", opt->catalog[0].archive.name);
@@ -190,6 +189,7 @@ void ctlgMatch_params (Options * opt)
   printf ("%d\n", opt->output.nfiles);
   printf ("\n");
 
+  fclose (opt->param.file);
 
 }
 
