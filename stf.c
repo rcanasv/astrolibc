@@ -332,12 +332,16 @@ printf ("Openning extendedOutput\n");
     //
     for (i = 0; i < sim->archive.nfiles; i++)
     {
+printf ("Load stf extended output\n");
       ninextended = stf_load_extended_output (stf, i, &xtndd);
+printf ("Loaded\n");
 
       if (ninextended)
       {
+printf ("Loading Simulation\n");
         Simulation_load_particles (sim, i, &part);
-        
+printf ("Loaded\n");
+
         for (j = 0; j < ninextended; j++)
         {
           id    = xtndd[j].IdStruct;
