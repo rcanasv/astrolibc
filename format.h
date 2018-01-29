@@ -18,11 +18,11 @@
 
 
 //
-// Simulation Codes
+// Simulation + Others
 //
 #define  GADGET      50
 #define  RAMSES      60
-
+#define  GALFILE     70
 
 
 #endif    /*  FORMAT_H */

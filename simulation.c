@@ -20,16 +20,21 @@ void Simulation_init (Simulation * sim)
       (!strcmp(sim->archive.format, "gadget")))
     sim->format = GADGET;
   else
-    if ((!strcmp(sim->archive.format, "ramses")) ||  \
-        (!strcmp(sim->archive.format, "RAMSES")) ||  \
-        (!strcmp(sim->archive.format, "Ramses")))
-      sim->format = RAMSES;
-    else
-    {
-      printf ("Format %s not supported\n", sim->archive.format);
-      printf ("Exiting...\n");
-      exit (0);
-    }
+  if ((!strcmp(sim->archive.format, "ramses")) ||  \
+      (!strcmp(sim->archive.format, "RAMSES")) ||  \
+      (!strcmp(sim->archive.format, "Ramses")))
+    sim->format = RAMSES;
+  else
+  if ((!strcmp(sim->archive.format, "galfile")) ||  \
+      (!strcmp(sim->archive.format, "Galfile")) ||  \
+      (!strcmp(sim->archive.format, "GALFILE")))
+    sim->format = GALFILE;
+  else
+  {
+    printf ("Format %s not supported\n", sim->archive.format);
+    printf ("Exiting...\n");
+    exit (0);
+  }
 }
 
 void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part)

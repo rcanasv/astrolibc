@@ -353,31 +353,26 @@ void halomaker_read_particles (Catalog * hmkr)
 // ---  Read Galfile --- //
 
 
-void halomaker_read_galfile (Archive * arx, Structure * gal)
+void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
 {
-  int     dummy;
-  double  dummyd;
-  int     i, j;
+  int        dummy;
+  double     dummyd;
+  int        i, j;
 
-  FILE *  f;
-  char    fname[NAME_LENGTH];
+  FILE     * f;
+  Particle * P;
+  char       fname[NAME_LENGTH];
 
-  int      gal_number;
-  int      gal_level;
-  double   gal_mass;
-  double   gal_pos[3];
-  double   gal_vel[3];
-  double   gal_ang[3];
-  int      nlist;
+  int        gal_number;
+  int        gal_level;
+  double     gal_mass;
+  double     gal_pos[3];
+  double     gal_vel[3];
+  double     gal_ang[3];
+  int        nlist;
 
 
-  if (gal->iPart == 1)
-  {
-    printf ("Particle properties already loaded for this structure\n");
-    return;
-  }
-
-  sprintf (fname, "%s/%s", arx->path, arx->name);
+  sprintf (fname, "%s/gal_stars_%07d", arx->path, num);
   if ((f = fopen (fname, "r")) == NULL)
   {
     printf ("Can't open file named   %s \n", fname);
@@ -392,7 +387,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
   HMKR_SKIP  fread (&gal_ang,    sizeof(double), 3, f);  HMKR_SKIP
   HMKR_SKIP  fread (&nlist,      sizeof(int),    1, f);  HMKR_SKIP
 
-/*
+
   printf ("\n");
   printf ("my_number   %d \n", gal_number);
   printf ("Level       %d \n", gal_level);
@@ -402,20 +397,22 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
   printf ("Ang Mom     %8.5f \t %8.5f \t %8.5f \n", gal_ang[0], gal_ang[1], gal_ang[2]);
   printf ("Nlist       %d \n", nlist);
   printf ("\n");
-*/
+
 
   //
   // Data is stored in double
   //
-  gal->NumPart = nlist;
-  if (!(gal->Part = malloc (nlist * sizeof(Particle))))
+  strct->NumPart = nlist;
+  if (!(strct->Part = malloc (nlist * sizeof(Particle))))
   {
     printf ("Cannot allocate memory for particle information\n");
     printf ("Exiting\n");
     exit (0);
   }
   else
-    gal->iPart = 1;
+    strct->iPart = 1;
+
+  P = strct->Part;
 
   // Positions
   for (j = 0; j < 3; j++)
@@ -426,7 +423,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
       for (i = 0; i < nlist; i++)
       {
         fread (&dummyd, sizeof(double), 1, f);
-        gal->Part[i].Pos[j] = dummyd;
+        P[i].Pos[j] = dummyd;
       }
     }
     else
@@ -446,7 +443,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
       for (i = 0; i < nlist; i++)
       {
         fread (&dummyd, sizeof(double), 1, f);
-        gal->Part[i].Vel[j] = dummyd;
+        P[i].Vel[j] = dummyd;
       }
     }
     else
@@ -464,7 +461,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
     for (i = 0; i < nlist; i++)
     {
       fread (&dummyd, sizeof(double), 1, f);
-      gal->Part[i].Mass = dummyd;
+      P[i].Mass = dummyd;
     }
   }
   else
@@ -479,7 +476,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
   if (dummy == 4 * nlist)
   {
     for (i = 0; i < nlist; i++)
-      fread (&gal->Part[i].Id, sizeof(int), 1, f);
+      fread (&P[i].Id, sizeof(int), 1, f);
   }
   else
   {
@@ -495,7 +492,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
     for (i = 0; i < nlist; i++)
     {
       fread (&dummyd, sizeof(double), 1, f);
-      gal->Part[i].Age = dummyd;
+      P[i].Age = dummyd;
     }
   }
   else
@@ -512,7 +509,7 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
     for (i = 0; i < nlist; i++)
     {
       fread (&dummyd, sizeof(double), 1, f);
-      gal->Part[i].Metal = dummyd;
+      P[i].Metal = dummyd;
     }
   }
   else
@@ -547,13 +544,15 @@ void halomaker_read_galfile (Archive * arx, Structure * gal)
   for (i = 0; i < nlist; i++)
   {
     // convert from Mpc to kpc
-    for (j = 0; j < 3; j++)
-        gal->Part[i].Pos[j] = gal->Part[i].Pos[j] * 1000;
+    P[i].Pos[0] *= 1000;
+    P[i].Pos[1] *= 1000;
+    P[i].Pos[2] *= 1000;
 
     // converts to M/10**10 Msun
-    gal->Part[i].Mass *= 10.0;
+    P[i].Mass   *= 10.0;
   }
 }
+
 
 
 void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim)
@@ -562,12 +561,24 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
   char        fname[NAME_LENGTH];
   Structure * strct;
 
-  if (strcmp(sim->archive.format, "galfile") == 0)
-    for (i = 1; i <= hmkr->nstruct; i++)
+  if (sim->format == GALFILE)
+  {
+    //for (i = 1; i <= hmkr->nstruct; i++)
+    for (i = 1; i <= 10; i++)
     {
-      sprintf (fname, "%s/gal_stars_%07d", sim->archive.path, i);
-      Archive_name (&sim->archive, fname);
       strct = &hmkr->strctProps[i];
-      halomaker_read_galfile (&sim->archive, strct);
+      halomaker_read_galfile (&sim->archive, i, strct);
+
+printf ("%e  %e  %e  %e  %e  %e\n", strct->Pos[0], strct->Pos[1], strct->Pos[2], \
+strct->Vel[0], strct->Vel[1], strct->Vel[2]);
+
     }
+    exit (0);
+  }
+  else
+  {
+    // Would need to load all files and then distribute particles
+    // according to their id to the corresponding structure
+    ;
+  }
 }

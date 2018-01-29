@@ -327,8 +327,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     //
     // Go through every file of simulation/extendedOutput
     //
-    //for (i = 0; i < sim->archive.nfiles; i++)
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < sim->archive.nfiles; i++)
     {
       ninextended = stf_load_extended_output (stf, i, &xtndd);
 
@@ -341,14 +340,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
           id    = xtndd[j].IdStruct;
           indx  = xtndd[j].oIndex;
           strct = &stf->strctProps[id];
-
           Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
-
-printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[strct->dummyi].Pos[0], \
- strct->Part[strct->dummyi].Pos[1], strct->Part[strct->dummyi].Pos[2], \
- strct->Part[strct->dummyi].Vel[0], strct->Part[strct->dummyi].Vel[1], \
- strct->Part[strct->dummyi].Vel[2]);
-
           strct->dummyi++;
         }
         free (xtndd);
@@ -364,9 +356,6 @@ printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[strct->dummyi].Pos[0], \
     //     Simulation_load_particles (sim, i, &part);
     ;
   }
-
-exit (0);
-
 }
 
 

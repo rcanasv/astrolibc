@@ -16,8 +16,8 @@
 int main (int argc, char ** argv)
 {
 
-  int i, j, k;
-  Options opt;
+  int      i, j, k;
+  Options  opt;
 
   ctlgMatch_options (argc, argv, &opt);
 
@@ -26,10 +26,10 @@ int main (int argc, char ** argv)
   //
   //  Load catalogs
   //
-  for (i = 0; i < opt.numCatalogs; i++)
+  for (i = 1; i < opt.numCatalogs; i++)
   {
     Simulation_init (&opt.simulation[i]);
-    
+
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
