@@ -107,6 +107,7 @@ int main (int argc, char ** argv)
 void ctlgMatch_params (Options * opt)
 {
   int   i;
+  int   dummy;
   char  buffer [NAME_LENGTH];
 
   opt->param.file = fopen (opt->param.name, "r");
@@ -127,11 +128,14 @@ void ctlgMatch_params (Options * opt)
                                              Archive_prefix (&opt->catalog[i].archive, buffer);
     fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
     fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog[i].archive, dummy);
+
 
     fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation[i].archive, buffer);
                                              Archive_prefix (&opt->simulation[i].archive, buffer);
     fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation[i].archive, buffer);
     fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation[i].archive, dummy);
   }
 
   // TreeFrog input
@@ -139,12 +143,14 @@ void ctlgMatch_params (Options * opt)
                                            Archive_prefix (&opt->mtree, buffer);
   fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->mtree, buffer);
   fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->mtree, buffer);
+  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->mtree, dummy);
 
   // ASCII Output
   fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
                                            Archive_prefix (&opt->output, buffer);
   fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
   fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
+  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
   fclose (opt->param.file);
 }
 
