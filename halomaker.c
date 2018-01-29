@@ -387,7 +387,7 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   HMKR_SKIP  fread (&gal_ang,    sizeof(double), 3, f);  HMKR_SKIP
   HMKR_SKIP  fread (&nlist,      sizeof(int),    1, f);  HMKR_SKIP
 
-
+/*
   printf ("\n");
   printf ("my_number   %d \n", gal_number);
   printf ("Level       %d \n", gal_level);
@@ -397,7 +397,7 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   printf ("Ang Mom     %8.5f \t %8.5f \t %8.5f \n", gal_ang[0], gal_ang[1], gal_ang[2]);
   printf ("Nlist       %d \n", nlist);
   printf ("\n");
-
+*/
 
   //
   // Data is stored in double
@@ -568,7 +568,7 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
     {
       strct = &hmkr->strctProps[i];
       halomaker_read_galfile (&sim->archive, i, strct);
-
+for (j = 0; j < strct->NumPart; j++)
 printf ("%e  %e  %e  %e  %e  %e\n", strct->Pos[0], strct->Pos[1], strct->Pos[2], \
 strct->Vel[0], strct->Vel[1], strct->Vel[2]);
 
