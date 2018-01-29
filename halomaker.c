@@ -557,7 +557,7 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
 
 void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim)
 {
-  int         i;
+  int         i, j;
   char        fname[NAME_LENGTH];
   Structure * strct;
 
