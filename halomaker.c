@@ -569,8 +569,8 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
       strct = &hmkr->strctProps[i];
       halomaker_read_galfile (&sim->archive, i, strct);
 for (j = 0; j < strct->NumPart; j++)
-printf ("%e  %e  %e  %e  %e  %e\n", strct->Pos[0], strct->Pos[1], strct->Pos[2], \
-strct->Vel[0], strct->Vel[1], strct->Vel[2]);
+printf ("%e  %e  %e  %e  %e  %e\n", strct->Part.Pos[0], strct->Part.Pos[1], strct->Part.Pos[2], \
+strct->Part.Vel[0], strct->Part.Vel[1], strct->Part.Vel[2]);
 
     }
     exit (0);
