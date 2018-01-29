@@ -325,6 +325,8 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
   {
     fclose (f);
 
+printf ("Openning extendedOutput\n");
+
     //
     // Go through every file of simulation/extendedOutput
     //
@@ -342,10 +344,18 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
           indx  = xtndd[j].oIndex;
           strct = &stf->strctProps[id];
 
-          Particle_copy (&part[j], &strct->Part[strct->dummyi++]);
+          Particle_copy (&part[j], &strct->Part[strct->dummyi]);
+
+printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[strct->dummyi].Pos[0], \
+strct->Part[strct->dummyi].Pos[1],strct->Part[strct->dummyi].Pos[2],   \
+strct->Part[strct->dummyi].Vel[0],strct->Part[strct->dummyi].Vel[1],   \
+strct->Part[strct->dummyi].Vel[2]);
+
+          strct->dummyi++;
         }
         free (xtndd);
         free (part);
+exit (0);
       }
     }
   }
@@ -376,7 +386,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, int id, Simulation *
     // Extended Output files should (in principle) exist
     for (i = 0; i < nfiles; i++)
       stf_load_extended_output (stf, file[i], &xtndd);
-    free (file);  
+    free (file);
     free (xtndd);
   }
   else

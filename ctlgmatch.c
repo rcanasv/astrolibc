@@ -33,6 +33,7 @@ int main (int argc, char ** argv)
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
 
+
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
