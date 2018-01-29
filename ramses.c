@@ -103,7 +103,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
     for (j = 0; j < ramses->npart; j++)
     {
       fread(&dummyd, sizeof(double), 1, f);
-      P[j].Pos[i];
+      P[j].Pos[i] = dummyd;
     }
     RMSSSKIP
   }
@@ -115,7 +115,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
     for (j = 0; j < ramses->npart; j++)
     {
       fread(&dummyd, sizeof(double), 1, f);
-      P[j].Vel[i];
+      P[j].Vel[i] = dummyd;
     }
     RMSSSKIP
   }
@@ -125,7 +125,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyd, sizeof(double), 1, f);
-    P[j].Mass;
+    P[j].Mass = dummyd;
   }
   RMSSSKIP
 
@@ -134,7 +134,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyi, sizeof(int), 1, f);
-    P[j].Id;
+    P[j].Id = dummyi;
   }
   RMSSSKIP
 
@@ -143,7 +143,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyi, sizeof(int), 1, f);
-    P[j].Level;
+    P[j].Level = dummyi;
   }
   RMSSSKIP
 
@@ -152,7 +152,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   for (j = 0; j < ramses->npart; j++)
   {
     fread(&dummyd, sizeof(double), 1, f);
-    P[j].Age;
+    P[j].Age = dummyd;
   }
   RMSSSKIP
 
