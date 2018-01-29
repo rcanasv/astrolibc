@@ -152,45 +152,7 @@ void ctlgMatch_params (Options * opt)
   fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
   fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
 
-
-  printf ("%s\n", opt->catalog[0].archive.name);
-  printf ("%s\n", opt->catalog[0].archive.path);
-  printf ("%s\n", opt->catalog[0].archive.format);
-  printf ("%d\n", opt->catalog[0].archive.nfiles);
-  printf ("\n");
-
-  printf ("%s\n", opt->simulation[0].archive.name);
-  printf ("%s\n", opt->simulation[0].archive.path);
-  printf ("%s\n", opt->simulation[0].archive.format);
-  printf ("%d\n", opt->simulation[0].archive.nfiles);
-  printf ("\n");
-
-  printf ("%s\n", opt->catalog[1].archive.name);
-  printf ("%s\n", opt->catalog[1].archive.path);
-  printf ("%s\n", opt->catalog[1].archive.format);
-  printf ("%d\n", opt->catalog[1].archive.nfiles);
-  printf ("\n");
-
-  printf ("%s\n", opt->simulation[1].archive.name);
-  printf ("%s\n", opt->simulation[1].archive.path);
-  printf ("%s\n", opt->simulation[1].archive.format);
-  printf ("%d\n", opt->simulation[1].archive.nfiles);
-  printf ("\n");
-
-  printf ("%s\n", opt->mtree.name);
-  printf ("%s\n", opt->mtree.path);
-  printf ("%s\n", opt->mtree.format);
-  printf ("%d\n", opt->mtree.nfiles);
-  printf ("\n");
-
-  printf ("%s\n", opt->output.name);
-  printf ("%s\n", opt->output.path);
-  printf ("%s\n", opt->output.format);
-  printf ("%d\n", opt->output.nfiles);
-  printf ("\n");
-
   fclose (opt->param.file);
-
 }
 
 
