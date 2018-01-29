@@ -7,33 +7,34 @@
  */
 
 #include "catalog.h"
+#include "simulation.h"
 #include "stf.h"
 #include "halomaker.h"
 
 
 
-void Catalog_init (Catalog * catalog)
+void Catalog_init (Catalog * ctlg)
 {
-  catalog->nprocs     = 0;
-  catalog->nstruct    = 0;
-  catalog->iprops     = 0;
-  catalog->iparts     = 0;
-  catalog->strctProps = NULL;
-  catalog->strctParts = NULL;
+  ctlg->nprocs     = 0;
+  ctlg->nstruct    = 0;
+  ctlg->iprops     = 0;
+  ctlg->iparts     = 0;
+  ctlg->strctProps = NULL;
+  ctlg->strctParts = NULL;
 
-  if ((!strcmp(catalog->archive.format, "stf"))          ||  \
-      (!strcmp(catalog->archive.format, "VELOCIraptor")) ||  \
-      (!strcmp(catalog->archive.format, "velociraptor")))
-    catalog->format = STF;
+  if ((!strcmp(ctlg->archive.format, "stf"))          ||  \
+      (!strcmp(ctlg->archive.format, "VELOCIraptor")) ||  \
+      (!strcmp(ctlg->archive.format, "velociraptor")))
+    ctlg->format = STF;
   else
-    if ((!strcmp(catalog->archive.format, "hmkr"))            ||  \
-        (!strcmp(catalog->archive.format, "hmkr_treebricks")) ||  \
-        (!strcmp(catalog->archive.format, "HaloMaker"))       ||  \
-        (!strcmp(catalog->archive.format, "halomaker")))
-      catalog->format = HALOMAKER;
+    if ((!strcmp(ctlg->archive.format, "hmkr"))            ||  \
+        (!strcmp(ctlg->archive.format, "hmkr_treebricks")) ||  \
+        (!strcmp(ctlg->archive.format, "HaloMaker"))       ||  \
+        (!strcmp(ctlg->archive.format, "halomaker")))
+      ctlg->format = HALOMAKER;
     else
     {
-      printf ("Format %s not supported\n", catalog->archive.format);
+      printf ("Format %s not supported\n", ctlg->archive.format);
       printf ("Exiting...\n");
       exit (0);
     }
@@ -41,10 +42,10 @@ void Catalog_init (Catalog * catalog)
 
 
 
-void Catalog_load (Catalog * catalog)
+void Catalog_load (Catalog * ctlg)
 {
-  Catalog_load_properties (catalog);
-  Catalog_load_particles  (catalog);
+  Catalog_load_properties (ctlg);
+  Catalog_load_particles  (ctlg);
 }
 
 
@@ -63,78 +64,78 @@ void Catalog_load_particles (Catalog * ctlg)
     Catalog_load_properties (ctlg);
 
   //if (catalog->format == STF)         stf_read_particles (catalog);
-  if (ctlg->format == HALOMAKER)   halomaker_read_particles (catalog);
+  if (ctlg->format == HALOMAKER)   halomaker_read_particles (ctlg);
 }
 
 
 
-void Catalog_get_particle_properties (Catalog * ctlg, Archive * arx)
+void Catalog_get_particle_properties (Catalog * ctlg, Simulation * sim)
 {
-  if (ctlg->format == STF)        stf_catalog_get_particle_properties (ctlg, arx);
-  if (ctlg->format == HALOMAKER)  halomaker_catalog_get_particle_properties (ctlg, arx);
+  if (ctlg->format == STF)        stf_catalog_get_particle_properties (ctlg, sim);
+  if (ctlg->format == HALOMAKER)  halomaker_catalog_get_particle_properties (ctlg, sim);
 }
 
 
 
-void Catalog_free (Catalog * catalog)
+void Catalog_free (Catalog * ctlg)
 {
   int i;
 
-  if (catalog->iprops)
+  if (ctlg->iprops)
   {
-    for (i = 1; i <= catalog->nstruct; i++)
+    for (i = 1; i <= ctlg->nstruct; i++)
     {
-      if (catalog->strctProps[i].SubIDs != NULL)
-        free (catalog->strctProps[i].SubIDs);
+      if (ctlg->strctProps[i].SubIDs != NULL)
+        free (ctlg->strctProps[i].SubIDs);
 
-      if (catalog->strctProps[i].MatchIDs != NULL)
-        free (catalog->strctProps[i].MatchIDs);
+      if (ctlg->strctProps[i].MatchIDs != NULL)
+        free (ctlg->strctProps[i].MatchIDs);
 
-      if (catalog->strctProps[i].MatchMrrts != NULL)
-        free (catalog->strctProps[i].MatchMrrts);
+      if (ctlg->strctProps[i].MatchMrrts != NULL)
+        free (ctlg->strctProps[i].MatchMrrts);
     }
-    free (catalog->strctProps);
+    free (ctlg->strctProps);
   }
 
 
-  if (catalog->iparts)
+  if (ctlg->iparts)
   {
-    for (i = 1; i <= catalog->nstruct; i++)
-      free (catalog->strctParts[i]);
-    free (catalog->strctParts);
+    for (i = 1; i <= ctlg->nstruct; i++)
+      free (ctlg->strctParts[i]);
+    free (ctlg->strctParts);
   }
 }
 
 
 
-void Catalog_fill_SubIDS (Catalog * catalog)
+void Catalog_fill_SubIDS (Catalog * ctlg)
 {
   int i, j;
   int bob;
   int tmp;
 
 
-  for (i = 1; i <= catalog->nstruct; i++)
-    if (catalog->strctProps[i].HostID == -1)
+  for (i = 1; i <= ctlg->nstruct; i++)
+    if (ctlg->strctProps[i].HostID == -1)
     {
-      bob = catalog->strctProps[i].NumSubs;
-      catalog->strctProps[i].SubIDs = (int *) malloc (bob * sizeof(int));
-      catalog->strctProps[i].dummy = 0;
+      bob = ctlg->strctProps[i].NumSubs;
+      ctlg->strctProps[i].SubIDs = (int *) malloc (bob * sizeof(int));
+      ctlg->strctProps[i].dummy = 0;
       for (j = 0; j < bob; j++)
-        catalog->strctProps[i].SubIDs[j] = 0;
+        ctlg->strctProps[i].SubIDs[j] = 0;
     }
 
-  for (i = 1; i <= catalog->nstruct; i++)
+  for (i = 1; i <= ctlg->nstruct; i++)
   {
-    if (catalog->strctProps[i].HostID != -1)
+    if (ctlg->strctProps[i].HostID != -1)
     {
       bob = i;
-      while (catalog->strctProps[bob].HostID != -1)
+      while (ctlg->strctProps[bob].HostID != -1)
       {
-        bob = catalog->strctProps[bob].DirectHostID;
+        bob = ctlg->strctProps[bob].DirectHostID;
       }
-      tmp = catalog->strctProps[bob].dummy++;
-      catalog->strctProps[bob].SubIDs[tmp] = i;
+      tmp = ctlg->strctProps[bob].dummy++;
+      ctlg->strctProps[bob].SubIDs[tmp] = i;
     }
   }
 }

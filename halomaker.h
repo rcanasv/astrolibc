@@ -22,10 +22,10 @@
 #define HMKR_PSKIP printf ("%d \n", dummy);
 
 
-void  halomaker_read_properties         (Catalog * hmkr);
-void  halomaker_read_particles          (Catalog * hmkr);
-void  halomaker_read_galfile            (Archive * arx, Structure * gal);
-void  halomaker_get_particle_properties (Catalog * hmkr, Archive * arx);
+void  halomaker_read_properties                 (Catalog * hmkr);
+void  halomaker_read_particles                  (Catalog * hmkr);
+void  halomaker_read_galfile                    (Archive * arx, Structure * gal);
+void  halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim);
 
 
 #endif    /*  HALOMAKER_H  */

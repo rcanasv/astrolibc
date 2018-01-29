@@ -23,6 +23,7 @@ void stf_read_properties (Catalog * stf)
 
   FILE * f;
   char   propts_fname [NAME_LENGTH];
+  char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
   //
@@ -309,7 +310,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     strct->iPart  = 0;
     strct->Part   = NULL;
 
-    if (strct->Part = (Particle *) malloc (stf->nstruct * sizeof(Particle)) == NULL)
+    if ((strct->Part = (Particle *) malloc (strct->NumPart * sizeof(Particle))) == NULL)
     {
       printf ("Error not enough memory to allocate Particle to Structure\n");
       exit(0);
@@ -320,7 +321,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 
 
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
-  if (f = fopen(fname,"r") != NULL)
+  if ((f = fopen(fname,"r")) != NULL)
   {
     fclose (f);
 
@@ -329,7 +330,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     //
     for (i = 0; i < sim->archive.nfiles; i++)
     {
-      ninextended = stf_catalog_load_extended_output (stf, i, &xtndd);
+      ninextended = stf_load_extended_output (stf, i, &xtndd);
 
       if (ninextended)
       {
@@ -337,8 +338,8 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 
         for (j = 0; j < ninextended; j++)
         {
-          id    = xtndd.IdStruct[j];
-          indx  = xtndd.oIndex[j];
+          id    = xtndd[j].IdStruct;
+          indx  = xtndd[j].oIndex;
           strct = &stf->strctProps[id];
 
           Particle_copy (&part[j], &strct->Part[strct->dummyi++]);
@@ -359,18 +360,24 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 
 
 
-void  stf_structure_get_particle_properties (Structure * strct, Simulation * sim)
+void  stf_structure_get_particle_properties (Catalog * stf, int id, Simulation * sim)
 {
 
-  FILE * f;
-  char fname [NAME_LENGTH];
+  int     i, nfiles;
+  int   * file;
+  FILE  * f;
+  char    fname [NAME_LENGTH];
+  stfExtendedOutput * xtndd;
 
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
-  if (f = fopen(fname,"r") != NULL)
+  if ((f = fopen(fname,"r")) != NULL)
   {
     fclose (f);
     // Extended Output files should (in principle) exist
-    stf_structure_load_extended_output (strct, arx);
+    for (i = 0; i < nfiles; i++)
+      stf_load_extended_output (stf, file[i], &xtndd);
+    free (file);  
+    free (xtndd);
   }
   else
   {

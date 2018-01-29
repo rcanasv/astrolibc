@@ -31,6 +31,7 @@ typedef struct Particle
   float   Vel[3];
   float   Mass;
   int     Id;
+  int     Level;
   float   Age;
   float   Metal;
   float   Chem;
@@ -40,6 +41,6 @@ typedef struct Particle
 
 
 int Particle_rad_compare (const void * a, const void * b);
-int Particle_copy        (Particle * src, Particle * dst);
+void Particle_copy       (Particle * src, Particle * dst);
 
 #endif    /*  PARTICLE_H  */

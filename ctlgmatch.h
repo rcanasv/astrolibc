@@ -13,18 +13,20 @@
 
 #include "astrolibc.h"
 #include "allvars.h"
+#include "stf.h"
+#include "halomaker.h"
+#include "ramses.h"
 
 
 typedef struct Options
 {
-  int         verbose;
-  Archive     param;
-  Archive     mtree;
-  Archive     output;
-  int         numCatalogs;
-  Catalog  *  catalog;
-  Archive  *  data;
-  char        outprefix   [NAME_LENGTH];
+  int            verbose;
+  Archive        param;
+  Archive        mtree;
+  Archive        output;
+  int            numCatalogs;
+  Catalog     *  catalog;
+  Simulation  *  simulation;
 } Options;
 
 

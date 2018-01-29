@@ -30,8 +30,8 @@ typedef struct stfOutput
 
 typedef struct stfExtendedOutput
 {
-  int  oIndx;
-  int  IdStrct;
+  int  oIndex;
+  int  IdStruct;
   int  IdHost;
   int  IdIGM;
 } stfExtendedOutput;
@@ -43,7 +43,8 @@ void  stf_write_catalog_particles           (Catalog * stf);
 void  stf_read_treefrog                     (Archive * tfrog, Catalog * stf);
 void  stf_get_particle_properties           (Catalog * stf, Simulation * sim);
 void  stf_catalog_get_particle_properties   (Catalog * stf, Simulation * sim);
-void  stf_structure_get_particle_properties (Structure * strct, Simulation * sim);
+void  stf_structure_get_particle_properties (Catalog * stf, int id, Simulation * sim);
+int   stf_load_extended_output              (Catalog * stf, int filenum, stfExtendedOutput ** xtndd);
 
 //int load_stf_extended_output (char * prefix, int filenum);
 //void free_extended_arrays (void);

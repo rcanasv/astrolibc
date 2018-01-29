@@ -11,8 +11,7 @@
 
 
 #include "ctlgmatch.h"
-#include "stf.h"
-#include "halomaker.h"
+
 
 int main (int argc, char ** argv)
 {
@@ -31,7 +30,7 @@ int main (int argc, char ** argv)
   {
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
-    Catalog_get_particle_properties (&opt.catalog[i]);
+    Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
 
   //
@@ -51,7 +50,7 @@ int main (int argc, char ** argv)
   //
   //  Read TreeFrog
   //
-  stf_read_treefrog (&opt.input, &opt.catalog[0]);
+  stf_read_treefrog (&opt.mtree, &opt.catalog[0]);
 
   //
   //  Print common properties
@@ -106,7 +105,8 @@ int main (int argc, char ** argv)
 //
 void ctlgMatch_params (Options * opt)
 {
-  int i;
+  int   i;
+  char  buffer [NAME_LENGTH];
 
   opt->param.file = fopen (opt->param.name, "r");
   if (opt->param.file == NULL)
@@ -118,8 +118,8 @@ void ctlgMatch_params (Options * opt)
 
   // Catalogs to load
   fscanf (opt->param.file, "%d", &opt->numCatalogs);
-  opt->catalog = (Catalog *) malloc (opt->numCatalogs * sizeof(Catalog));
-  opt->data    = (Archive *) malloc (opt->numCatalogs * sizeof(Archive));
+  opt->catalog    = (Catalog *)    malloc (opt->numCatalogs * sizeof(Catalog));
+  opt->simulation = (Simulation *) malloc (opt->numCatalogs * sizeof(Simulation));
   for (i = 0; i < opt->numCatalogs; i++)
   {
     fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog[i].archive, buffer);
@@ -127,10 +127,10 @@ void ctlgMatch_params (Options * opt)
     fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
     fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
 
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->data[i], buffer);
-                                             Archive_prefix (&opt->data[i], buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->data[i], buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->data[i], buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation[i].archive, buffer);
+                                             Archive_prefix (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation[i].archive, buffer);
   }
 
   // TreeFrog input

@@ -1,5 +1,5 @@
 /*
- *  \file simcodes.h
+ *  \file simulation.h
  *  \brief This file contains headers for astronomical simulation codes
  *         e.g. Gadget-2, RAMSES, etc.
  *
@@ -13,31 +13,23 @@
 #include "base.h"
 #include "archive.h"
 #include "particle.h"
+#include "format.h"
+#include "cosmology.h"
 
-
-#define   GADGET   1
-#define   RAMSES   2
 
 
 typedef struct Simulation
 {
   Archive    archive;
+  Cosmology  cosmology;
   int        format;
-  double     z;
-  double     H0;
-  double     OmegaM;
-  double     OmegaL;
-  double     OmegaB;
-  double     OmegaK;
-  double     AgeUniv;
-  double     Lbox;
   double     Time;
-  double     Aexp;
   double     unit_l;
   double     unit_d;
   double     unit_v;
   double     unit_t;
   double     unit_m;
+  int        ndim;
   int        ncpu;
   int        npart;
   int        seed[4];

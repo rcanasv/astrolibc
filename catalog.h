@@ -14,10 +14,8 @@
 #include "structure.h"
 #include "cosmology.h"
 #include "format.h"
+#include "simulation.h"
 
-
-#define  STF        1
-#define  HALOMAKER  2
 
 
 typedef struct Catalog
@@ -34,13 +32,13 @@ typedef struct Catalog
 } Catalog;
 
 
-void Catalog_init                    (Catalog * catalog);
-void Catalog_load                    (Catalog * catalog);
-void Catalog_load_properties         (Catalog * catalog);
-void Catalog_load_particles          (Catalog * catalog);
-void Catalog_free                    (Catalog * catalog);
-void Catalog_fill_SubIDS             (Catalog * catalog);
-void Catalog_get_particle_properties (Catalog * catalog);
+void Catalog_init                    (Catalog * ctlg);
+void Catalog_load                    (Catalog * ctlg);
+void Catalog_load_properties         (Catalog * ctlg);
+void Catalog_load_particles          (Catalog * ctlg);
+void Catalog_free                    (Catalog * ctlg);
+void Catalog_fill_SubIDS             (Catalog * ctlg);
+void Catalog_get_particle_properties (Catalog * ctlg, Simulation * sim);
 
 //void Catalog_fill_ProgIDs (Catalog * catalog, char * tffile);
 

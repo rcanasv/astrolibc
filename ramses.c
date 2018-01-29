@@ -7,9 +7,6 @@
 
 #include "base.h"
 #include "ramses.h"
-#include "ramsesio.h"
-
-
 
 
 //
@@ -22,6 +19,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   char    fname  [NAME_LENGTH];
   char    buffer [NAME_LENGTH];
 
+  int     dummy;
   int     dummyi;
   float   dummyf;
   double  dummyd;
@@ -33,20 +31,20 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //  Read Info file to get Simulation info
   //
   sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
-  f = fopen(name,"r");
+  f = fopen (fname, "r");
   for (i = 0; i < 7; i++)
-    fgets(buffer, 100, ff);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Lbox);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Aexp);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->H0);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->OmegaM);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->OmegaL);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->OmegaB);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_l);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_d);
-  fgets(buffer, 100, ff);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_t);
+    fgets (buffer, 100, f);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaB);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_l);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_d);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_t);
   fclose (f);
 
   ramses->unit_m = ramses->unit_d * ramses->unit_l * ramses->unit_l * ramses->unit_l;  // in grams
@@ -62,7 +60,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //  Read Particle file to get Simulation info
   //
   sprintf (fname, "%s/part_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
-  f = fopen(name,"r");
+  f = fopen(fname,"r");
 
   //!--- Header
   RMSSSKIP  fread(&ramses->ncpu,     sizeof(int),    1, f);  RMSSSKIP
@@ -159,15 +157,15 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //
   for (i = 0; i < ramses->npart; i++)
   {
-    part[0][i] *= ramses->unit_l;
-    part[0][i] *= ramses->unit_l;
-    part[0][i] *= ramses->unit_l;
+    part[0][i].Pos[0] *= ramses->unit_l;
+    part[0][i].Pos[1] *= ramses->unit_l;
+    part[0][i].Pos[2] *= ramses->unit_l;
 
-    part[0][i] *= ramses->unit_v;
-    part[0][i] *= ramses->unit_v;
-    part[0][i] *= ramses->unit_v;
+    part[0][i].Vel[0] *= ramses->unit_v;
+    part[0][i].Vel[1] *= ramses->unit_v;
+    part[0][i].Vel[2] *= ramses->unit_v;
 
-    part[0][i] *= ramses->unit_m;
+    part[0][i].Mass *= ramses->unit_m;
   }
 }
 

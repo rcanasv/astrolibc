@@ -9,14 +9,10 @@
 
 
 #include "base.h"
-
-
 #include "particle.h"
 #include "structure.h"
 #include "catalog.h"
-
-#include "finder.h"
-#include "simcodes.h"
+#include "simulation.h"
 
 
 #endif    /*  FINDERS_H  */
