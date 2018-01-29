@@ -23,12 +23,16 @@ int main (int argc, char ** argv)
 
   ctlgMatch_params  (&opt);
 
+printf ("Parameters successfully read\n");
+
   //
   //  Load catalogs
   //
   for (i = 0; i < opt.numCatalogs; i++)
   {
+printf ("Initializing catalogs\n");
     Catalog_init (&opt.catalog[i]);
+printf ("Loading catalogs\n");    
     Catalog_load (&opt.catalog[i]);
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
