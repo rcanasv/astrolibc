@@ -324,23 +324,17 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
   if ((f = fopen(fname,"r")) != NULL)
   {
     fclose (f);
-
-printf ("Openning extendedOutput\n");
-
     //
     // Go through every file of simulation/extendedOutput
     //
-    for (i = 0; i < sim->archive.nfiles; i++)
+    //for (i = 0; i < sim->archive.nfiles; i++)
+    for (i = 0; i < 10; i++)
     {
-printf ("Load stf extended output\n");
       ninextended = stf_load_extended_output (stf, i, &xtndd);
-printf ("Loaded\n");
 
       if (ninextended)
       {
-printf ("Loading Simulation\n");
         Simulation_load_particles (sim, i, &part);
-printf ("Loaded\n");
 
         for (j = 0; j < ninextended; j++)
         {
@@ -351,15 +345,14 @@ printf ("Loaded\n");
           Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
 
 printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[strct->dummyi].Pos[0], \
-strct->Part[strct->dummyi].Pos[1],strct->Part[strct->dummyi].Pos[2],   \
-strct->Part[strct->dummyi].Vel[0],strct->Part[strct->dummyi].Vel[1],   \
-strct->Part[strct->dummyi].Vel[2]);
+ strct->Part[strct->dummyi].Pos[1], strct->Part[strct->dummyi].Pos[2], \
+ strct->Part[strct->dummyi].Vel[0], strct->Part[strct->dummyi].Vel[1], \
+ strct->Part[strct->dummyi].Vel[2]);
 
           strct->dummyi++;
         }
         free (xtndd);
         free (part);
-exit (0);
       }
     }
   }
@@ -371,6 +364,9 @@ exit (0);
     //     Simulation_load_particles (sim, i, &part);
     ;
   }
+
+exit (0);
+
 }
 
 
