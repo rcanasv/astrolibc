@@ -336,6 +336,8 @@ printf ("Openning extendedOutput\n");
 
       if (ninextended)
       {
+        Simulation_load_particles (sim, i, &part);
+        
         for (j = 0; j < ninextended; j++)
         {
           id    = xtndd[j].IdStruct;

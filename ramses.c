@@ -31,7 +31,11 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //  Read Info file to get Simulation info
   //
   sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
-  f = fopen (fname, "r");
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
   for (i = 0; i < 7; i++)
     fgets (buffer, 100, f);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
@@ -72,15 +76,15 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   RMSSSKIP  fread(&ramses->mstarLst, sizeof(double), 1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->nsink,    sizeof(int),    1, f);  RMSSSKIP
 
-//   printf ("NumProcs        %d\n", ramses->ncpu);
-//   printf ("Num Dims        %d\n", ramses->ndim);
-//   printf ("Npart           %d\n", ramses->npart);
-//   for (i = 0; i < 4; i++)
-//     printf ("LocalSeed[%d]    %d\n", i, ramses->seed[i]);
-//   printf ("NstarTot        %d\n", ramses->nstarTot);
-//   printf ("Mstar_tot       %g\n", ramses->mstarTot);
-//   printf ("Mstar_lost      %g\n", ramses->mstarLst);
-//   printf ("NumSink         %d\n", ramses->nsink);
+   printf ("NumProcs        %d\n", ramses->ncpu);
+   printf ("Num Dims        %d\n", ramses->ndim);
+   printf ("Npart           %d\n", ramses->npart);
+   for (i = 0; i < 4; i++)
+     printf ("LocalSeed[%d]    %d\n", i, ramses->seed[i]);
+   printf ("NstarTot        %d\n", ramses->nstarTot);
+   printf ("Mstar_tot       %g\n", ramses->mstarTot);
+   printf ("Mstar_lost      %g\n", ramses->mstarLst);
+   printf ("NumSink         %d\n", ramses->nsink);
 
   //--- Pos
   for (i = 0; i < ramses->ndim; i++)
