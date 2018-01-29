@@ -88,11 +88,13 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
    printf ("Mstar_lost      %g\n", ramses->mstarLst);
    printf ("NumSink         %d\n", ramses->nsink);
 
-  if ((P = (Particle *) malloc (ramses->npart * sizeof(Particle))) == NULL)
+  if ((*(part) = (Particle *) malloc (ramses->npart * sizeof(Particle))) == NULL)
   {
     printf ("Couldn't allocate memory for Particle array\n");
     exit(0);
   }
+
+  P = *(part);
 
   //--- Pos
   for (i = 0; i < ramses->ndim; i++)
@@ -179,8 +181,6 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
 
     P[i].Mass   *= ramses->unit_m;
   }
-
-  *(part) = P;
 }
 
 
