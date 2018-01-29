@@ -348,7 +348,7 @@ printf ("Loaded\n");
           indx  = xtndd[j].oIndex;
           strct = &stf->strctProps[id];
 
-          Particle_copy (&part[j], &strct->Part[strct->dummyi]);
+          Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
 
 printf ("%e  %e  %e  %e  %e  %e\n", strct->Part[strct->dummyi].Pos[0], \
 strct->Part[strct->dummyi].Pos[1],strct->Part[strct->dummyi].Pos[2],   \
