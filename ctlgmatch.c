@@ -108,7 +108,6 @@ int main (int argc, char ** argv)
       if (strct->Type > 7)
       {
         Structure_correct_periodicity       (strct, &opt.simulation[1]);
-        Structure_calculate_centre_of_mass  (strct);
         Structure_shift_to_centre_of_mass   (strct);
         Structure_get_particle_radius       (strct);
 

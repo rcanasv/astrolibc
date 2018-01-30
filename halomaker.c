@@ -543,13 +543,23 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   //
   for (i = 0; i < nlist; i++)
   {
+    // Shift to centre of mass position
+    P[i].Pos[0] -= gal_pos[0];
+    P[i].Pos[1] -= gal_pos[1];
+    P[i].Pos[2] -= gal_pos[2];
+
+    // Shift to centre of mass velocity
+    P[i].Vel[0] -= gal_vel[0];
+    P[i].Vel[1] -= gal_vel[1];
+    P[i].Vel[2] -= gal_vel[2];
+
     // convert from Mpc to kpc
     P[i].Pos[0] *= 1000;
     P[i].Pos[1] *= 1000;
     P[i].Pos[2] *= 1000;
 
-    // converts to M/10**10 Msun
-    P[i].Mass   *= 10.0;
+    // converts to Msun
+    P[i].Mass   *= 1e+11;
   }
 }
 

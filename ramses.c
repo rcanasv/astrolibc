@@ -61,6 +61,8 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
 
   ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
 
+  // Box is now in kpc
+  ramses->cosmology.Lbox *= ramses->unit_m;
 
   //
   //  Read Particle file to get Simulation info
