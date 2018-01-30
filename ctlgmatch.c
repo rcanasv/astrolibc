@@ -16,8 +16,9 @@
 int main (int argc, char ** argv)
 {
 
-  int      i, j, k;
-  Options  opt;
+  int          i, j, k;
+  Options      opt;
+  Structure  * strct;
 
   ctlgMatch_options (argc, argv, &opt);
 
@@ -55,6 +56,94 @@ int main (int argc, char ** argv)
   //
   stf_read_treefrog (&opt.mtree, &opt.catalog[0]);
 
+
+  //
+  //  Calculate SFRs
+  //
+  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[0]);
+  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[1]);
+
+  for (i = 0; i < opt.numCatalogs; i++)
+  {
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    {
+      strct = &opt.catalog[i].strctProps[j];
+      if (strct->Type > 7)
+      {
+        strct->SFR20  = 0;
+        strct->SFR50  = 0;
+        strct->SFR100 = 0;
+        for (k = 0; k < strct->NumPart; k++)
+        {
+          if (strct->Part[k].Age > 0.0)
+          {
+            if (strct->Part[k].Age <  20e6)   strct->SFR20  += strct->Part[k].Mass;
+            if (strct->Part[k].Age <  50e6)   strct->SFR50  += strct->Part[k].Mass;
+            if (strct->Part[k].Age < 100e6)   strct->SFR100 += strct->Part[k].Mass;
+          }
+        }
+        //
+        // SFR in  Msun / yr
+        //
+        strct->SFR20  /=  20e6;
+        strct->SFR50  /=  50e6;
+        strct->SFR100 /= 100e6;
+      }
+    }
+  }
+
+
+  //
+  //  Calculate R20, R50, R90
+  //
+  double m20;
+  double m50;
+  double m90;
+
+  for (i = 0; i < opt.numCatalogs; i++)
+  {
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    {
+      strct = &opt.catalog[i].strctProps[j];
+      if (strct->Type > 7)
+      {
+        Structure_correct_periodicity       (strct, &opt.simulation[1]);
+        Structure_calculate_centre_of_mass  (strct);
+        Structure_shift_to_centre_of_mass   (strct);
+        Structure_get_particle_radius       (strct);
+
+        // Sort by radius
+        qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+        // Calculate half mass radius
+        strct->RHalfMass = 0.0;
+        strct->R20       = 0.0;
+        strct->R90       = 0.0;
+        strct->Rsize     = 0.0;
+        strct->TotMass   = 0.0;
+        strct->dummyd    = 0.0;
+
+        for (k = 0; k < strct->NumPart; k++)
+          strct->TotMass += strct->Part[k].Mass;
+
+        m20  = strct->TotMass * 0.20;
+        m50  = strct->TotMass * 0.50;
+        m90  = strct->TotMass * 0.90;
+
+        for (k = 0; k < strct->NumPart; k++)
+        {
+          strct->dummyd += strct->Part[k].Mass;
+
+          if (strct->dummyd < m20)  strct->R20       = strct->Part[k].Radius;
+          if (strct->dummyd < m50)  strct->RHalfMass = strct->Part[k].Radius;
+          if (strct->dummyd < m90)  strct->R90       = strct->Part[k].Radius;
+        }
+        strct->Rsize = strct->Part[strct->NumPart-1].Radius;
+      }
+    }
+  }
+
+
   //
   //  Print common properties
   //
@@ -76,10 +165,20 @@ int main (int argc, char ** argv)
         fprintf (f, "%7d   ", strct1->Type);
         fprintf (f, "%e    ", strct1->TotMass);
         fprintf (f, "%e    ", strct2->TotMass);
+        fprintf (f, "%e    ", strct1->R20);
+        fprintf (f, "%e    ", strct2->R20);
+        fprintf (f, "%e    ", strct1->RHalfMass);
+        fprintf (f, "%e    ", strct2->RHalfMass);
+        fprintf (f, "%e    ", strct1->R90);
+        fprintf (f, "%e    ", strct2->R90);
         fprintf (f, "%e    ", strct1->Rsize);
-        fprintf (f, "%e    ", strct2->Rsize*1000);
-        fprintf (f, "%e    ", strct1->Vdisp);
-        fprintf (f, "%e    ", strct2->Vdisp);
+        fprintf (f, "%e    ", strct2->Rsize);
+        fprintf (f, "%e    ", strct1->SFR20);
+        fprintf (f, "%e    ", strct2->SFR20);
+        fprintf (f, "%e    ", strct1->SFR50);
+        fprintf (f, "%e    ", strct2->SFR50);
+        fprintf (f, "%e    ", strct1->SFR100);
+        fprintf (f, "%e    ", strct2->SFR100);
         fprintf (f, "%e    ", strct1->Pos[0]);
         fprintf (f, "%e    ", strct2->Pos[0]);
         fprintf (f, "%e    ", strct1->Pos[1]);

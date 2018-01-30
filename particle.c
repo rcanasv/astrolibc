@@ -14,9 +14,9 @@ int Particle_rad_compare (const void * a, const void * b)
   Particle * Part2 = (Particle *) b;
 
   if (Part1->Radius > Part2->Radius)
-    return 1;
+    return  1;
   if (Part1->Radius == Part2->Radius)
-    return 0;
+    return  0;
   if (Part1->Radius < Part2->Radius)
     return -1;
 }
@@ -37,4 +37,12 @@ void Particle_copy (Particle * src, Particle * dst)
   dst->Chem   = src->Chem;
   dst->Type   = src->Type;
   dst->Radius = src->Radius;
+}
+
+
+void Particle_get_radius (Particle * P)
+{
+  P->Radius = sqrt (P->Pos[0]*P->Pos[0] + \
+                    P->Pos[1]*P->Pos[1] + \
+                    P->Pos[2]*P->Pos[2]);
 }

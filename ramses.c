@@ -1,5 +1,5 @@
 /*
- *  \file   ramsesio.c
+ *  \file   ramses.c
  *  \brief  This file contains RAMSES input-output routines
  *
  *
@@ -209,7 +209,7 @@ double friedman(double Omega0, double OmegaL, double OmegaK, double alpha, doubl
   double axp_tau_pre;
   double axp_t_pre;
 
-  int    nstep   = 0;
+  int nstep = 0;
   int nskip;
   int nout;
 
@@ -221,15 +221,15 @@ double friedman(double Omega0, double OmegaL, double OmegaK, double alpha, doubl
   while ((axp_tau >= axp_min) || (axp_t >= axp_min))
   {
     nstep++;
-    dtau = alpha * axp_tau / dadtau(axp_tau, Omega0, OmegaL, OmegaK);
+    dtau        = alpha * axp_tau / dadtau(axp_tau, Omega0, OmegaL, OmegaK);
     axp_tau_pre = axp_tau - dadtau(axp_tau, Omega0, OmegaL, OmegaK) * dtau / 2.0;
-    axp_tau = axp_tau - dadtau(axp_tau_pre, Omega0, OmegaL, OmegaK) * dtau;
-    tau = tau - dtau;
+    axp_tau     = axp_tau - dadtau(axp_tau_pre, Omega0, OmegaL, OmegaK) * dtau;
+    tau         = tau - dtau;
 
-    dt = alpha * axp_t / dadt(axp_t, Omega0, OmegaL, OmegaK);
-    axp_t_pre = axp_t - dadt(axp_t, Omega0, OmegaL, OmegaK) * dt / 2.0;
-    axp_t = axp_t - dadt(axp_t_pre, Omega0, OmegaL, OmegaK) * dt;
-    t = t - dt;
+    dt          = alpha * axp_t / dadt(axp_t, Omega0, OmegaL, OmegaK);
+    axp_t_pre   = axp_t - dadt(axp_t, Omega0, OmegaL, OmegaK) * dt / 2.0;
+    axp_t       = axp_t - dadt(axp_t_pre, Omega0, OmegaL, OmegaK) * dt;
+    t           = t - dt;
   }
 
   age_tot =-t;
@@ -254,15 +254,15 @@ double friedman(double Omega0, double OmegaL, double OmegaK, double alpha, doubl
   while ((axp_tau >= axp_min) || (axp_t >= axp_min))
   {
     nstep++;
-    dtau = alpha * axp_tau / dadtau (axp_tau, Omega0, OmegaL, OmegaK);
+    dtau        = alpha * axp_tau / dadtau (axp_tau, Omega0, OmegaL, OmegaK);
     axp_tau_pre = axp_tau - dadtau(axp_tau, Omega0, OmegaL, OmegaK) * dtau/2.0;
-    axp_tau = axp_tau - dadtau(axp_tau_pre, Omega0, OmegaL, OmegaK) * dtau;
-    tau = tau - dtau;
+    axp_tau     = axp_tau - dadtau(axp_tau_pre, Omega0, OmegaL, OmegaK) * dtau;
+    tau         = tau - dtau;
 
-    dt = alpha * axp_t / dadt(axp_t, Omega0, OmegaL, OmegaK);
-    axp_t_pre = axp_t - dadt(axp_t, Omega0, OmegaL, OmegaK) * dt / 2.0;
-    axp_t = axp_t - dadt(axp_t_pre, Omega0, OmegaL, OmegaK) * dt;
-    t = t -dt;
+    dt          = alpha * axp_t / dadt(axp_t, Omega0, OmegaL, OmegaK);
+    axp_t_pre   = axp_t - dadt(axp_t, Omega0, OmegaL, OmegaK) * dt / 2.0;
+    axp_t       = axp_t - dadt(axp_t_pre, Omega0, OmegaL, OmegaK) * dt;
+    t           = t -dt;
 
     if ((nstep%nskip) == 0)
     {
@@ -283,10 +283,13 @@ double friedman(double Omega0, double OmegaL, double OmegaK, double alpha, doubl
 }
 
 
+
 double dadtau (double axp_tau, double Omega0, double OmegaL, double OmegaK)
 {
   return sqrt(axp_tau*axp_tau*axp_tau * (Omega0 + OmegaL*axp_tau*axp_tau*axp_tau + OmegaK*axp_tau));
 }
+
+
 
 double dadt (double axp_t, double Omega0, double OmegaL, double OmegaK)
 {
@@ -294,44 +297,115 @@ double dadt (double axp_t, double Omega0, double OmegaL, double OmegaK)
 }
 
 
-//   double * axp_frw;
-//   double * hexp_frw;
-//   double * tau_frw;
-//   double * t_frw;
-//   int      n_frw = 1000;
-//   double   time_tot = friedman(Omega_m, Omega_l, 0.0, 1e-6, 1e-3, &axp_frw, &hexp_frw, &tau_frw, &t_frw, n_frw);
-//
-//   // Find neighbouring conformal time
-//   i = 1;
-//   while (tau_frw[i] > time  && i < n_frw)
-//     i = i+1;
-//
-//   // Interpolate time
-//   double time_simu = t_frw[i]   * (time - tau_frw[i-1]) / (tau_frw[i]   - tau_frw[i-1]) + \
-//                      t_frw[i-1] * (time - tau_frw[i])   / (tau_frw[i-1] - tau_frw[i]);
-//
-//   printf ("Time simu    %lf\n", (time_tot + time_simu) / (H0*1e5/3.08e24) / (365*24*3600*1e9));
-//   printf ("Hubble time  %lf\n", time_tot / (H0*1e5/3.08e24) / (365*24*3600*1e9));
-//
-//   printf ("i               %d\n", i);
-//   printf ("time            %e\n", time);
-//   printf ("time_tot        %e\n", time_tot);
-//   printf ("time_simu       %e\n", time_simu);
-//   printf ("t_tot + t_simu  %e\n", time_tot + time_simu);
-//     if (ramses_age[i] != 0)
-//     {
-//       j = 1;
-//       while (tau_frw[j] > ramses_age[i]  && j < n_frw)
-//         j++;
-//
-//       printf ("%e  ", ramses_age[i]);
-//
-//       t = t_frw[j]   * (ramses_age[i] - tau_frw[j-1]) / (tau_frw[j]   - tau_frw[j-1]) + \
-//           t_frw[j-1] * (ramses_age[i] - tau_frw[j])   / (tau_frw[j-1] - tau_frw[j]);
-//       ramses_age[i] = (time_simu - t) / (H0*1e5/3.08e24) / (365*24*3600.0);
-//       printf ("%e  %e\n", t, ramses_age[i]);
-//     }
-//   free (axp_frw);
-//   free (hexp_frw);
-//   free (tau_frw);
-//   free (t_frw);
+
+void  ramses_structure_calculate_star_age (Simulation * ramses, Structure * strct)
+{
+  ;
+}
+
+
+
+void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
+{
+
+  int      i, j, k;
+
+  double * axp_frw;
+  double * hexp_frw;
+  double * tau_frw;
+  double * t_frw;
+  int      n_frw = 1000;
+  double   t;
+
+  double   time_tot;
+  double   time_simu;
+
+  FILE   * f;
+  char     fname  [NAME_LENGTH];
+  char     dummys [NAME_LENGTH];
+  char     buffer [NAME_LENGTH];
+
+  Structure * strct;
+
+  //
+  //  Read Info file to get Simulation info
+  //
+  sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+  for (i = 0; i < 7; i++)
+    fgets (buffer, 100, f);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaB);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_l);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_d);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_t);
+  fclose (f);
+
+  //
+  //  Fill frw arrays
+  //
+  time_tot = friedman(ramses->cosmology.OmegaM, ramses->cosmology.OmegaL, 0.0, 1e-6, 1e-3, &axp_frw, &hexp_frw, &tau_frw, &t_frw, n_frw);
+
+  // Find neighbouring conformal time
+  i = 1;
+  while (tau_frw[i] > ramses->Time  && i < n_frw)
+    i = i+1;
+
+  // Interpolate time
+  time_simu = t_frw[i]   * (ramses->Time - tau_frw[i-1]) / (tau_frw[i]   - tau_frw[i-1]) + \
+              t_frw[i-1] * (ramses->Time - tau_frw[i])   / (tau_frw[i-1] - tau_frw[i]);
+
+
+  printf ("Time simu    %lf\n", (time_tot + time_simu) / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
+  printf ("Hubble time  %lf\n", time_tot / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
+
+  printf ("i               %d\n", i);
+  printf ("time            %e\n", ramses->Time);
+  printf ("time_tot        %e\n", time_tot);
+  printf ("time_simu       %e\n", time_simu);
+  printf ("t_tot + t_simu  %e\n", time_tot + time_simu);
+
+
+  for (i = 1; i <= ctlg->nstruct; i++)
+  {
+    if (ctlg->strctProps[i].iPart)
+    {
+      strct = &ctlg->strctProps[i];
+      for (j = 0; j < strct->NumPart; j++)
+      {
+        if (strct->Part[j].Age != 0)
+        {
+          k = 1;
+          while (tau_frw[k] > strct->Part[j].Age  && k < n_frw)
+            k++;
+
+          t = t_frw[k]   * (strct->Part[j].Age - tau_frw[k-1]) / (tau_frw[k]   - tau_frw[k-1]) + \
+              t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
+
+          // Age in years
+          strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600.0);
+        }
+      }
+    }
+    else
+    {
+      printf ("Somethin weird happened. Particle array for Structure has not been initialized\n");
+      exit (0);
+    }
+  }
+
+  free (axp_frw);
+  free (hexp_frw);
+  free (tau_frw);
+  free (t_frw);
+}

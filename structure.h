@@ -10,6 +10,7 @@
 
 
 #include "base.h"
+#include "simulation.h"
 
 
 typedef struct Structure
@@ -45,8 +46,7 @@ typedef struct Structure
   double     SFR50;
   double     SFR100;
   double     R20;
-  double     R50;
-  double     R100;
+  double     R90;
 
   // Additioanl data
   int        Timestep;
@@ -83,6 +83,12 @@ typedef struct Structure
   int        dummyi;
   double     dummyd;
 } Structure;
+
+
+void  Structure_correct_periodicity       (Structure * strct, Simulation * sim);
+void  Structure_calculate_centre_of_mass  (Structure * strct);
+void  Structure_shift_to_centre_of_mass   (Structure * strct);
+void  Structure_get_particle_radius       (Structure * strct);
 
 
 #endif    /*  STRUCTURE_H  */

@@ -11,20 +11,6 @@
 #include "base.h"
 
 
-/*
-typedef struct pdata_d
-{
-  double   Pos[3];
-  double   Vel[3];
-  double   Mass;
-  int      Id;
-  double   Age;
-  double   Metal;
-  double   Chem;
-  int      Type;
-} pdata_d;
-*/
-
 typedef struct Particle
 {
   float   Pos[3];
@@ -40,7 +26,9 @@ typedef struct Particle
 } Particle;
 
 
-int Particle_rad_compare (const void * a, const void * b);
-void Particle_copy       (Particle * src, Particle * dst);
+int   Particle_rad_compare (const void * a, const void * b);
+void  Particle_copy        (Particle * src, Particle * dst);
+void  Particle_get_radius  (Particle * P);
+
 
 #endif    /*  PARTICLE_H  */
