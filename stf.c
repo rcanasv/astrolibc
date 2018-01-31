@@ -330,6 +330,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     for (i = 0; i < sim->archive.nfiles; i++)
     {
       ninextended = stf_load_extended_output (stf, i, &xtndd);
+      printf ("Load extended output file %d\n", i);
 
       if (ninextended)
       {

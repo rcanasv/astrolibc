@@ -39,7 +39,7 @@ int main (int argc, char ** argv)
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
 
-    printf ("Loading particle properties   %d\n", i);
+    fprintf (fff, "Loading particle properties   %d\n", i);
 
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
