@@ -29,12 +29,21 @@ int main (int argc, char ** argv)
   //
   for (i = 1; i < opt.numCatalogs; i++)
   {
+
     Simulation_init (&opt.simulation[i]);
+
+    printf ("Loading catalog   %d\n", i);
 
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
+
+    printf ("Loading particle properties   %d\n", i);
+
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
+
+
+  printf ("Tagging isolated galaxies\n");
 
 
   //
@@ -51,17 +60,29 @@ int main (int argc, char ** argv)
       isolated[i] = 1;
   }
 
+
+  printf ("Loading treefrog\n");
+
   //
   //  Read TreeFrog
   //
   stf_read_treefrog (&opt.mtree, &opt.catalog[0]);
 
 
+
+
   //
   //  Calculate SFRs
   //
+  printf ("Calculating Stellar age 1\n");
+
   ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[0]);
+
+  printf ("Calculating Stellar age 2\n");
+
   ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[1]);
+
+  printf ("Calculating SFRs\n");
 
   for (i = 0; i < opt.numCatalogs; i++)
   {
@@ -99,6 +120,8 @@ int main (int argc, char ** argv)
   double m20;
   double m50;
   double m90;
+
+  printf ("Calculating Radius\n");
 
   for (i = 0; i < opt.numCatalogs; i++)
   {
