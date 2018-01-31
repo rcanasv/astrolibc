@@ -318,6 +318,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     else
       strct->iPart = 1;
   }
+  printf ("Memory allocated for structures %d\n", i);
 
 
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
