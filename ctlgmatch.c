@@ -24,28 +24,16 @@ int main (int argc, char ** argv)
 
   ctlgMatch_params  (&opt);
 
-  FILE * fff = fopen ("log", "w");
-
   //
   //  Load catalogs
   //
-  for (i = 1; i < opt.numCatalogs; i++)
+  for (i = 0; i < opt.numCatalogs; i++)
   {
-
     Simulation_init (&opt.simulation[i]);
-
-    fprintf (fff, "Loading catalog   %d\n", i);
-
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
-
-    fprintf (fff, "Loading particle properties   %d\n", i);
-
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
-
-
-  fprintf (fff, "Tagging isolated galaxies\n");
 
 
   //
@@ -62,29 +50,17 @@ int main (int argc, char ** argv)
       isolated[i] = 1;
   }
 
-
-  fprintf (fff, "Loading treefrog\n");
-
   //
   //  Read TreeFrog
   //
   stf_read_treefrog (&opt.mtree, &opt.catalog[0]);
 
 
-
-
   //
   //  Calculate SFRs
   //
-  fprintf (fff, "Calculating Stellar age 1\n");
-
-  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[0]);
-
-  fprintf (fff, "Calculating Stellar age 2\n");
-
-  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[1]);
-
-  fprintf (fff, "Calculating SFRs\n");
+  ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[0]);
+  ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[1]);
 
   for (i = 0; i < opt.numCatalogs; i++)
   {
@@ -122,8 +98,6 @@ int main (int argc, char ** argv)
   double m20;
   double m50;
   double m90;
-
-  fprintf (fff, "Calculating Radius\n");
 
   for (i = 0; i < opt.numCatalogs; i++)
   {
@@ -221,8 +195,6 @@ int main (int argc, char ** argv)
   //
   for (i = 0; i < opt.numCatalogs; i++)
     Catalog_free (&opt.catalog[i]);
-
-    fclose (fff);
 
   return (0);
 }

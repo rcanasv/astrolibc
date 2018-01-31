@@ -248,8 +248,15 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   int nmatch;
 
   char buffer [LONG_LENGTH];
+  char fname  [NAME_LENGTH];
 
-  f = fopen (tfrog->name, "r");
+  sprintf (fname, "%s/%s", tfrog->path, tfrog->name);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+
 
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
@@ -270,6 +277,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
     {
       stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
       stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
+      stf->strctProps[i].iMatch     = 1;
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
@@ -286,7 +294,6 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 
 void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 {
-
   int    i, j, k;
   FILE * f;
   char   fname [NAME_LENGTH];
@@ -318,8 +325,6 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     else
       strct->iPart = 1;
   }
-  printf ("Memory allocated for structures %d\n", i);
-
 
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
   if ((f = fopen(fname,"r")) != NULL)
@@ -331,7 +336,6 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     for (i = 0; i < sim->archive.nfiles; i++)
     {
       ninextended = stf_load_extended_output (stf, i, &xtndd);
-      printf ("Load extended output file %d\n", i);
 
       if (ninextended)
       {
@@ -364,7 +368,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
   //
   for (i = 1; i <= stf->nstruct; i++)
   {
-    strct - &stf->strctProps[i];
+    strct = &stf->strctProps[i];
     for (j = 0; j < strct->NumPart; j++)
     {
       strct->Part[j].Pos[0] -= strct->Pos[0];
@@ -376,7 +380,6 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
       strct->Part[j].Vel[2] -= strct->Vel[2];
     }
   }
-
 }
 
 

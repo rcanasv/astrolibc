@@ -68,7 +68,11 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //  Read Particle file to get Simulation info
   //
   sprintf (fname, "%s/part_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
-  f = fopen(fname,"r");
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
 
   //!--- Header
   RMSSSKIP  fread(&ramses->ncpu,     sizeof(int),    1, f);  RMSSSKIP
@@ -80,6 +84,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   RMSSSKIP  fread(&ramses->mstarLst, sizeof(double), 1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->nsink,    sizeof(int),    1, f);  RMSSSKIP
 
+/*
    printf ("NumProcs        %d\n", ramses->ncpu);
    printf ("Num Dims        %d\n", ramses->ndim);
    printf ("Npart           %d\n", ramses->npart);
@@ -89,6 +94,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
    printf ("Mstar_tot       %g\n", ramses->mstarTot);
    printf ("Mstar_lost      %g\n", ramses->mstarLst);
    printf ("NumSink         %d\n", ramses->nsink);
+*/
 
   if ((*(part) = (Particle *) malloc (ramses->npart * sizeof(Particle))) == NULL)
   {
