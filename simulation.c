@@ -23,7 +23,10 @@ void Simulation_init (Simulation * sim)
   if ((!strcmp(sim->archive.format, "ramses")) ||  \
       (!strcmp(sim->archive.format, "RAMSES")) ||  \
       (!strcmp(sim->archive.format, "Ramses")))
+  {
     sim->format = RAMSES;
+    ramses_init (sim);
+  }
   else
   if ((!strcmp(sim->archive.format, "galfile")) ||  \
       (!strcmp(sim->archive.format, "Galfile")) ||  \

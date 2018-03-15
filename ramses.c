@@ -9,6 +9,52 @@
 #include "ramses.h"
 
 
+void ramses_init (Simulation * ramses)
+{
+  int     i;
+  FILE  * f;
+  char    fname  [NAME_LENGTH];
+  char    dummys [NAME_LENGTH];
+  char    buffer [NAME_LENGTH];
+
+
+  sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+  for (i = 0; i < 7; i++)
+    fgets (buffer, 100, f);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaB);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_l);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_d);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_t);
+  fclose (f);
+
+  ramses->unit_m = ramses->unit_d * ramses->unit_l * ramses->unit_l * ramses->unit_l;  // in grams
+  ramses->unit_m = ramses->unit_m / 1.989e+33;                                         // in solar masses
+
+  ramses->unit_v = ramses->unit_l / ramses->unit_t;                                    // in cm / s
+  ramses->unit_v = ramses->unit_v / 100000.0;                                          // in km / s
+
+  ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
+
+  // Box is now in kpc
+  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
+  printf ("unit_l  %lf\n", ramses->unit_l);
+  ramses->cosmology.Lbox *= ramses->unit_l;
+  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
+}
+
+
 //
 //  Read RAMSES Particle FILE
 //
@@ -62,13 +108,18 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
 
   // Box is now in kpc
-  ramses->cosmology.Lbox *= ramses->unit_m;
+  ramses->cosmology.Lbox *= ramses->unit_l;
 
   //
   //  Read Particle file to get Simulation info
   //
   sprintf (fname, "%s/part_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
   f = fopen(fname,"r");
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
 
   //!--- Header
   RMSSSKIP  fread(&ramses->ncpu,     sizeof(int),    1, f);  RMSSSKIP
@@ -80,6 +131,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   RMSSSKIP  fread(&ramses->mstarLst, sizeof(double), 1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->nsink,    sizeof(int),    1, f);  RMSSSKIP
 
+/*
    printf ("NumProcs        %d\n", ramses->ncpu);
    printf ("Num Dims        %d\n", ramses->ndim);
    printf ("Npart           %d\n", ramses->npart);
@@ -89,6 +141,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
    printf ("Mstar_tot       %g\n", ramses->mstarTot);
    printf ("Mstar_lost      %g\n", ramses->mstarLst);
    printf ("NumSink         %d\n", ramses->nsink);
+*/
 
   if ((*(part) = (Particle *) malloc (ramses->npart * sizeof(Particle))) == NULL)
   {
@@ -326,6 +379,7 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
   char     fname  [NAME_LENGTH];
   char     dummys [NAME_LENGTH];
   char     buffer [NAME_LENGTH];
+  double   dummyd;
 
   Structure * strct;
 
@@ -340,17 +394,17 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
   }
   for (i = 0; i < 7; i++)
     fgets (buffer, 100, f);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
   fgets (buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaB);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_l);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_d);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->unit_t);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
+  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
   fclose (f);
 
   //
@@ -368,9 +422,9 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
               t_frw[i-1] * (ramses->Time - tau_frw[i])   / (tau_frw[i-1] - tau_frw[i]);
 
 
+
   printf ("Time simu    %lf\n", (time_tot + time_simu) / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
   printf ("Hubble time  %lf\n", time_tot / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
-
   printf ("i               %d\n", i);
   printf ("time            %e\n", ramses->Time);
   printf ("time_tot        %e\n", time_tot);
@@ -405,6 +459,7 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
       exit (0);
     }
   }
+
 
   free (axp_frw);
   free (hexp_frw);

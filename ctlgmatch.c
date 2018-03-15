@@ -19,22 +19,29 @@ int main (int argc, char ** argv)
   int          i, j, k;
   Options      opt;
   Structure  * strct;
+  Structure  * strct1;
+  Structure  * strct2;
 
   ctlgMatch_options (argc, argv, &opt);
 
   ctlgMatch_params  (&opt);
 
+
   //
   //  Load catalogs
   //
-  for (i = 1; i < opt.numCatalogs; i++)
+  for (i = 0; i < opt.numCatalogs; i++)
   {
+    printf ("simulation init  %d\n", i);
 
     Simulation_init (&opt.simulation[i]);
 
-    printf ("Loading catalog   %d\n", i);
+    printf ("Catalog init   %d\n", i);
 
     Catalog_init (&opt.catalog[i]);
+
+    printf ("Catalog load   %d\n", i);
+
     Catalog_load (&opt.catalog[i]);
 
     printf ("Loading particle properties   %d\n", i);
@@ -53,15 +60,103 @@ int main (int argc, char ** argv)
 
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct1->dummyd = 0;
+    strct1->dummyi = 0;
+  }
+  
+  
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
     isolated[i] = 0;
-
-    if ((opt.catalog[0].strctProps[i].Type == 10) && \
-        (opt.catalog[0].strctProps[i].NumSubs == 0))
-      isolated[i] = 1;
+    
+    if (strct1->Type > 7)
+    {
+      if (strct1->HostID == -1)
+      {
+        strct1->dummyd = strct1->TotMass;
+        strct1->dummyi = strct1->ID;
+        continue;
+      }
+      
+      if (strct2->dummyi == 0)
+      { 
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }  
+      // 
+      // Determine if galaxy is isolated
+      //
+      if ((strct1->Type    == 10) && \
+          (strct1->NumSubs == 0))
+        isolated[i] = 1;
+      
+      //
+      // Save mass of central galaxy
+      //
+      if (strct1->TotMass > strct2->dummyd)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+    }
+  }
+  
+  
+  //
+  // Correct Type for galaxies
+  //
+  for (i = 1; i <=  opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->DirectHostID];
+    
+    if (strct1->Type > 7)
+    {
+      if (strct1->Type == 10)
+      {
+        strct1->dummyd = strct1->TotMass;
+        strct1->dummyi = strct1->ID;
+        continue;
+      }
+      
+      
+      while (strct2->Type > 10)
+        strct2 = &opt.catalog[0].strctProps[strct2->DirectHostID];
+      
+      
+      if (strct1->TotMass > strct2->dummyd)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+    }
   }
 
+  
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    if (strct1->Type == 10)
+    {
+      if (strct1->dummyi != strct1->ID)
+      {
+        //
+        // This means that this is not the most massive galaxy
+        // in the 6DFOF
+        //
+        strct2 = &opt.catalog[0].strctProps[strct1->dummyi];
+        strct1->Type = 20;
+        strct2->Type = 10;
+        strct2->dummyi = strct2->ID;
+      }
+    }
+  }
 
-  printf ("Loading treefrog\n");
+  
+  
 
   //
   //  Read TreeFrog
@@ -70,19 +165,11 @@ int main (int argc, char ** argv)
 
 
 
-
   //
   //  Calculate SFRs
   //
-  printf ("Calculating Stellar age 1\n");
-
-  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[0]);
-
-  printf ("Calculating Stellar age 2\n");
-
-  ramses_catalog_calculate_star_age (&opt.simulation[1], &opt.catalog[1]);
-
-  printf ("Calculating SFRs\n");
+  ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[0]);
+  ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[1]);
 
   for (i = 0; i < opt.numCatalogs; i++)
   {
@@ -113,6 +200,7 @@ int main (int argc, char ** argv)
     }
   }
 
+  
 
   //
   //  Calculate R20, R50, R90
@@ -121,8 +209,6 @@ int main (int argc, char ** argv)
   double m50;
   double m90;
 
-  printf ("Calculating Radius\n");
-
   for (i = 0; i < opt.numCatalogs; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -130,7 +216,7 @@ int main (int argc, char ** argv)
       strct = &opt.catalog[i].strctProps[j];
       if (strct->Type > 7)
       {
-        Structure_correct_periodicity       (strct, &opt.simulation[1]);
+        Structure_correct_periodicity       (strct, &opt.simulation[0]);
         Structure_shift_to_centre_of_mass   (strct);
         Structure_get_particle_radius       (strct);
 
@@ -169,8 +255,6 @@ int main (int argc, char ** argv)
   //
   //  Print common properties
   //
-  Structure * strct1;
-  Structure * strct2;
   FILE * f = fopen (opt.output.name, "w");
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
@@ -185,6 +269,7 @@ int main (int argc, char ** argv)
         fprintf (f, "%7d   ", isolated[strct1->ID]);
         fprintf (f, "%e    ", strct1->MatchMrrts[0]);
         fprintf (f, "%7d   ", strct1->Type);
+        fprintf (f, "%e    ", opt.catalog[0].strctProps[strct1->HostID].dummyd);
         fprintf (f, "%e    ", strct1->TotMass);
         fprintf (f, "%e    ", strct2->TotMass);
         fprintf (f, "%e    ", strct1->R20);
@@ -212,7 +297,50 @@ int main (int argc, char ** argv)
     }
   }
   fclose (f);
+  
+  char buff[NAME_LENGTH];
+  sprintf (buff, "%s_VELOCIraptor", opt.output.name);
+  f = fopen (buff, "w");
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    fprintf (f, "%7d   ", strct1->ID);
+    fprintf (f, "%7d   ", strct1->Type);
+    fprintf (f, "%e    ", strct1->TotMass);
+    fprintf (f, "%e    ", strct1->R20);
+    fprintf (f, "%e    ", strct1->RHalfMass);
+    fprintf (f, "%e    ", strct1->R90);
+    fprintf (f, "%e    ", strct1->Rsize);
+    fprintf (f, "%e    ", strct1->SFR20);
+    fprintf (f, "%e    ", strct1->SFR50);
+    fprintf (f, "%e    ", strct1->SFR100);
+    fprintf (f, "\n");
+  }
+  fclose (f);
+
+  
+  sprintf (buff, "%s_HaloMaker", opt.output.name);
+  f = fopen (buff, "w");
+  for (i = 1; i <= opt.catalog[1].nstruct; i++)
+  {
+    strct1 = &opt.catalog[1].strctProps[i];
+    fprintf (f, "%7d   ", strct1->ID);
+    fprintf (f, "%7d   ", strct1->Type);
+    fprintf (f, "%e    ", strct1->TotMass);
+    fprintf (f, "%e    ", strct1->R20);
+    fprintf (f, "%e    ", strct1->RHalfMass);
+    fprintf (f, "%e    ", strct1->R90);
+    fprintf (f, "%e    ", strct1->Rsize);
+    fprintf (f, "%e    ", strct1->SFR20);
+    fprintf (f, "%e    ", strct1->SFR50);
+    fprintf (f, "%e    ", strct1->SFR100);
+    fprintf (f, "\n");
+  }
+  fclose (f);
+  
   free (isolated);
+
+
 
   //
   //  Free memory
