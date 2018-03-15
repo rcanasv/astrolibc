@@ -17,7 +17,6 @@
 #include "cosmology.h"
 
 
-
 typedef struct Simulation
 {
   Archive    archive;
@@ -56,12 +55,13 @@ typedef struct Simulation
   int        Age;
   int        Hz;
   int        HubbleParam;
-  int        MassTable;
   int        NfilesPerSnapshot;
-  int        NpartThisFile;
-  int        NpartTot;
-  char       RunLabel[NAME_LENGTH];
+  double     MassTable     [6];
+  double     NpartThisFile [6];
+  double     NpartTot      [6];
+  char       RunLabel      [NAME_LENGTH];
 } Simulation;
+
 
 void Simulation_init           (Simulation * sim);
 void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part);
