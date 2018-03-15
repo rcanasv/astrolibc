@@ -248,18 +248,14 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   int nmatch;
 
   char buffer [LONG_LENGTH];
-
   char fname  [NAME_LENGTH];
 
   sprintf (fname, "%s/%s", tfrog->path, tfrog->name);
-
   if ((f = fopen (fname, "r")) == NULL)
   {
     printf ("Couldn't open file %s\n", fname);
     exit (0);
   }
-
-
 
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
@@ -280,6 +276,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
     {
       stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
       stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
+      stf->strctProps[i].iMatch     = 1;
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
@@ -296,7 +293,6 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 
 void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 {
-
   int    i, j, k;
   FILE * f;
   char   fname [NAME_LENGTH];
@@ -328,7 +324,6 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     else
       strct->iPart = 1;
   }
-  
 
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
   if ((f = fopen(fname,"r")) != NULL)

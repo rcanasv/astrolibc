@@ -26,7 +26,6 @@ int main (int argc, char ** argv)
 
   ctlgMatch_params  (&opt);
 
-
   //
   //  Load catalogs
   //
@@ -51,8 +50,6 @@ int main (int argc, char ** argv)
 
 
   printf ("Tagging isolated galaxies\n");
-
-
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
@@ -135,7 +132,7 @@ int main (int argc, char ** argv)
     }
   }
 
-  
+
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
     strct1 = &opt.catalog[0].strctProps[i];
@@ -156,13 +153,10 @@ int main (int argc, char ** argv)
   }
 
   
-  
-
   //
   //  Read TreeFrog
   //
   stf_read_treefrog (&opt.mtree, &opt.catalog[0]);
-
 
 
   //
