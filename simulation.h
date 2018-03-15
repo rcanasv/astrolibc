@@ -23,7 +23,15 @@ typedef struct Simulation
   Archive    archive;
   Cosmology  cosmology;
   int        format;
+
+  double     a;
+  double     z;
+  double     h;
+  double     AgeUniv;
+  double     Lbox;
   double     Time;
+
+  // For RAMSES files
   double     unit_l;
   double     unit_d;
   double     unit_v;
@@ -37,6 +45,22 @@ typedef struct Simulation
   double     mstarTot;
   double     mstarLst;
   int        nsink;
+
+  // For GADGET
+  double     Ez;
+  int        Cooling;
+  int        Feedback;
+  int        IcInfo;
+  int        Metals;
+  int        SFR;
+  int        Age;
+  int        Hz;
+  int        HubbleParam;
+  int        MassTable;
+  int        NfilesPerSnapshot;
+  int        NpartThisFile;
+  int        NpartTot;
+  char       RunLabel[NAME_LENGTH];
 } Simulation;
 
 void Simulation_init           (Simulation * sim);

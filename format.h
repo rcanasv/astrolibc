@@ -20,9 +20,12 @@
 //
 // Simulation + Others
 //
-#define  GADGET      50
-#define  RAMSES      60
-#define  GALFILE     70
+#define  GADGET      10
+#define  RAMSES      20
+#define  GALFILE     30
+#define  EAGLE       40
+#define  ILLUSTRIS   50
+#define  GIZMO       60
 
 
 #endif    /*  FORMAT_H */

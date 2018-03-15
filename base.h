@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include <hdf5.h>
+
 #define NAME_LENGTH 256
 #define LONG_LENGTH 3000
 

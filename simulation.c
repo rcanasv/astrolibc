@@ -18,7 +18,9 @@ void Simulation_init (Simulation * sim)
   if ((!strcmp(sim->archive.format, "Gadget")) ||  \
       (!strcmp(sim->archive.format, "GADGET")) ||  \
       (!strcmp(sim->archive.format, "gadget")))
+  {
     sim->format = GADGET;
+  }
   else
   if ((!strcmp(sim->archive.format, "ramses")) ||  \
       (!strcmp(sim->archive.format, "RAMSES")) ||  \
@@ -31,7 +33,23 @@ void Simulation_init (Simulation * sim)
   if ((!strcmp(sim->archive.format, "galfile")) ||  \
       (!strcmp(sim->archive.format, "Galfile")) ||  \
       (!strcmp(sim->archive.format, "GALFILE")))
+  {
     sim->format = GALFILE;
+  }
+  else
+  if ((!strcmp(sim->archive.format, "eagle")) ||  \
+      (!strcmp(sim->archive.format, "Eagle")) ||  \
+      (!strcmp(sim->archive.format, "EAGLE")))
+  {
+    sim->format = EAGLE;
+  }
+  else
+  if ((!strcmp(sim->archive.format, "illustris")) ||  \
+      (!strcmp(sim->archive.format, "Illustris")) ||  \
+      (!strcmp(sim->archive.format, "ILLUSTRIS")))
+  {
+    sim->format = ILLUSTRIS;
+  }
   else
   {
     printf ("Format %s not supported\n", sim->archive.format);

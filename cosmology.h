@@ -13,15 +13,11 @@
 
 typedef struct Cosmology
 {
-  double   aexp;
-  double   z;
-  double   H0;
+  double   HubbleParam;
   double   OmegaM;
   double   OmegaL;
   double   OmegaB;
   double   OmegaK;
-  double   AgeUniv;
-  double   Lbox;
 } Cosmology;
 
 
