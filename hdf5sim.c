@@ -154,7 +154,7 @@ void hdf5_sim_init (Simulation * snapshot)
 }
 
 
-void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
+void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** part)
 {
 
   int      i, j;
@@ -187,10 +187,10 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
   hdf5_sim_init_groups (snapshot, &group);
   hdf5_sim_init_header (snapshot, &header);
 
-  double * posbuff  = (double *) malloc (3 * sim->NpartThisFile[4] * sizeof(double));
-  double * velbuff  = (double *) malloc (3 * sim->NpartThisFile[4] * sizeof(double));
-  int    * idbuff   = (int    *) malloc (    sim->NpartThisFile[4] * sizeof(int));
-  double * massbuff = (double *) malloc (    sim->NpartThisFile[4] * sizeof(double));
+  double * posbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
+  double * velbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
+  int    * idbuff   = (int    *) malloc (    snapshot->NpartThisFile[4] * sizeof(int));
+  double * massbuff = (double *) malloc (    snapshot->NpartThisFile[4] * sizeof(double));
 
   //
   // Read Header
