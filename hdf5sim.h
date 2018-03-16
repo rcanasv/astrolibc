@@ -55,10 +55,19 @@ typedef struct HDF5_SimGroup
 } HDF5_SimGroup;
 
 
-void  hdf5_sim_init          (Simulation * sim);
-void  hdf5_sim_init_groups   (Simulation * sim, HDF5_SimGroup  * group);
-void  hdf5_sim_init_header   (Simulation * sim, HDF5_SimHeader * header);
+typedef struct HDF5_PartDset
+{
+  char Position    [NAME_LENGTH];
+  char Velocity    [NAME_LENGTH];
+  char Mass        [NAME_LENGTH];
+  char ID          [NAME_LENGTH];
+} HDF5_PartDset;
 
+
+void  hdf5_sim_init           (Simulation * sim);
+void  hdf5_sim_init_groups    (Simulation * sim, HDF5_SimGroup  * group);
+void  hdf5_sim_init_header    (Simulation * sim, HDF5_SimHeader * header);
+void  hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part);
 
 //void  hdf5_sim_load_particles                (Simulation * sim, int filenum, Particle ** part);
 //void  hdf5_sim_structure_calculate_star_age  (Simulation * sim, Structure * strct);

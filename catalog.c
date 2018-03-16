@@ -23,6 +23,7 @@ void Catalog_init (Catalog * ctlg)
   ctlg->strctParts = NULL;
 
   if ((!strcmp(ctlg->archive.format, "stf"))          ||  \
+      (!strcmp(ctlg->archive.format, "STF"))          ||  \
       (!strcmp(ctlg->archive.format, "VELOCIraptor")) ||  \
       (!strcmp(ctlg->archive.format, "velociraptor")))
     ctlg->format = STF;

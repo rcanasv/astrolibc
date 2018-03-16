@@ -56,6 +56,7 @@ void Simulation_init (Simulation * sim)
 
 void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part)
 {
-  if (sim->format == RAMSES) ramses_load_particles (sim, filenum, part);
+  if (sim->format == RAMSES) ramses_load_particles   (sim, filenum, part);
+  if (sim->format == EAGLE)  hdf5_sim_load_particles (sim, filenum, part);
   //if (sim->format == GADGET) gadget_load_particles (sim, filenum, part);
 }
