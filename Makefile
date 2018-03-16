@@ -1,12 +1,17 @@
 CC          = gcc
 
-HDF5_INCL   = -I/opt/gcc/5.4.0/zlib/1.2.11/include  -I/opt/gcc/5.4.0/hdf5/1.8.18/include
-HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5_hl.a /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5.a -L/opt/gcc/5.4.0/zlib/1.2.11/lib
-HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
+HDF5_INCL   = -I/home/rcanas/opt/gcc/6.3.0/zlib/1.2.11/include  -I/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/include
+HDF5_LIB    = -L/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib  /home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib/libhdf5_hl.a /home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib/libhdf5.a -L/home/rcanas/opt/gcc/6.3.0/zlib/1.2.11/lib
+HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib
+
+#HDF5_INCL   = -I/opt/gcc/5.4.0/zlib/1.2.11/include  -I/opt/gcc/5.4.0/hdf5/1.8.18/include
+#HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5_hl.a /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5.a -L/opt/gcc/5.4.0/zlib/1.2.11/lib
+#HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
 
 INC         = $(HDF5_INCL)
 LIB         = $(HDF5_LIB)
 FLAGS       = -lm $(HDF5_FLAGS)
+
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
 	gcc analyze_galaxy_catalog.c -lm -o bin/analyze_galaxy_catalog
