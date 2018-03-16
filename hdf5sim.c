@@ -90,9 +90,9 @@ void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
   {
     case EAGLE:
       strcpy (dataset->Position, "Coordinates");
-      strcpy (dataset->Velocity, "Velocities");
+      strcpy (dataset->Velocity, "Velocity");
       strcpy (dataset->Mass,     "ParticleIDs");
-      strcpy (dataset->ID,       "Masses");
+      strcpy (dataset->ID,       "Mass");
       break;
 
     case ILLUSTRIS:
@@ -261,8 +261,8 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
 
   for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {
-    printf ("%f\n", P[i].Pos[0]);
-    printf ("%f\n", P[i].Pos[1]);
+    printf ("%f  ", P[i].Pos[0]);
+    printf ("%f  ", P[i].Pos[1]);
     printf ("%f\n", P[i].Pos[2]);
   }
 
