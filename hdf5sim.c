@@ -189,7 +189,7 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
 
   double * posbuff  = (double *) malloc (3 * sim->NpartThisFile[4] * sizeof(double));
   double * velbuff  = (double *) malloc (3 * sim->NpartThisFile[4] * sizeof(double));
-  double * idbuff   = (int    *) malloc (    sim->NpartThisFile[4] * sizeof(int));
+  int    * idbuff   = (int    *) malloc (    sim->NpartThisFile[4] * sizeof(int));
   double * massbuff = (double *) malloc (    sim->NpartThisFile[4] * sizeof(double));
 
   //
@@ -203,10 +203,10 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
   }
 
   id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
-  hdf5_get_data (id_group, dataset.Pos,  partbuff, sizeof(partbuff[0]));
-  hdf5_get_data (id_group, dataset.Vel,  partbuff, sizeof(partbuff[0]));
-  hdf5_get_data (id_group, dataset.Mass, partbuff, sizeof(partbuff[0]));
-  hdf5_get_data (id_group, dataset.ID,   partbuff, sizeof(partbuff[0]));
+  hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));
+  hdf5_get_data (id_group, dataset.Velocity,  velbuff,  sizeof(velbuff[0]));
+  hdf5_get_data (id_group, dataset.Mass,      massbuff, sizeof(massbuff[0]));
+  hdf5_get_data (id_group, dataset.ID,        idbuff,   sizeof(idbuff[0]));
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
@@ -240,9 +240,9 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
 
   for (i = 0; i < sim->NpartThisFile[4]; i++)
   {
-    printf ("%f\n", Part[i].Pos[0]);
-    printf ("%f\n", Part[i].Pos[1]);
-    printf ("%f\n", Part[i].Pos[2]);
+    printf ("%f\n", P[i].Pos[0]);
+    printf ("%f\n", P[i].Pos[1]);
+    printf ("%f\n", P[i].Pos[2]);
   }
 
 
