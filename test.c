@@ -50,22 +50,34 @@ int main (int argc, char ** argv)
   //  Load catalogs
   //
   printf ("simulation init\n");
-
   Simulation_init (&opt.simulation);
 
-  printf ("Catalog init\n");
+  printf ("BoxSize          %g\n", opt.simulation.Lbox);
+  printf ("HubbleParam      %g\n", opt.simulation.cosmology.HubbleParam);
+  printf ("Om0              %g\n", opt.simulation.cosmology.OmegaM);
+  printf ("OmB              %g\n", opt.simulation.cosmology.OmegaB);
+  printf ("OmL              %g\n", opt.simulation.cosmology.OmegaL);
+  printf ("time             %g\n", opt.simulation.Time);
+  printf ("z                %g\n", opt.simulation.z);
+  for (i = 0; i < 6; i++)
+    printf ("NumPartThisFile  %u\n", opt.simulation.NpartThisFile[i]);
+  for (i = 0; i < 6; i++)
+    printf ("NumPartTot       %u\n", opt.simulation.NpartTot[i]);
+  for (i = 0; i < 6; i++)
+    printf ("Mass             %g\n", opt.simulation.MassTable[i]);
 
+  /*
+  printf ("Catalog init\n");
   Catalog_init (&opt.catalog);
 
   printf ("Catalog load\n");
-
   Catalog_load (&opt.catalog);
 
   printf ("Loading particle properties\n");
-
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
   Catalog_free (&opt.catalog);
+ */
 
   return (0);
 }

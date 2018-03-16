@@ -4,6 +4,7 @@
  *
  */
 
+
 #include "particle.h"
 #include "structure.h"
 #include "catalog.h"
@@ -42,6 +43,7 @@ void Simulation_init (Simulation * sim)
       (!strcmp(sim->archive.format, "EAGLE")))
   {
     sim->format = EAGLE;
+    hdf5_sim_init (sim);
   }
   else
   if ((!strcmp(sim->archive.format, "illustris")) ||  \
