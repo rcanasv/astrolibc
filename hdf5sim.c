@@ -50,41 +50,38 @@ void hdf5_sim_init_header (Simulation * sim, HDF5_SimHeader * header)
   switch (sim->format)
   {
     case EAGLE:
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Ez, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
-      strcpy (header->Lbox, "BoxSize");
+      strcpy (header->Lbox,              "BoxSize");
+      strcpy (header->Ez,                "E(z)");
+      strcpy (header->a,                 "ExpansionFactor");
+      strcpy (header->Cooling,           "Flag_Cooling");
+      strcpy (header->Double,            "Flag_DoublePrecision");
+      strcpy (header->Feedback,          "Flag_Feedback");
+      strcpy (header->IcInfo,            "Flag_IC_Info");
+      strcpy (header->Metals,            "Flag_Metals");
+      strcpy (header->SFR,               "Flag_Sfr");
+      strcpy (header->Age,               "Flag_StellarAge");
+      strcpy (header->Hz,                "H(z)");
+      strcpy (header->HubbleParam,       "HubbleParam");
+      strcpy (header->MassTable,         "MassTable");
+      strcpy (header->NfilesPerSnapshot, "NumFilesPerSnapshot");
+      strcpy (header->NpartThisFile,     "NumPart_ThisFile");
+      strcpy (header->NpartTot           "NumPart_Total");
+      strcpy (header->NpartTotHW,        "NumPart_Total_HighWord");
+      strcpy (header->OmegaM,            "Omega0");
+      strcpy (header->OmegaB,            "OmegaBaryon");
+      strcpy (header->OmegaL,            "OmegaLambda");
+      strcpy (header->z,                 "Redshift");
+      strcpy (header->RunLabel,          "RunLabel");
+      strcpy (header->Time,              "Time");
       break;
 
-    case ILLUSRIS:
+    case ILLUSTRIS:
       break;
 
     case GIZMO:
       break;
   }
 }
-
-char Lbox           [NAME_LENGTH];
-char HubbleParam    [NAME_LENGTH];
-char OmegaM         [NAME_LENGTH];
-char OmegaB         [NAME_LENGTH];
-char OmegaL         [NAME_LENGTH];
-char Time           [NAME_LENGTH];
-char z              [NAME_LENGTH];
-char a              [NAME_LENGTH];
-char NpartThisFile  [NAME_LENGTH];
-char NpartTot       [NAME_LENGTH];
-char MassTable      [NAME_LENGTH];
-
-
 
 
 void hdf5_sim_init (Simulation * snapshot)
@@ -134,25 +131,10 @@ void hdf5_sim_init (Simulation * snapshot)
   //
   // Adjust Units
   //
-  /*
-  ramses->unit_m = ramses->unit_d * ramses->unit_l * ramses->unit_l * ramses->unit_l;  // in grams
-  ramses->unit_m = ramses->unit_m / 1.989e+33;                                         // in solar masses
-
-  ramses->unit_v = ramses->unit_l / ramses->unit_t;                                    // in cm / s
-  ramses->unit_v = ramses->unit_v / 100000.0;                                          // in km / s
-
-  ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
-  */
 
   //
   // Display header values
   //
-  /*
-  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
-  printf ("unit_l  %lf\n", ramses->unit_l);
-  ramses->cosmology.Lbox *= ramses->unit_l;
-  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
-  */
   printf ("BoxSize          %g\n", snapshot->Lbox);
   printf ("HubbleParam      %g\n", snapshot->HubbleParam);
   printf ("Om0              %g\n", snapshot->OmegaM);

@@ -19,67 +19,30 @@
 
 typedef HDF5_SimHeader
 {
-  char Lbox           [NAME_LENGTH];
-  char Ez             [NAME_LENGTH];
-  char a              [NAME_LENGTH];
-  char Cooling        [NAME_LENGTH];
-  char Feedback       [NAME_LENGTH];
-  char HubbleParam    [NAME_LENGTH];
-  char OmegaM         [NAME_LENGTH];
-  char OmegaB         [NAME_LENGTH];
-  char OmegaL         [NAME_LENGTH];
-  char Time           [NAME_LENGTH];
-  char z              [NAME_LENGTH];
-  char NpartThisFile  [NAME_LENGTH];
-  char NpartTot       [NAME_LENGTH];
-  char MassTable      [NAME_LENGTH];
+  char Lbox               [NAME_LENGTH];
+  char Ez                 [NAME_LENGTH];
+  char a                  [NAME_LENGTH];
+  char Cooling            [NAME_LENGTH];
+  char Double             [NAME_LENGTH];
+  char Feedback           [NAME_LENGTH];
+  char IcInfo             [NAME_LENGTH];
+  char Metals             [NAME_LENGTH];
+  char SFR                [NAME_LENGTH];
+  char Age                [NAME_LENGTH];
+  char Hz                 [NAME_LENGTH];
+  char HubbleParam        [NAME_LENGTH];
+  char MassTable          [NAME_LENGTH];
+  char NfilesPerSnapshot  [NAME_LENGTH];
+  char NpartThisFile      [NAME_LENGTH];
+  char NpartTot           [NAME_LENGTH];
+  char NpartTotHW         [NAME_LENGTH];
+  char OmegaM             [NAME_LENGTH];
+  char OmegaB             [NAME_LENGTH];
+  char OmegaL             [NAME_LENGTH];
+  char z                  [NAME_LENGTH];
+  char RunLabel           [NAME_LENGTH];
+  char Time               [NAME_LENGTH];
 } HDF5_SimGroup;
-
-
-double   HubbleParam;
-double   OmegaM;
-double   OmegaL;
-double   OmegaB;
-double   OmegaK;
-
-
-double     a;
-double     z;
-double     h;
-double     AgeUniv;
-double     Lbox;
-double     Time;
-
-// For RAMSES files
-double     unit_l;
-double     unit_d;
-double     unit_v;
-double     unit_t;
-double     unit_m;
-int        ndim;
-int        ncpu;
-int        npart;
-int        seed[4];
-int        nstarTot;
-double     mstarTot;
-double     mstarLst;
-int        nsink;
-
-// For GADGET
-double     Ez;
-int        Cooling;
-int        Feedback;
-int        IcInfo;
-int        Metals;
-int        SFR;
-int        Age;
-int        Hz;
-int        HubbleParam;
-int        NfilesPerSnapshot;
-double     MassTable     [6];
-double     NpartThisFile [6];
-double     NpartTot      [6];
-char       RunLabel      [NAME_LENGTH];
 
 
 typedef HDF5_SimGroup
