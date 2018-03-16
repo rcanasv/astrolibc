@@ -13,33 +13,33 @@ void hdf5_sim_init_groups (Simulation * sim, HDF5_SimGroup * group)
   switch (sim->format)
   {
     case EAGLE:
-      strcpy (groups->Header,     "Header");
-      strcpy (groups->GasPart,    "PartType0");
-      strcpy (groups->DarkPart,   "PartType1");
-      strcpy (groups->ExtraPart,  "PartType2");
-      strcpy (groups->TracerPart, "PartType3");
-      strcpy (groups->StarPart,   "PartType4");
-      strcpy (groups->BHPart,     "PartType5");
+      strcpy (group->Header,     "Header");
+      strcpy (group->GasPart,    "PartType0");
+      strcpy (group->DarkPart,   "PartType1");
+      strcpy (group->ExtraPart,  "PartType2");
+      strcpy (group->TracerPart, "PartType3");
+      strcpy (group->StarPart,   "PartType4");
+      strcpy (group->BHPart,     "PartType5");
       break;
 
-    case ILLUSRIS:
-      strcpy (groups->Header,     "Header");
-      strcpy (groups->GasPart,    "PartType0");
-      strcpy (groups->DarkPart,   "PartType1");
-      strcpy (groups->ExtraPart,  "PartType2");
-      strcpy (groups->TracerPart, "PartType3");
-      strcpy (groups->StarPart,   "PartType4");
-      strcpy (groups->BHPart,     "PartType5");
+    case ILLUSTRIS:
+      strcpy (group->Header,     "Header");
+      strcpy (group->GasPart,    "PartType0");
+      strcpy (group->DarkPart,   "PartType1");
+      strcpy (group->ExtraPart,  "PartType2");
+      strcpy (group->TracerPart, "PartType3");
+      strcpy (group->StarPart,   "PartType4");
+      strcpy (group->BHPart,     "PartType5");
       break;
 
     case GIZMO:
-      strcpy (groups->Header,     "Header");
-      strcpy (groups->GasPart,    "PartType0");
-      strcpy (groups->DarkPart,   "PartType1");
-      strcpy (groups->ExtraPart,  "PartType2");
-      strcpy (groups->TracerPart, "PartType3");
-      strcpy (groups->StarPart,   "PartType4");
-      strcpy (groups->BHPart,     "PartType5");
+      strcpy (group->Header,     "Header");
+      strcpy (group->GasPart,    "PartType0");
+      strcpy (group->DarkPart,   "PartType1");
+      strcpy (group->ExtraPart,  "PartType2");
+      strcpy (group->TracerPart, "PartType3");
+      strcpy (group->StarPart,   "PartType4");
+      strcpy (group->BHPart,     "PartType5");
       break;
   }
 }
@@ -65,7 +65,7 @@ void hdf5_sim_init_header (Simulation * sim, HDF5_SimHeader * header)
       strcpy (header->MassTable,         "MassTable");
       strcpy (header->NfilesPerSnapshot, "NumFilesPerSnapshot");
       strcpy (header->NpartThisFile,     "NumPart_ThisFile");
-      strcpy (header->NpartTot           "NumPart_Total");
+      strcpy (header->NpartTot,          "NumPart_Total");
       strcpy (header->NpartTotHW,        "NumPart_Total_HighWord");
       strcpy (header->OmegaM,            "Omega0");
       strcpy (header->OmegaB,            "OmegaBaryon");
@@ -93,7 +93,8 @@ void hdf5_sim_init (Simulation * snapshot)
 
   hid_t     id_file;
   hid_t     id_group;
-  herr_t    id_status;
+
+  herr_t    status;
 
   HDF5_SimGroup    group;
   HDF5_SimHeader   header;
@@ -108,23 +109,23 @@ void hdf5_sim_init (Simulation * snapshot)
   // Read Header
   //
   sprintf (fname, "%s/info_%s.txt", snapshot->archive.path, snapshot->archive.prefix);
-  if ((id_file = H5Fopen (argv[1], H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+  if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
     printf ("Couldn't open file %s\n", fname);
     exit (0);
   }
 
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
-  get_attribute (id_group, header->Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
-  get_attribute (id_group, header->HubbleParam,   &snapshot->cosmology.HubbleParam, sizeof(snapshot->cosmology.HubbleParam));
-  get_attribute (id_group, header->OmegaM,        &snapshot->cosmology.OmegaM,      sizeof(snapshot->cosmology.OmegaM));
-  get_attribute (id_group, header->OmegaB,        &snapshot->cosmology.OmegaB,      sizeof(snapshot->cosmology.OmegaB));
-  get_attribute (id_group, header->OmegaL,        &snapshot->cosmology.OmegaL,      sizeof(snapshot->cosmology.OmegaL));
-  get_attribute (id_group, header->Time,          &snapshot->Time,                  sizeof(snapshot->Time));
-  get_attribute (id_group, header->z,             &snapshot->z,                     sizeof(snapshot->z));
-  get_attribute (id_group, header->NpartThisFile, &snapshot->NpartThisFile,         sizeof(snapshot->NpartThisFile[0]));
-  get_attribute (id_group, header->NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
-  get_attribute (id_group, header->MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
+  hdf5_get_attribute (id_group, header.Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
+  hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->cosmology.HubbleParam, sizeof(snapshot->cosmology.HubbleParam));
+  hdf5_get_attribute (id_group, header.OmegaM,        &snapshot->cosmology.OmegaM,      sizeof(snapshot->cosmology.OmegaM));
+  hdf5_get_attribute (id_group, header.OmegaB,        &snapshot->cosmology.OmegaB,      sizeof(snapshot->cosmology.OmegaB));
+  hdf5_get_attribute (id_group, header.OmegaL,        &snapshot->cosmology.OmegaL,      sizeof(snapshot->cosmology.OmegaL));
+  hdf5_get_attribute (id_group, header.Time,          &snapshot->Time,                  sizeof(snapshot->Time));
+  hdf5_get_attribute (id_group, header.z,             &snapshot->z,                     sizeof(snapshot->z));
+  hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile,         sizeof(snapshot->NpartThisFile[0]));
+  hdf5_get_attribute (id_group, header.NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
+  hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
@@ -136,10 +137,10 @@ void hdf5_sim_init (Simulation * snapshot)
   // Display header values
   //
   printf ("BoxSize          %g\n", snapshot->Lbox);
-  printf ("HubbleParam      %g\n", snapshot->HubbleParam);
-  printf ("Om0              %g\n", snapshot->OmegaM);
-  printf ("OmB              %g\n", snapshot->OmegaB);
-  printf ("OmL              %g\n", snapshot->OmegaL);
+  printf ("HubbleParam      %g\n", snapshot->cosmology.HubbleParam);
+  printf ("Om0              %g\n", snapshot->cosmology.OmegaM);
+  printf ("OmB              %g\n", snapshot->cosmology.OmegaB);
+  printf ("OmL              %g\n", snapshot->cosmology.OmegaL);
   printf ("time             %g\n", snapshot->Time);
   printf ("z                %g\n", snapshot->z);
   for (i = 0; i < 6; i++)

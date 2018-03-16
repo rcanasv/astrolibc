@@ -7,7 +7,7 @@
 
 #include "base.h"
 #include "structure.h"
-
+#include "particle.h"
 
 
 void Structure_correct_periodicity (Structure * strct, Simulation * sim)
@@ -18,7 +18,7 @@ void Structure_correct_periodicity (Structure * strct, Simulation * sim)
   double  hbox;
 
 
-  Lbox = sim->cosmology.Lbox;
+  Lbox = sim->Lbox;
   hbox = Lbox / 2.0;
 
 //printf ("Lbox  %lf\n", Lbox);

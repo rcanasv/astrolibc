@@ -13,17 +13,7 @@
 
 
 #include "base.h"
-
-
-typedef struct Archive
-{
-  FILE * file;
-  char   name     [NAME_LENGTH];
-  char   format   [NAME_LENGTH];
-  char   path     [NAME_LENGTH];
-  char   prefix   [NAME_LENGTH];
-  int    nfiles;
-} Archive;
+#include "typedef.h"
 
 
 void Archive_fill   (Archive * a, char * name, char * format, char * path, char * prefix, int nfiles);

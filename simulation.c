@@ -5,13 +5,7 @@
  */
 
 
-#include "particle.h"
-#include "structure.h"
-#include "catalog.h"
 #include "simulation.h"
-#include "format.h"
-
-#include "ramses.h"
 
 
 void Simulation_init (Simulation * sim)

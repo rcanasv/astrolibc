@@ -9,14 +9,11 @@
  *
  */
 
-
-#include "astrolibc.h"
-#include "allvars.h"
-#include "stf.h"
-#include "halomaker.h"
-#include "ramses.h"
-#include "hdf5.h"
-#include "hdf5sim.h"
+#include "base.h"
+#include "typedef.h"
+#include "archive.h"
+#include "catalog.h"
+#include "simulation.h"
 
 
 typedef struct Options
@@ -24,22 +21,20 @@ typedef struct Options
   int            verbose;
   Archive        param;
   Archive        output;
-  Catalog     *  catalog;
-  Simulation  *  simulation;
+  Catalog        catalog;
+  Simulation     simulation;
 } Options;
 
 
-void test_usage   (int opt,  char ** argv)
-int  test_options (int argc, char ** argv, Options * opt)
+void  test_usage   (int opt,  char ** argv);
+int   test_options (int argc, char ** argv, Options * opt);
+void  test_params  (Options * opt);
 
 
 int main (int argc, char ** argv)
 {
   int          i, j, k;
   Options      opt;
-  Structure  * strct;
-  Structure  * strct1;
-  Structure  * strct2;
 
 
   test_options (argc, argv, &opt);
@@ -99,10 +94,6 @@ void test_params (Options * opt)
     printf ("Exiting...\n");
     exit (0);
   }
-
-  // Catalogs to load
-  opt->catalog    = (Catalog *)    malloc (sizeof(Catalog));
-  opt->simulation = (Simulation *) malloc (sizeof(Simulation));
 
   // Catalog
   fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog.archive, buffer);
@@ -164,16 +155,16 @@ int test_options (int argc, char ** argv, Options * opt)
       	break;
 
       case 'h':
-      	ctlgMatch_usage (0, argv);
+      	test_usage (0, argv);
         break;
 
       default:
-      	ctlgMatch_usage (1, argv);
+      	test_usage (1, argv);
     }
   }
 
   if (flag == 0)
-    ctlgMatch_usage (1, argv);
+    test_usage (1, argv);
 
 }
 

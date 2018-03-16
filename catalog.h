@@ -9,27 +9,13 @@
 
 
 #include "base.h"
+#include "typedef.h"
 #include "archive.h"
-#include "particle.h"
-#include "structure.h"
 #include "cosmology.h"
-#include "format.h"
+#include "structure.h"
 #include "simulation.h"
-
-
-
-typedef struct Catalog
-{
-  Archive        archive;
-  Cosmology      cosmology;
-  int            format;
-  int            nstruct;
-  int            nprocs;
-  int            iprops;
-  int            iparts;
-  Structure    * strctProps;
-  Particle    ** strctParts;
-} Catalog;
+#include "particle.h"
+#include "format.h"
 
 
 void Catalog_init                    (Catalog * ctlg);

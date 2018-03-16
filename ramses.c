@@ -26,10 +26,10 @@ void ramses_init (Simulation * ramses)
   }
   for (i = 0; i < 7; i++)
     fgets (buffer, 100, f);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Lbox);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->a);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.HubbleParam);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
@@ -48,10 +48,10 @@ void ramses_init (Simulation * ramses)
   ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
 
   // Box is now in kpc
-  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
+  printf ("Lbox    %lf\n", ramses->Lbox);
   printf ("unit_l  %lf\n", ramses->unit_l);
-  ramses->cosmology.Lbox *= ramses->unit_l;
-  printf ("Lbox    %lf\n", ramses->cosmology.Lbox);
+  ramses->Lbox *= ramses->unit_l;
+  printf ("Lbox    %lf\n", ramses->Lbox);
 }
 
 
@@ -86,10 +86,10 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   }
   for (i = 0; i < 7; i++)
     fgets (buffer, 100, f);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.Lbox);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Lbox);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->Time);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.aexp);
-  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.H0);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->a);
+  fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.HubbleParam);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaM);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &ramses->cosmology.OmegaL);
   fgets(buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
@@ -108,7 +108,7 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
 
   // Box is now in kpc
-  ramses->cosmology.Lbox *= ramses->unit_l;
+  ramses->Lbox *= ramses->unit_l;
 
   //
   //  Read Particle file to get Simulation info
@@ -423,8 +423,8 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
 
 
 
-  printf ("Time simu    %lf\n", (time_tot + time_simu) / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
-  printf ("Hubble time  %lf\n", time_tot / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600*1e9));
+  printf ("Time simu    %lf\n", (time_tot + time_simu) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
+  printf ("Hubble time  %lf\n", time_tot / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
   printf ("i               %d\n", i);
   printf ("time            %e\n", ramses->Time);
   printf ("time_tot        %e\n", time_tot);
@@ -449,7 +449,7 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
               t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
 
           // Age in years
-          strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.H0*1e5/3.08e24) / (365*24*3600.0);
+          strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600.0);
         }
       }
     }

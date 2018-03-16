@@ -11,14 +11,4 @@
 #include "base.h"
 
 
-typedef struct Cosmology
-{
-  double   HubbleParam;
-  double   OmegaM;
-  double   OmegaL;
-  double   OmegaB;
-  double   OmegaK;
-} Cosmology;
-
-
 #endif    /*  COSMOLOGY_H  */

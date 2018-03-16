@@ -5,19 +5,17 @@
  */
 
 
-#ifndef HDF5_H
-#define HDF5_H
+#ifndef HDF5SIM_H
+#define HDF5SIM_H
 
 
-#define HDF5GAS     0
-#define HDF5DM      1
-#define HDF5EXTRA   2
-#define HDF5TRACER  3
-#define HDF5STAR    4
-#define HDF5BH      5
+#include "base.h"
+#include "typedef.h"
+#include "hdf5routines.h"
+#include "format.h"
 
 
-typedef HDF5_SimHeader
+typedef struct HDF5_SimHeader
 {
   char Lbox               [NAME_LENGTH];
   char Ez                 [NAME_LENGTH];
@@ -42,22 +40,23 @@ typedef HDF5_SimHeader
   char z                  [NAME_LENGTH];
   char RunLabel           [NAME_LENGTH];
   char Time               [NAME_LENGTH];
-} HDF5_SimGroup;
+} HDF5_SimHeader;
 
 
-typedef HDF5_SimGroup
+typedef struct HDF5_SimGroup
 {
-  char Header     [NAME_LENGTH];
-  char GasPart    [NAME_LENGTH];
-  char DarkPart   [NAME_LENGTH];
-  char ExtraPart  [NAME_LENGTH];
-  char StarPart   [NAME_LENGTH];
-  char BHPart     [NAME_LENGTH];
+  char Header      [NAME_LENGTH];
+  char GasPart     [NAME_LENGTH];
+  char DarkPart    [NAME_LENGTH];
+  char ExtraPart   [NAME_LENGTH];
+  char TracerPart  [NAME_LENGTH];
+  char StarPart    [NAME_LENGTH];
+  char BHPart      [NAME_LENGTH];
 } HDF5_SimGroup;
 
 
 void  hdf5_sim_init          (Simulation * sim);
-void  hdf5_sim_init_groups   (Simulation * sim, HDF5_SimGroup * group);
+void  hdf5_sim_init_groups   (Simulation * sim, HDF5_SimGroup  * group);
 void  hdf5_sim_init_header   (Simulation * sim, HDF5_SimHeader * header);
 
 

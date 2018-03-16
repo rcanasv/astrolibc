@@ -56,9 +56,9 @@ void halomaker_read_properties (Catalog * hmkr)
                fread (&nsubs,    sizeof(int),   1, f);   HMKR_SKIP
 
 
-  hmkr->cosmology.aexp    = aexp;
+  hmkr->a                 = aexp;
   hmkr->cosmology.OmegaM  = omegam;
-  hmkr->cosmology.AgeUniv = ageuniv;
+  hmkr->AgeUniv           = ageuniv;
 
   hmkr->nprocs  = 1;
   hmkr->nstruct = nstruct + nsubs;
@@ -144,7 +144,7 @@ void halomaker_read_properties (Catalog * hmkr)
     hmkr->strctProps[i].TotMass = dummyf * 1e+11;       // Mass is now in Solar Masses
 
     // Galaxy Position
-    double Lbox   = 100000 * hmkr->cosmology.aexp / 0.704;
+    double Lbox   = 100000 * hmkr->a / 0.704;
     double Lbox_2 = Lbox / 2.0;
 
     HMKR_SKIP    fread (&dummyf, sizeof(float), 1, f);

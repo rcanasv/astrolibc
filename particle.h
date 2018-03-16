@@ -9,22 +9,7 @@
 
 
 #include "base.h"
-
-
-typedef struct Particle
-{
-  float   Pos[3];
-  float   Vel[3];
-  float   Mass;
-  int     Id;
-  int     Level;
-  float   Age;
-  float   Metal;
-  float   Chem;
-  int     Type;
-  float   Radius;
-} Particle;
-
+#include "typedef.h"
 
 int   Particle_rad_compare (const void * a, const void * b);
 void  Particle_copy        (Particle * src, Particle * dst);
