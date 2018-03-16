@@ -84,6 +84,26 @@ void hdf5_sim_init_header (Simulation * sim, HDF5_SimHeader * header)
 }
 
 
+void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
+{
+  switch (sim->format)
+  {
+    case EAGLE:
+      strcpy (dataset->Position, "Coordinates");
+      strcpy (dataset->Velocity, "Velocities");
+      strcpy (dataset->Mass,     "ParticleIDs");
+      strcpy (dataset->ID,       "Masses");
+      break;
+
+    case ILLUSTRIS:
+      break;
+
+    case GIZMO:
+      break;
+  }
+}
+
+
 void hdf5_sim_init (Simulation * snapshot)
 {
   int     i;
@@ -184,8 +204,9 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   //  Initialize Depending on  Format
   //
-  hdf5_sim_init_groups (snapshot, &group);
-  hdf5_sim_init_header (snapshot, &header);
+  hdf5_sim_init_groups  (snapshot, &group);
+  hdf5_sim_init_header  (snapshot, &header);
+  hdf5_sim_init_dataset (snapshot, &dataset);
 
   double * posbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
   double * velbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
@@ -213,7 +234,7 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // From buffer to Particle
   //
-  if ((*(part) = (Particle *) malloc (sim->NpartThisFile[4] * sizeof(Particle))) == NULL)
+  if ((*(part) = (Particle *) malloc (snapshot->NpartThisFile[4] * sizeof(Particle))) == NULL)
   {
     printf ("Couldn't allocate memory for Particle array\n");
     exit(0);
@@ -221,7 +242,7 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
 
   P = *(part);
 
-  for (i = 0, j = 0; i < sim->NpartThisFile[4]; i++, j=j+3)
+  for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
   {
     P[i].Pos[0] = posbuff  [j];
     P[i].Pos[1] = posbuff  [j+1];
@@ -238,7 +259,7 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   free (idbuff);
   free (massbuff);
 
-  for (i = 0; i < sim->NpartThisFile[4]; i++)
+  for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {
     printf ("%f\n", P[i].Pos[0]);
     printf ("%f\n", P[i].Pos[1]);
