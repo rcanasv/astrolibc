@@ -108,7 +108,7 @@ void hdf5_sim_init (Simulation * snapshot)
   //
   // Read Header
   //
-  sprintf (fname, "%s/info_%s.txt", snapshot->archive.path, snapshot->archive.prefix);
+  sprintf (fname, "%s/%s", snapshot->archive.path, snapshot->archive.prefix);
   if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
     printf ("Couldn't open file %s\n", fname);
