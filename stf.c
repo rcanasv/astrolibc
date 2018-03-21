@@ -366,6 +366,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
   //
   //  Shift particles to the structure centre of mass
   //
+  /*
   for (i = 1; i <= stf->nstruct; i++)
   {
     strct = &stf->strctProps[i];
@@ -380,6 +381,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
       strct->Part[j].Vel[2] -= strct->Vel[2];
     }
   }
+  */
 }
 
 

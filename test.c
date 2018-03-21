@@ -56,6 +56,9 @@ int main (int argc, char ** argv)
   printf ("Loading particle properties\n");
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
+  
+
+
   Catalog_free (&opt.catalog);
 
 

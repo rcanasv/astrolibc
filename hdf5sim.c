@@ -216,7 +216,7 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // Read Header
   //
-  sprintf (fname, "%s/%s", snapshot->archive.path, snapshot->archive.prefix);
+  sprintf (fname, "%s/%s.%d.hdf5", snapshot->archive.path, snapshot->archive.prefix, filenum);
   if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
     printf ("Couldn't open file %s\n", fname);
@@ -265,8 +265,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     printf ("%f  ", P[i].Pos[1]);
     printf ("%f\n", P[i].Pos[2]);
   }
-
-
 
   //
   // Convert to human readable units
