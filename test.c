@@ -147,8 +147,8 @@ int main (int argc, char ** argv)
       {
         strct->dummyd += strct->Part[k].Mass;
 
-        if (strct->dummyd < halftotmass)      strct->R20       = strct->Part[k].Radius;
-        if (strct->dummyd < halfmass100kpc3d) strct->RHalfMass = strct->Part[k].Radius;
+        if (strct->dummyd < halftotmass)      r         = strct->Part[k].Radius;
+        if (strct->dummyd < halfmass100kpc3d) r100kpc3d = strct->Part[k].Radius;
       }
 
       //
@@ -172,7 +172,7 @@ int main (int argc, char ** argv)
       {
         strct->dummyd += strct->Part[k].Mass;
         if (strct->dummyd < halfmass100kpc2d)
-         strct->RHalfMass = strct->Part[k].Radius;
+         r100kpc2d = strct->Part[k].Radius;
       }
     }
     fprintf (f, "%e  ", totmass);
