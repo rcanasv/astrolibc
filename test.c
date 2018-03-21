@@ -56,24 +56,6 @@ int main (int argc, char ** argv)
   //printf ("Loading particle properties\n");
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
-/*
-  FILE * f;
-  Structure * strct;
-  char buffer [NAME_LENGTH];
-  for (i = 1; i < opt.catalog.nstruct; i++)
-  {
-    sprintf (buffer, "galaxy_%03d", i);
-    f = fopen (buffer, "w");
-    strct = &opt.catalog.strctProps[i];
-    for (j = 0; j < strct->NumPart; j++)
-    {
-      fprintf (f, "%e  ", strct->Part[j].Pos[0]);
-      fprintf (f, "%e  ", strct->Part[j].Pos[1]);
-      fprintf (f, "%e\n", strct->Part[j].Pos[2]);
-    }
-    fclose (f);
-  }
-*/
 
   Structure * strct;
   Particle  * p;
@@ -100,7 +82,6 @@ int main (int argc, char ** argv)
   char buffer [NAME_LENGTH];
   sprintf (buffer, "sizemass_eagle_velociraptor.dat");
   f = fopen (buffer, "w");
-
 
   for (i = 1; i < opt.catalog.nstruct; i++)
   {
@@ -139,9 +120,9 @@ int main (int argc, char ** argv)
           mass100kpc3d += strct->Part[k].Mass;
       }
 
-      halftotmass      /= 2.0;
-      halfmass100kpc3d /= 2.0;
-      strct->dummyd     = 0;
+      halftotmass      = totmass      / 2.0;
+      halfmass100kpc3d = mass100kpc3d / 2.0;
+      strct->dummyd    = 0;
 
       for (k = 0; k < strct->NumPart; k++)
       {
@@ -166,7 +147,7 @@ int main (int argc, char ** argv)
           mass100kpc2d += strct->Part[k].Mass;
       }
 
-      halfmass100kpc2d /= 2.0;
+      halfmass100kpc2d  = mass100kpc2d / 2.0;
       strct->dummyd     = 0;
 
       for (k = 0; k < strct->NumPart; k++)

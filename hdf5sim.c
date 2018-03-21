@@ -280,14 +280,11 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   double a = 1.0 / (1.0 + snapshot->z);
   double h = snapshot->cosmology.HubbleParam;
 
-  printf ("a   %e\n", a);
-  printf ("h   %e\n", h);
-
   for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {
-    P[i].Pos[0] *= 1000 * a / h;
-    P[i].Pos[1] *= 1000 * a / h;
-    P[i].Pos[2] *= 1000 * a / h;
-    P[i].Mass   *= 1.0      / h;
+    P[i].Pos[0] *= 1000.0 * a / h;
+    P[i].Pos[1] *= 1000.0 * a / h;
+    P[i].Pos[2] *= 1000.0 * a / h;
+    P[i].Mass   *= 1.0        / h;
   }
 }
