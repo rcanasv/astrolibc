@@ -348,6 +348,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
           Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
           strct->dummyi++;
         }
+
         free (xtndd);
         free (part);
       }

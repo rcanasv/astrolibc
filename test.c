@@ -56,10 +56,10 @@ int main (int argc, char ** argv)
   printf ("Loading particle properties\n");
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
-  
+  printf ("Particles loaded\n");  
 
 
-  Catalog_free (&opt.catalog);
+//  Catalog_free (&opt.catalog);
 
 
   return (0);

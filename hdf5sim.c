@@ -196,6 +196,10 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   herr_t   status;
 
   Particle * P;
+  double   * posbuff;
+  double   * velbuff;
+  double   * massbuff;
+  int      * idbuff;
 
   HDF5_SimGroup    group;
   HDF5_SimHeader   header;
@@ -208,11 +212,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   hdf5_sim_init_header  (snapshot, &header);
   hdf5_sim_init_dataset (snapshot, &dataset);
 
-  double * posbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
-  double * velbuff  = (double *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double));
-  int    * idbuff   = (int    *) malloc (    snapshot->NpartThisFile[4] * sizeof(int));
-  double * massbuff = (double *) malloc (    snapshot->NpartThisFile[4] * sizeof(double));
-
   //
   // Read Header
   //
@@ -223,6 +222,29 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     exit (0);
   }
 
+  //
+  // Update local number of particles
+  //
+  id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
+  hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile, sizeof(snapshot->NpartThisFile[0]));
+  status = H5Gclose  (id_group);
+
+
+  //
+  // From buffer to Particle
+  //
+  if (((*(part)  = (Particle *) malloc (    snapshot->NpartThisFile[4] * sizeof(Particle)))  == NULL) || \
+      ((posbuff  = (double   *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL) || \
+      ((velbuff  = (double   *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL) || \
+      ((idbuff   = (int      *) malloc (    snapshot->NpartThisFile[4] * sizeof(int))     )  == NULL) || \
+      ((massbuff = (double   *) malloc (    snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL)
+     )
+  {
+    printf ("Couldn't allocate memory for Particle array\n");
+    exit(0);
+  }
+
+
   id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
   hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));
   hdf5_get_data (id_group, dataset.Velocity,  velbuff,  sizeof(velbuff[0]));
@@ -231,14 +253,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
-  //
-  // From buffer to Particle
-  //
-  if ((*(part) = (Particle *) malloc (snapshot->NpartThisFile[4] * sizeof(Particle))) == NULL)
-  {
-    printf ("Couldn't allocate memory for Particle array\n");
-    exit(0);
-  }
 
   P = *(part);
 
@@ -258,13 +272,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   free (velbuff);
   free (idbuff);
   free (massbuff);
-
-  for (i = 0; i < snapshot->NpartThisFile[4]; i++)
-  {
-    printf ("%f  ", P[i].Pos[0]);
-    printf ("%f  ", P[i].Pos[1]);
-    printf ("%f\n", P[i].Pos[2]);
-  }
 
   //
   // Convert to human readable units
