@@ -87,6 +87,8 @@ int main (int argc, char ** argv)
   {
     strct = &opt.catalog.strctProps[i];
 
+    printf ("%e\n", strct->Part[0].Mass);
+
     totmass      = 0.0;
     mass100kpc3d = 0.0;
     mass100kpc2d = 0.0;
