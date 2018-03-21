@@ -44,22 +44,37 @@ int main (int argc, char ** argv)
   //
   //  Load catalogs
   //
-  printf ("simulation init\n");
+  //printf ("simulation init\n");
   Simulation_init (&opt.simulation);
 
-  printf ("Catalog init\n");
+  //printf ("Catalog init\n");
   Catalog_init (&opt.catalog);
 
-  printf ("Catalog load\n");
+  //printf ("Catalog load\n");
   Catalog_load_properties (&opt.catalog);
 
-  printf ("Loading particle properties\n");
+  //printf ("Loading particle properties\n");
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
-  printf ("Particles loaded\n");  
+  FILE * f;
+  Structure * strct;
+  char buffer [NAME_LENGTH];
+  for (i = 1; i < opt.catalog.nstruct; i++)
+  {
+    sprintf (buffer, "galaxy_%03d", i);
+    f = fopen (buffer, "w");
+    strct = &opt.catalog.strctProps[i];
+    for (j = 0; j < strct->NumPart; j++)
+    {
+      fprintf (f, "%e  ", strct->Part[j].Pos[0]);
+      fprintf (f, "%e  ", strct->Part[j].Pos[1]);
+      fprintf (f, "%e\n", strct->Part[j].Pos[2]);
+    }
+    fclose (f);
+  }
 
 
-//  Catalog_free (&opt.catalog);
+  //Catalog_free (&opt.catalog);
 
 
   return (0);
