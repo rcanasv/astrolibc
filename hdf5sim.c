@@ -147,7 +147,6 @@ void hdf5_sim_init (Simulation * snapshot)
   hdf5_get_attribute (id_group, header.NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
   hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
   snapshot->Lbox = snapshot->Lbox / (1.0 + snapshot->z) / snapshot->cosmology.HubbleParam;
-  printf ("BoxSize   %e\n", snapshot->Lbox);
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 

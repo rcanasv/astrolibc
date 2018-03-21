@@ -157,6 +157,7 @@ int main (int argc, char ** argv)
       for (k = 0; k < strct->NumPart; k++)
         strct->Part[k].Pos[2] = 0.0;
 
+      Structure_get_particle_radius (strct);
       qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
 
       for (k = 0; k < strct->NumPart; k++)
@@ -174,14 +175,14 @@ int main (int argc, char ** argv)
         if (strct->dummyd < halfmass100kpc2d)
          r100kpc2d = strct->Part[k].Radius;
       }
+      fprintf (f, "%e  ", totmass);
+      fprintf (f, "%e  ", r);
+      fprintf (f, "%e  ", mass100kpc3d);
+      fprintf (f, "%e  ", r100kpc3d);
+      fprintf (f, "%e  ", mass100kpc2d);
+      fprintf (f, "%e  ", r100kpc2d);
+      fprintf (f, "\n");
     }
-    fprintf (f, "%e  ", totmass);
-    fprintf (f, "%e  ", r);
-    fprintf (f, "%e  ", mass100kpc3d);
-    fprintf (f, "%e  ", r100kpc3d);
-    fprintf (f, "%e  ", mass100kpc2d);
-    fprintf (f, "%e  ", r100kpc2d);
-    fprintf (f, "\n");
   }
   fclose (f);
 
