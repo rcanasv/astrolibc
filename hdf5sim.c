@@ -91,8 +91,8 @@ void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
     case EAGLE:
       strcpy (dataset->Position, "Coordinates");
       strcpy (dataset->Velocity, "Velocity");
-      strcpy (dataset->Mass,     "ParticleIDs");
-      strcpy (dataset->ID,       "Mass");
+      strcpy (dataset->ID,       "ParticleIDs");
+      strcpy (dataset->Mass,     "Mass");
       break;
 
     case ILLUSTRIS:
