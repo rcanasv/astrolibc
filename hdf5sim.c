@@ -146,6 +146,8 @@ void hdf5_sim_init (Simulation * snapshot)
   hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile,         sizeof(snapshot->NpartThisFile[0]));
   hdf5_get_attribute (id_group, header.NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
   hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
+  snapshot->Lbox = snapshot->Lbox / (1.0 + snapshot->z) / snapshot->cosmology.HubbleParam;
+  printf ("BoxSize   %e\n", snapshot->Lbox);
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
@@ -276,18 +278,17 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // Convert to human readable units
   //
-  /*
-  for (i = 0; i < ramses->npart; i++)
+  double a = 1.0 / (1.0 + snapshot->z);
+  double h = snapshot->cosmology.HubbleParam;
+
+  printf ("a   %e\n", a);
+  printf ("h   %e\n", h);
+
+  for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {
-    P[i].Pos[0] *= ramses->unit_l;
-    P[i].Pos[1] *= ramses->unit_l;
-    P[i].Pos[2] *= ramses->unit_l;
-
-    P[i].Vel[0] *= ramses->unit_v;
-    P[i].Vel[1] *= ramses->unit_v;
-    P[i].Vel[2] *= ramses->unit_v;
-
-    P[i].Mass   *= ramses->unit_m;
+    P[i].Pos[0] *= 1000 * a / h;
+    P[i].Pos[1] *= 1000 * a / h;
+    P[i].Pos[2] *= 1000 * a / h;
+    P[i].Mass   *= 1.0      / h;
   }
-  */
 }

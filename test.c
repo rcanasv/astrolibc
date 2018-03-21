@@ -56,6 +56,7 @@ int main (int argc, char ** argv)
   //printf ("Loading particle properties\n");
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
 
+/*
   FILE * f;
   Structure * strct;
   char buffer [NAME_LENGTH];
@@ -72,10 +73,119 @@ int main (int argc, char ** argv)
     }
     fclose (f);
   }
+*/
 
+  Structure * strct;
+  Particle  * p;
+
+  double  cmx;
+  double  cmy;
+  double  cmz;
+
+  double  totmass;
+  double  mass100kpc3d;
+  double  mass100kpc2d;
+
+  double  halftotmass;
+  double  halfmass100kpc3d;
+  double  halfmass100kpc2d;
+
+  double  r;
+  double  r100kpc3d;
+  double  r100kpc2d;
+
+  double r2d;
+
+  FILE * f;
+  char buffer [NAME_LENGTH];
+  sprintf (buffer, "sizemass_eagle_velociraptor.dat");
+  f = fopen (buffer, "w");
+
+
+  for (i = 1; i < opt.catalog.nstruct; i++)
+  {
+    strct = &opt.catalog.strctProps[i];
+
+    totmass      = 0.0;
+    mass100kpc3d = 0.0;
+    mass100kpc2d = 0.0;
+
+    halftotmass      = 0.0;
+    halfmass100kpc3d = 0.0;
+    halfmass100kpc2d = 0.0;
+
+    r            = 0.0;
+    r100kpc3d    = 0.0;
+    r100kpc2d    = 0.0;
+
+    if (strct->Type > 7)
+    {
+      Structure_correct_periodicity       (strct, &opt.simulation);
+      Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+
+      //
+      //  Calculate 3D Sizes
+      //
+      qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        // Total Mass
+        totmass += strct->Part[k].Mass;
+
+        // Mass Inside 3D 100 kpc
+        if (strct->Part[k].Radius < 100.0)
+          mass100kpc3d += strct->Part[k].Mass;
+      }
+
+      halftotmass      /= 2.0;
+      halfmass100kpc3d /= 2.0;
+      strct->dummyd     = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        strct->dummyd += strct->Part[k].Mass;
+
+        if (strct->dummyd < halftotmass)      strct->R20       = strct->Part[k].Radius;
+        if (strct->dummyd < halfmass100kpc3d) strct->RHalfMass = strct->Part[k].Radius;
+      }
+
+      //
+      //  Calculate 2D Sizes
+      //
+      for (k = 0; k < strct->NumPart; k++)
+        strct->Part[k].Pos[2] = 0.0;
+
+      qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        if (strct->Part[k].Radius < 100.0)
+          mass100kpc2d += strct->Part[k].Mass;
+      }
+
+      halfmass100kpc2d /= 2.0;
+      strct->dummyd     = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        strct->dummyd += strct->Part[k].Mass;
+        if (strct->dummyd < halfmass100kpc2d)
+         strct->RHalfMass = strct->Part[k].Radius;
+      }
+    }
+    fprintf (f, "%e  ", totmass);
+    fprintf (f, "%e  ", r);
+    fprintf (f, "%e  ", mass100kpc3d);
+    fprintf (f, "%e  ", r100kpc3d);
+    fprintf (f, "%e  ", mass100kpc2d);
+    fprintf (f, "%e  ", r100kpc2d);
+    fprintf (f, "\n");
+  }
+  fclose (f);
 
   //Catalog_free (&opt.catalog);
-
 
   return (0);
 }
