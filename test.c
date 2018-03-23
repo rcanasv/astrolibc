@@ -101,6 +101,11 @@ int main (int argc, char ** argv)
 
     if (strct->Type > 7)
     {
+
+      strct->Pos[0] *= 1000;
+      strct->Pos[1] *= 1000;
+      strct->Pos[2] *= 1000;
+
       Structure_correct_periodicity       (strct, &opt.simulation);
       Structure_shift_to_centre_of_mass   (strct);
       Structure_get_particle_radius       (strct);
