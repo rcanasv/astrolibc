@@ -558,6 +558,11 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
     P[i].Pos[1] *= 1000;
     P[i].Pos[2] *= 1000;
 
+    // Move galaxy to box  0 - Lbox
+    P[i].Pos[0] += strct->Pos[0];
+    P[i].Pos[1] += strct->Pos[1];
+    P[i].Pos[2] += strct->Pos[2];
+
     // converts to Msun
     P[i].Mass   *= 1e+11;
   }

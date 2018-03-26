@@ -48,12 +48,14 @@ int main (int argc, char ** argv)
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
 
-
   printf ("Tagging isolated galaxies\n");
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
-  int * isolated = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * isolated   = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * looselyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * highlyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * central    = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
 
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
@@ -61,14 +63,18 @@ int main (int argc, char ** argv)
     strct1->dummyd = 0;
     strct1->dummyi = 0;
   }
-  
-  
+
+
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
     strct1 = &opt.catalog[0].strctProps[i];
     strct2 = &opt.catalog[0].strctProps[strct1->HostID];
-    isolated[i] = 0;
-    
+
+    isolated[i]  = 0;
+    looselyint[i] = 0;
+    highlyint[i] = 0;
+    central[i]   = 0;
+
     if (strct1->Type > 7)
     {
       if (strct1->HostID == -1)
@@ -77,19 +83,25 @@ int main (int argc, char ** argv)
         strct1->dummyi = strct1->ID;
         continue;
       }
-      
+
       if (strct2->dummyi == 0)
-      { 
+      {
         strct2->dummyd = strct1->TotMass;
         strct2->dummyi = strct1->ID;
-      }  
-      // 
-      // Determine if galaxy is isolated
+      }
       //
-      if ((strct1->Type    == 10) && \
-          (strct1->NumSubs == 0))
-        isolated[i] = 1;
-      
+      // Determine if galaxy is TRULY isolated
+      //
+      if (strct2->NumSubs == 1)
+         isolated[i] = 1;
+      else
+      {
+        if ((strct1->Type    == 10) && (strct1->NumSubs == 0))
+          looselyint[i] = 1;
+        else
+          highlyint[i] = 1;
+      }
+
       //
       // Save mass of central galaxy
       //
@@ -100,8 +112,8 @@ int main (int argc, char ** argv)
       }
     }
   }
-  
-  
+
+
   //
   // Correct Type for galaxies
   //
@@ -109,7 +121,7 @@ int main (int argc, char ** argv)
   {
     strct1 = &opt.catalog[0].strctProps[i];
     strct2 = &opt.catalog[0].strctProps[strct1->DirectHostID];
-    
+
     if (strct1->Type > 7)
     {
       if (strct1->Type == 10)
@@ -118,12 +130,12 @@ int main (int argc, char ** argv)
         strct1->dummyi = strct1->ID;
         continue;
       }
-      
-      
+
+
       while (strct2->Type > 10)
         strct2 = &opt.catalog[0].strctProps[strct2->DirectHostID];
-      
-      
+
+
       if (strct1->TotMass > strct2->dummyd)
       {
         strct2->dummyd = strct1->TotMass;
@@ -152,7 +164,7 @@ int main (int argc, char ** argv)
     }
   }
 
-  
+
   //
   //  Read TreeFrog
   //
@@ -194,7 +206,7 @@ int main (int argc, char ** argv)
     }
   }
 
-  
+
 
   //
   //  Calculate R20, R50, R90
@@ -261,6 +273,9 @@ int main (int argc, char ** argv)
         fprintf (f, "%7d   ", strct1->ID);
         fprintf (f, "%7d   ", strct2->ID);
         fprintf (f, "%7d   ", isolated[strct1->ID]);
+        fprintf (f, "%7d   ", looselyint[strct1->ID]);
+        fprintf (f, "%7d   ", highlyint[strct1->ID]);
+        fprintf (f, "%7d   ", central[strct1->ID]);
         fprintf (f, "%e    ", strct1->MatchMrrts[0]);
         fprintf (f, "%7d   ", strct1->Type);
         fprintf (f, "%e    ", opt.catalog[0].strctProps[strct1->HostID].dummyd);
@@ -291,7 +306,7 @@ int main (int argc, char ** argv)
     }
   }
   fclose (f);
-  
+
   char buff[NAME_LENGTH];
   sprintf (buff, "%s_VELOCIraptor", opt.output.name);
   f = fopen (buff, "w");
@@ -308,11 +323,15 @@ int main (int argc, char ** argv)
     fprintf (f, "%e    ", strct1->SFR20);
     fprintf (f, "%e    ", strct1->SFR50);
     fprintf (f, "%e    ", strct1->SFR100);
+    fprintf (f, "%7d   ", isolated[strct1->ID]);
+    fprintf (f, "%7d   ", looselyint[strct1->ID]);
+    fprintf (f, "%7d   ", highlyint[strct1->ID]);
+    fprintf (f, "%7d   ", central[strct1->ID]);
     fprintf (f, "\n");
   }
   fclose (f);
 
-  
+
   sprintf (buff, "%s_HaloMaker", opt.output.name);
   f = fopen (buff, "w");
   for (i = 1; i <= opt.catalog[1].nstruct; i++)
@@ -331,9 +350,11 @@ int main (int argc, char ** argv)
     fprintf (f, "\n");
   }
   fclose (f);
-  
-  free (isolated);
 
+  free (isolated);
+  free (looselyint);
+  free (highlyint);
+  free (central);
 
 
   //
