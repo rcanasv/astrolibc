@@ -26,6 +26,10 @@ void Structure_correct_periodicity (Structure * strct, Simulation * sim)
 
   for (i = 0; i < strct->NumPart; i++)
   {
+    strct->Part[i].Pos[0] -= strct->Pos[0];
+    strct->Part[i].Pos[1] -= strct->Pos[1];
+    strct->Part[i].Pos[2] -= strct->Pos[2];
+
     while (strct->Part[i].Pos[0] >  hbox)   strct->Part[i].Pos[0] -= Lbox;
     while (strct->Part[i].Pos[1] >  hbox)   strct->Part[i].Pos[1] -= Lbox;
     while (strct->Part[i].Pos[2] >  hbox)   strct->Part[i].Pos[2] -= Lbox;

@@ -1,11 +1,8 @@
 /*
  *
- *  \file    ctlgmatch.c
- *  \brief   This code cross matches structures (galaxies, dmhs, ...)
- *           in the same snapshot identified by two different codes.
- *
- *           Currently only VELOCIraptor - HaloMaker cross match is
- *           available.
+ *  \file    test.c
+ *  \brief   
+ * 
  *
  */
 
