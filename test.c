@@ -101,9 +101,38 @@ int main (int argc, char ** argv)
 
     if (strct->Type > 7)
     {
+ 
+      if (strct->ID == 12325)
+      {
+        for (k = 0; k < strct->NumPart; k++)
+        {
+          printf ("%e  ", strct->Part[k].Pos[0]);
+          printf ("%e  ", strct->Part[k].Pos[1]);
+          printf ("%e\n", strct->Part[k].Pos[2]);
+        }
+      }
+
+      printf ("-----\n");
+
+
+      strct->Pos[0] *= 1000;
+      strct->Pos[1] *= 1000;
+      strct->Pos[2] *= 1000;
+
       Structure_correct_periodicity       (strct, &opt.simulation);
       Structure_shift_to_centre_of_mass   (strct);
       Structure_get_particle_radius       (strct);
+
+      if (strct->ID == 12325)
+      {
+        for (k = 0; k < strct->NumPart; k++)
+        {
+          printf ("%e  ", strct->Part[k].Pos[0]);
+          printf ("%e  ", strct->Part[k].Pos[1]);
+          printf ("%e\n", strct->Part[k].Pos[2]);
+        }
+      }
+
 
       //
       //  Calculate 3D Sizes
@@ -158,6 +187,7 @@ int main (int argc, char ** argv)
         if (strct->dummyd < halfmass100kpc2d)
          r100kpc2d = strct->Part[k].Radius;
       }
+      fprintf (f, "%d  ", strct->ID);
       fprintf (f, "%e  ", totmass);
       fprintf (f, "%e  ", r);
       fprintf (f, "%e  ", mass100kpc3d);
