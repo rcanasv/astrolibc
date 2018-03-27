@@ -1,10 +1,8 @@
 CC          = gcc
 
-
 HDF5_INCL   = -I//softs/hdf5/1.8.18-gcc4/include
 HDF5_LIB    = -L/softs/hdf5/1.8.18-gcc4/lib  /softs/hdf5/1.8.18-gcc4/lib/libhdf5_hl.a /softs/hdf5/1.8.18-gcc4/lib/libhdf5.a
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/softs/hdf5/1.8.18-gcc4/lib
-
 
 #HDF5_INCL   = -I/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/include
 #HDF5_LIB    = -L/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib  /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5_hl.a /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5.a

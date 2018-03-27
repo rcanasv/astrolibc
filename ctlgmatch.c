@@ -49,6 +49,7 @@ int main (int argc, char ** argv)
   }
 
   printf ("Tagging isolated galaxies\n");
+
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
@@ -63,7 +64,6 @@ int main (int argc, char ** argv)
     strct1->dummyd = 0;
     strct1->dummyi = 0;
   }
-
 
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
@@ -113,6 +113,19 @@ int main (int argc, char ** argv)
     }
   }
 
+  //
+  // Tag central galaxies
+  //
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+      if (strct1->ID == strct2->dummyi)
+        central[i] == 1;
+  }
+
 
   //
   // Correct Type for galaxies
@@ -131,10 +144,8 @@ int main (int argc, char ** argv)
         continue;
       }
 
-
       while (strct2->Type > 10)
         strct2 = &opt.catalog[0].strctProps[strct2->DirectHostID];
-
 
       if (strct1->TotMass > strct2->dummyd)
       {
