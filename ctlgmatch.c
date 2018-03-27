@@ -49,11 +49,12 @@ int main (int argc, char ** argv)
   }
 
   printf ("Tagging isolated galaxies\n");
+
   //
   //  Tag isolated galaxies in VELOCIraptor
   //
   int * isolated   = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
-  int * looselyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * looselyint = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
   int * highlyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
   int * central    = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
 
@@ -64,16 +65,15 @@ int main (int argc, char ** argv)
     strct1->dummyi = 0;
   }
 
-
   for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
     strct1 = &opt.catalog[0].strctProps[i];
     strct2 = &opt.catalog[0].strctProps[strct1->HostID];
 
-    isolated[i]  = 0;
+    isolated[i]   = 0;
     looselyint[i] = 0;
-    highlyint[i] = 0;
-    central[i]   = 0;
+    highlyint[i]  = 0;
+    central[i]    = 0;
 
     if (strct1->Type > 7)
     {
@@ -96,7 +96,7 @@ int main (int argc, char ** argv)
          isolated[i] = 1;
       else
       {
-        if ((strct1->Type    == 10) && (strct1->NumSubs == 0))
+        if ((strct1->Type == 10) && (strct1->NumSubs == 0))
           looselyint[i] = 1;
         else
           highlyint[i] = 1;
@@ -111,6 +111,19 @@ int main (int argc, char ** argv)
         strct2->dummyi = strct1->ID;
       }
     }
+  }
+
+  //
+  // Tag central galaxies
+  //
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+      if (strct1->ID == strct2->dummyi)
+        central[i] == 1;
   }
 
 
@@ -131,10 +144,8 @@ int main (int argc, char ** argv)
         continue;
       }
 
-
       while (strct2->Type > 10)
         strct2 = &opt.catalog[0].strctProps[strct2->DirectHostID];
-
 
       if (strct1->TotMass > strct2->dummyd)
       {
