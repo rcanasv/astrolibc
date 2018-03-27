@@ -53,7 +53,7 @@ int main (int argc, char ** argv)
   //  Tag isolated galaxies in VELOCIraptor
   //
   int * isolated   = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
-  int * looselyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
+  int * looselyint = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
   int * highlyint  = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
   int * central    = (int *) malloc ((opt.catalog[0].nstruct+1)*sizeof(int));
 
@@ -70,10 +70,10 @@ int main (int argc, char ** argv)
     strct1 = &opt.catalog[0].strctProps[i];
     strct2 = &opt.catalog[0].strctProps[strct1->HostID];
 
-    isolated[i]  = 0;
+    isolated[i]   = 0;
     looselyint[i] = 0;
-    highlyint[i] = 0;
-    central[i]   = 0;
+    highlyint[i]  = 0;
+    central[i]    = 0;
 
     if (strct1->Type > 7)
     {
@@ -96,7 +96,7 @@ int main (int argc, char ** argv)
          isolated[i] = 1;
       else
       {
-        if ((strct1->Type    == 10) && (strct1->NumSubs == 0))
+        if ((strct1->Type == 10) && (strct1->NumSubs == 0))
           looselyint[i] = 1;
         else
           highlyint[i] = 1;
