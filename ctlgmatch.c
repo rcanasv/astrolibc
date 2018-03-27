@@ -81,6 +81,11 @@ int main (int argc, char ** argv)
       {
         strct1->dummyd = strct1->TotMass;
         strct1->dummyi = strct1->ID;
+        central[i] = 1;
+        if (strct1->NumSubs == 0)
+          isolated[i] = 1;
+        else
+          highlyint[i] = 1;
         continue;
       }
 
@@ -89,6 +94,7 @@ int main (int argc, char ** argv)
         strct2->dummyd = strct1->TotMass;
         strct2->dummyi = strct1->ID;
       }
+
       //
       // Determine if galaxy is TRULY isolated
       //
@@ -123,7 +129,7 @@ int main (int argc, char ** argv)
 
     if (strct1->Type > 7)
       if (strct1->ID == strct2->dummyi)
-        central[i] == 1;
+        central[i] = 1;
   }
 
 
