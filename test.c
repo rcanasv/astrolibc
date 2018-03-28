@@ -69,17 +69,17 @@ int main (int argc, char ** argv)
   int * highlyint  = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
   int * central    = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
 
-  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    strct1 = &opt.catalog[0].strctProps[i];
+    strct1 = &opt.catalog.strctProps[i];
     strct1->dummyd = 0;
     strct1->dummyi = 0;
   }
 
-  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    strct1 = &opt.catalog[0].strctProps[i];
-    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+    strct1 = &opt.catalog.strctProps[i];
+    strct2 = &opt.catalog.strctProps[strct1->HostID];
 
     isolated   [i] = 0;
     looselyint [i] = 0;
@@ -133,10 +133,10 @@ int main (int argc, char ** argv)
   //
   // Tag central galaxies
   //
-  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    strct1 = &opt.catalog[0].strctProps[i];
-    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+    strct1 = &opt.catalog.strctProps[i];
+    strct2 = &opt.catalog.strctProps[strct1->HostID];
 
     if (strct1->Type > 7)
       if (strct1->ID == strct2->dummyi)
@@ -152,13 +152,13 @@ int main (int argc, char ** argv)
   int         n;
   char        buff [NAME_LENGTH];
 
-  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    strct1 = &opt.catalog[0].strctProps[i];
+    strct1 = &opt.catalog.strctProps[i];
     if ((central[i] == 1) && (strct1->Mass > 10))
     {
-      strct1 = &opt.catalog[0].strctProps[i];
-      strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+      strct1 = &opt.catalog.strctProps[i];
+      strct2 = &opt.catalog.strctProps[strct1->HostID];
 
       sprintf (buff, "diffuse_%05d", i);
       fpart = fopen(buff, "w");
