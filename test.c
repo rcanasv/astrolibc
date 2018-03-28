@@ -155,7 +155,7 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if ((central[i] == 1) && (strct1->Mass > 10))
+    if ((central[i] == 1) && (strct1->TotMass > 10))
     {
       strct1 = &opt.catalog.strctProps[i];
       strct2 = &opt.catalog.strctProps[strct1->HostID];
@@ -182,7 +182,7 @@ int main (int argc, char ** argv)
 
       totpart = strct1->NumPart + strct2->NumPart;
 
-      tmpstrct.Part = (Structure *) malloc (totpart * (sizeof(Structure));
+      tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
       for (j = 0, n = 0; j < strct1->NumPart; j++, n++)
         Particle_copy (&strct1->Part[j], &tmpstrct.Part[n]);
       for (j = 0; j < strct2->NumPart; j++, n++)
@@ -191,7 +191,7 @@ int main (int argc, char ** argv)
       free (strct1->Part);
 
       strct1->NumPart = totpart;
-      strct1->Part = (Structure *) malloc (totpart * (sizeof(Structure));
+      strct1->Part = (Particle *) malloc (totpart * (sizeof(Particle)));
       for (j = 0; j < totpart; j++)
         Particle_copy (&tmpstrct.Part[j], &strct1->Part[j]);
 
