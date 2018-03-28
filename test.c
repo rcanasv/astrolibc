@@ -155,30 +155,33 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if ((central[i] == 1) && (strct1->TotMass > 10))
+    if (central[i] == 1)
     {
       strct1 = &opt.catalog.strctProps[i];
       strct2 = &opt.catalog.strctProps[strct1->HostID];
 
-      sprintf (buff, "diffuse_%05d", i);
-      fpart = fopen(buff, "w");
-      for (j = 0; j < strct1->NumPart; j++)
+      if (strct1->TotMass > 11)
       {
-        fprintf (fpart, "%e  ", strct1->Part[j].Pos[0]);
-        fprintf (fpart, "%e  ", strct1->Part[j].Pos[1]);
-        fprintf (fpart, "%e\n", strct1->Part[j].Pos[2]);
-      }
-      fclose (fpart);
+        sprintf (buff, "galaxy_%05d", i);
+        fpart = fopen(buff, "w");
+        for (j = 0; j < strct1->NumPart; j++)
+        {
+          fprintf (fpart, "%e  ", strct1->Part[j].Pos[0]);
+          fprintf (fpart, "%e  ", strct1->Part[j].Pos[1]);
+          fprintf (fpart, "%e\n", strct1->Part[j].Pos[2]);
+        }
+        fclose (fpart);
 
-      sprintf (buff, "galaxy_%05d", i);
-      fpart = fopen(buff, "w");
-      for (j = 0; j < strct2->NumPart; j++)
-      {
-        fprintf (fpart, "%e  ", strct2->Part[j].Pos[0]);
-        fprintf (fpart, "%e  ", strct2->Part[j].Pos[1]);
-        fprintf (fpart, "%e\n", strct2->Part[j].Pos[2]);
+        sprintf (buff, "diffuse_%05d", i);
+        fpart = fopen(buff, "w");
+        for (j = 0; j < strct2->NumPart; j++)
+        {
+          fprintf (fpart, "%e  ", strct2->Part[j].Pos[0]);
+          fprintf (fpart, "%e  ", strct2->Part[j].Pos[1]);
+          fprintf (fpart, "%e\n", strct2->Part[j].Pos[2]);
+        }
+        fclose (fpart);
       }
-      fclose (fpart);
 
       totpart = strct1->NumPart + strct2->NumPart;
 
@@ -192,9 +195,12 @@ int main (int argc, char ** argv)
 
       strct1->NumPart = totpart;
       strct1->Part = (Particle *) malloc (totpart * (sizeof(Particle)));
+
       for (j = 0; j < totpart; j++)
         Particle_copy (&tmpstrct.Part[j], &strct1->Part[j]);
 
+      if (strct1->TotMass > 11)
+      {
         sprintf (buff, "both_%05d", i);
         fpart = fopen(buff, "w");
         for (j = 0; j < strct1->NumPart; j++)
@@ -204,6 +210,7 @@ int main (int argc, char ** argv)
           fprintf (fpart, "%e\n", strct1->Part[j].Pos[2]);
         }
         fclose (fpart);
+      }
     }
   }
 
