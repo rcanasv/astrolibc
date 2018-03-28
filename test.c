@@ -155,14 +155,14 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if (central[i] == 1)
+    if ((central[i] == 1) && (strct1->HostID > 0))
     {
       strct1 = &opt.catalog.strctProps[i];
       strct2 = &opt.catalog.strctProps[strct1->HostID];
 
       if (strct1->TotMass > 11)
       {
-        sprintf (buff, "galaxy_%05d", i);
+        sprintf (buff, "galaxy_%07d", i);
         fpart = fopen(buff, "w");
         for (j = 0; j < strct1->NumPart; j++)
         {
@@ -172,7 +172,7 @@ int main (int argc, char ** argv)
         }
         fclose (fpart);
 
-        sprintf (buff, "diffuse_%05d", i);
+        sprintf (buff, "diffuse_%07d", i);
         fpart = fopen(buff, "w");
         for (j = 0; j < strct2->NumPart; j++)
         {
@@ -201,7 +201,7 @@ int main (int argc, char ** argv)
 
       if (strct1->TotMass > 11)
       {
-        sprintf (buff, "both_%05d", i);
+        sprintf (buff, "both_%07d", i);
         fpart = fopen(buff, "w");
         for (j = 0; j < strct1->NumPart; j++)
         {
