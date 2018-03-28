@@ -1,8 +1,8 @@
 /*
  *
  *  \file    test.c
- *  \brief   
- * 
+ *  \brief
+ *
  *
  */
 
@@ -55,7 +55,158 @@ int main (int argc, char ** argv)
 
 
   Structure * strct;
+  Structure * strct1;
+  Structure * strct2;
   Particle  * p;
+
+  printf ("Tagging isolated galaxies\n");
+
+  //
+  //  Tag isolated galaxies in VELOCIraptor
+  //
+  int * isolated   = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+  int * looselyint = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+  int * highlyint  = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+  int * central    = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct1->dummyd = 0;
+    strct1->dummyi = 0;
+  }
+
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+
+    isolated   [i] = 0;
+    looselyint [i] = 0;
+    highlyint  [i] = 0;
+    central    [i] = 0;
+
+    if (strct1->Type > 7)
+    {
+      if (strct1->HostID == -1)
+      {
+        strct1->dummyd = strct1->TotMass;
+        strct1->dummyi = strct1->ID;
+        central[i] = 1;
+        if (strct1->NumSubs == 0)
+          isolated[i] = 1;
+        else
+          highlyint[i] = 1;
+        continue;
+      }
+
+      if (strct2->dummyi == 0)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+
+      //
+      // Determine if galaxy is TRULY isolated
+      //
+      if (strct2->NumSubs == 1)
+         isolated[i] = 1;
+      else
+      {
+        if ((strct1->Type == 10) && (strct1->NumSubs == 0))
+          looselyint[i] = 1;
+        else
+          highlyint[i] = 1;
+      }
+
+      //
+      // Save mass of central galaxy
+      //
+      if (strct1->TotMass > strct2->dummyd)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+    }
+  }
+
+  //
+  // Tag central galaxies
+  //
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+      if (strct1->ID == strct2->dummyi)
+        central[i] = 1;
+  }
+
+  //
+  // Merge central with IHSM
+  //
+  Structure   tmpstrct;
+  FILE      * fpart;
+  int         totpart;
+  int         n;
+  char        buff [NAME_LENGTH];
+
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    if ((central[i] == 1) && (strct1->Mass > 10))
+    {
+      strct1 = &opt.catalog[0].strctProps[i];
+      strct2 = &opt.catalog[0].strctProps[strct1->HostID];
+
+      sprintf (buff, "diffuse_%05d", i);
+      fpart = fopen(buff, "w");
+      for (j = 0; j < strct1->NumPart; j++)
+      {
+        fprintf (fpart, "%e  ", strct1->Part[j].Pos[0]);
+        fprintf (fpart, "%e  ", strct1->Part[j].Pos[1]);
+        fprintf (fpart, "%e\n", strct1->Part[j].Pos[2]);
+      }
+      fclose (fpart);
+
+      sprintf (buff, "galaxy_%05d", i);
+      fpart = fopen(buff, "w");
+      for (j = 0; j < strct2->NumPart; j++)
+      {
+        fprintf (fpart, "%e  ", strct2->Part[j].Pos[0]);
+        fprintf (fpart, "%e  ", strct2->Part[j].Pos[1]);
+        fprintf (fpart, "%e\n", strct2->Part[j].Pos[2]);
+      }
+      fclose (fpart);
+
+      totpart = strct1->NumPart + strct2->NumPart;
+
+      tmpstrct.Part = (Structure *) malloc (totpart * (sizeof(Structure));
+      for (j = 0, n = 0; j < strct1->NumPart; j++, n++)
+        Particle_copy (&strct1->Part[j], &tmpstrct.Part[n]);
+      for (j = 0; j < strct2->NumPart; j++, n++)
+        Particle_copy (&strct2->Part[j], &tmpstrct.Part[n]);
+      free (tmpstrct.Part);
+      free (strct1->Part);
+
+      strct1->NumPart = totpart;
+      strct1->Part = (Structure *) malloc (totpart * (sizeof(Structure));
+      for (j = 0; j < totpart; j++)
+        Particle_copy (&tmpstrct.Part[j], &strct1->Part[j]);
+
+        sprintf (buff, "both_%05d", i);
+        fpart = fopen(buff, "w");
+        for (j = 0; j < strct1->NumPart; j++)
+        {
+          fprintf (fpart, "%e  ", strct1->Part[j].Pos[0]);
+          fprintf (fpart, "%e  ", strct1->Part[j].Pos[1]);
+          fprintf (fpart, "%e\n", strct1->Part[j].Pos[2]);
+        }
+        fclose (fpart);
+    }
+  }
+
 
   double  cmx;
   double  cmy;
@@ -170,6 +321,11 @@ int main (int argc, char ** argv)
     }
   }
   fclose (f);
+
+  free (isolated);
+  free (looselyint);
+  free (highlyint);
+  free (central);
 
   //Catalog_free (&opt.catalog);
 
