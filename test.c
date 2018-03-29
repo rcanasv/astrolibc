@@ -146,7 +146,6 @@ int main (int argc, char ** argv)
   //
   // Merge central with IHSM
   //
-  /*
   Structure   tmpstrct;
   FILE      * fpart;
   int         totpart;
@@ -156,11 +155,12 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if ((central[i] == 1) && (strct1->HostID > 0))
+    if ((central[i] == 1) && (strct1->HostID > 0) && (strct1->Type > 7))
     {
       strct1 = &opt.catalog.strctProps[i];
       strct2 = &opt.catalog.strctProps[strct1->HostID];
 
+      /*
       if (strct1->TotMass > 11)
       {
         sprintf (buff, "galaxy_%07d", i);
@@ -183,6 +183,7 @@ int main (int argc, char ** argv)
         }
         fclose (fpart);
       }
+      */
 
       totpart = strct1->NumPart + strct2->NumPart;
 
@@ -191,7 +192,6 @@ int main (int argc, char ** argv)
         Particle_copy (&strct1->Part[j], &tmpstrct.Part[n]);
       for (j = 0; j < strct2->NumPart; j++, n++)
         Particle_copy (&strct2->Part[j], &tmpstrct.Part[n]);
-      free (tmpstrct.Part);
       free (strct1->Part);
 
       strct1->NumPart = totpart;
@@ -200,6 +200,7 @@ int main (int argc, char ** argv)
       for (j = 0; j < totpart; j++)
         Particle_copy (&tmpstrct.Part[j], &strct1->Part[j]);
 
+      /*
       if (strct1->TotMass > 11)
       {
         sprintf (buff, "both_%07d", i);
@@ -212,9 +213,11 @@ int main (int argc, char ** argv)
         }
         fclose (fpart);
       }
+      */
+      free (tmpstrct.Part);
     }
   }
- */
+
 
   double  cmx;
   double  cmy;
