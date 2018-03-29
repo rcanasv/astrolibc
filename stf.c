@@ -207,16 +207,14 @@ void stf_write_catalog_particles (Catalog * stf)
 
 
 
-/*
-
-int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct)
+int read_stf_filesofgroup (Catalog * stf, Structure * strct, int ** files_of_strct)
 {
   int i, j, k;
   FILE * f;
 
-  char buffer [NAME_LENGTH];
+  char fname [NAME_LENGTH];
 
-  sprintf (buffer, "%s.filesofgroup", prefix);
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
 
   int tmpid;
   int nfiles;
@@ -235,7 +233,7 @@ int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct)
 
   return nfiles;
 }
-*/
+
 
 
 

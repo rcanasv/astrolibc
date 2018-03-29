@@ -12,17 +12,12 @@
 
 void Structure_correct_periodicity (Structure * strct, Simulation * sim)
 {
-
   int     i, j, k;
   double  Lbox;
   double  hbox;
 
-
   Lbox = sim->Lbox;
   hbox = Lbox / 2.0;
-
-//printf ("Lbox  %lf\n", Lbox);
-//printf ("Positions  %lf  %lf  %lf\n", strct->Part[0].Pos[0], strct->Part[0].Pos[1], strct->Part[0].Pos[2]);
 
   for (i = 0; i < strct->NumPart; i++)
   {
