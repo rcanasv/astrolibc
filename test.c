@@ -146,6 +146,7 @@ int main (int argc, char ** argv)
   //
   // Merge central with IHSM
   //
+  /*
   Structure   tmpstrct;
   FILE      * fpart;
   int         totpart;
@@ -213,7 +214,7 @@ int main (int argc, char ** argv)
       }
     }
   }
-
+ */
 
   double  cmx;
   double  cmy;
