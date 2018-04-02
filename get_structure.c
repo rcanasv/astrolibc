@@ -16,6 +16,10 @@
 typedef struct Options
 {
   int            verbose;
+  int            nstruct;
+  int            ilist;
+  int          * id;
+  Archive        list;
   Archive        param;
   Archive        output;
   Catalog        catalog;
@@ -32,140 +36,117 @@ int main (int argc, char ** argv)
 {
   int          i, j, k;
   Options      opt;
+  Structure *  strct;
+  gheader      header;
+  int       *  strct_to_get;
 
 
-  test_options (argc, argv, &opt);
-  test_params  (&opt);
+  get_structure_options (argc, argv, &opt);
+  get_structure_params  (&opt);
 
 
   //
   //  Load catalogs
   //
-  //printf ("simulation init\n");
   Simulation_init (&opt.simulation);
   Catalog_init (&opt.catalog);
   Catalog_load_properties (&opt.catalog);
 
-  Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
+  // 3995614986
+  // 4273503266
+  // 3840676851
 
-  3995614986
-  4273503266
-  3840676851
+  //
+  //  1.  Get Individual structure
+  //  2.  Get Several structures a file for each one
+  //  3.  Get Several structures into a single file
+  //  4.  Get everything inside 3DFOF
+  //  2.  Get everything inside 6DFOF
+  //
 
-  strcpy (stfprefix, argv[1]);
-  strcpy (directory, argv[2]);
-  strcpy (galprefix, argv[3]);
-  strcpy (outprefix, argv[4]);
-  strcpy (format,    argv[5]);
-  NUMFILES = atoi (argv[6]);
-  int ID = atoi (argv[7]);
+  strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    strct_to_get[i] = 0;
 
-
-  if ( (strcmp(format, "gadget") != 0) && (strcmp(format,"ramses") != 0) )
+  for (i = 0; i < opt.nstruct; i++)
   {
-    printf ("Incorrect specified format  %s, exiting...\n", format);
-    exit (0);
+//    printf ("%d\n", opt.id[i]);
+    strct_to_get[opt.id[i]] = 1;
   }
 
-  int * filestoread = (int *) malloc (NUMFILES        * sizeof(int));
-  int * getgal      = (int *) malloc (snap1.nstruct+1 * sizeof(int));
+/*
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
+      strct_to_get[i] = 1;
+*/
 
-  int acum        = 0;
-  int nparttot    = 0;
-  int ninextended = 0;
-  int dummystruct = 0;
-  int dummyindex  = 0;
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    if (opt.catalog.strctProps[i].HostID == opt.id[0])
+      strct_to_get[i] = 1;
 
-  double cm [3];
-  cm[0] = snap1.strctProps[ID].Pos[0];
-  cm[1] = snap1.strctProps[ID].Pos[1];
-  cm[2] = snap1.strctProps[ID].Pos[2];
+  Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
 
-  ID = snap1.strctProps[ID].HostID;
 
-  for (i = 0; i < NUMFILES; i++)
-    filestoread[i] = 0;
+  Particle * P;
+  int        numpart = 0;
 
-  for (i = 1; i <= snap1.nstruct; i++)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    getgal[i] = 0;
-    if (snap1.strctProps[i].HostID == ID)
-      getgal[i] = 1;
-  }
-  getgal[ID] = 1;
-
-  get_files_to_read_filesofgroup (stfprefix, snap1.nstruct, getgal, filestoread);
-
-  for (i = 1; i <= snap1.nstruct; i++)
-    if (getgal[i])
-      nparttot += snap1.strctProps[i].NumPart;
-
-  if (!(p = malloc (nparttot * sizeof(struct pgadget))))
-  {
-    printf ("Cannot allocate memory for particle information for structure %d\n", i);
-    printf ("Exiting\n");
-    exit (0);
+    if (strct_to_get[i] == 1)
+      numpart += opt.catalog.strctProps[i].NumPart;
   }
 
-  for (i = 0; i < NUMFILES; i++)
+  P = (Particle *) malloc (numpart * sizeof(Particle));
+
+  k = 0;
+
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    if (filestoread[i])
-    {
-      printf ("Reading file %d\n", i);
-      ninextended = load_stf_extended_output (stfprefix, i);
-      if (ninextended)
+    if (strct_to_get[i] == 1)
+      for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
       {
-        read_ramses_snapshot (directory, galprefix, i);
-
-        for (j = 0; j < ninextended; j++)
-        {
-          dummystruct = extended_IdStruct[j];
-          dummyindex  = extended_oIndex[j];
-
-          if (getgal[dummystruct])
-          {
-            p[acum].Pos[0] = ramses_pos[0][dummyindex];
-            p[acum].Pos[1] = ramses_pos[1][dummyindex];
-            p[acum].Pos[2] = ramses_pos[2][dummyindex];
-            p[acum].Vel[0] = ramses_vel[0][dummyindex];
-            p[acum].Vel[1] = ramses_vel[1][dummyindex];
-            p[acum].Vel[2] = ramses_vel[2][dummyindex];
-            p[acum].Mass   = ramses_mass  [dummyindex];
-            p[acum].Id     = ramses_id    [dummyindex];
-            p[acum].Age    = ramses_age   [dummyindex];
-            p[acum].Type   = 1;
-            acum++;
-          }
-        }
-        free_extended_arrays ();
-        free_ramses_arrays ();
+        Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
+        P[k].Type = 1;
       }
+  }
+
+  gadget_write_snapshot (P, numpart, &header, &opt.output);
+
+  free (P);
+
+/*
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+  {
+    if (strct_to_get[i] == 1)
+    {
+      strct = &opt.catalog.strctProps[i];
+      for (j = 0; j < strct->NumPart; j++)
+        strct->Part[j].Type = 1;
+      sprintf (opt.output.name, "%s_%03d.gdt_000", opt.output.prefix, i);
+
+      //
+      // opt.output.file = fopen (opt.output.name, "w");
+      // for (j = 0; j < strct->NumPart; j++)
+      // {
+      //   fprintf (opt.output.file, "%e  ", strct->Part[j].Pos[0]);
+      //   fprintf (opt.output.file, "%e  ", strct->Part[j].Pos[1]);
+      //   fprintf (opt.output.file, "%e\n", strct->Part[j].Pos[2]);
+      // }
+      //
+
+      fclose (opt.output.file);
+
+      gadget_write_snapshot (strct->Part, strct->NumPart, &header, &opt.output);
     }
   }
-
-
-  gadget_write_snapshot(strct->Part, strct->NumPart, opt.simulation, outprefix, nfiles);
-
-  free (filestoread);
-  free (getgal);
+ */
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-  //Catalog_free (&opt.catalog);
+  free (strct_to_get);
+  Catalog_free (&opt.catalog);
 
   return (0);
 }
@@ -211,6 +192,22 @@ void get_structure_params (Options * opt)
 
   // Close
   fclose (opt->param.file);
+
+ if (opt->ilist)
+ {
+    opt->list.file = fopen (opt->list.name, "r");
+    if (opt->list.file == NULL)
+    {
+      printf ("Couldn't open file  %s\n", opt->list.name);
+      printf ("Exiting...\n");
+      exit (0);
+    }
+    fscanf (opt->list.file, "%d", &opt->nstruct);
+    opt->id = (int *) malloc (opt->nstruct * sizeof(int));
+    for (i = 0; i < opt->nstruct; i++)
+      fscanf (opt->list.file, "%d", &opt->id[i]);
+    fclose (opt->list.file);
+  }
 }
 
 
@@ -230,16 +227,33 @@ int get_structure_options (int argc, char ** argv, Options * opt)
   struct option lopts[] = {
     {"help",    0, NULL, 'h'},
     {"verbose", 0, NULL, 'v'},
-    {"input",   0, NULL, 'i'},
+    {"param",   1, NULL, 'p'},
+    {"id",      2, NULL, 'i'},
+    {"list",    2, NULL, 'l'},
     {0,         0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "i:vh", lopts, &index)) != -1)
+  opt->ilist = 0;
+
+  while ((myopt = getopt_long (argc, argv, "i:p:l:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
-      case 'i':
+      case 'p':
       	strcpy (opt->param.name, optarg);
+        flag++;
+        break;
+
+      case 'i':
+        opt->nstruct = 1;
+      	opt->id = (int *) malloc (opt->nstruct * sizeof(int));
+        opt->id[0] = atoi(optarg);
+        flag++;
+        break;
+
+      case 'l':
+        opt->ilist = 1;
+        strcpy (opt->list.name, optarg);
         flag++;
         break;
 

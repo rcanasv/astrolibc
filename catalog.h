@@ -17,6 +17,10 @@
 #include "particle.h"
 #include "format.h"
 
+#include "simulation.h"
+#include "stf.h"
+#include "halomaker.h"
+
 
 void Catalog_init                    (Catalog * ctlg);
 void Catalog_load                    (Catalog * ctlg);

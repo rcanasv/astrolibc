@@ -7,10 +7,6 @@
  */
 
 #include "catalog.h"
-#include "simulation.h"
-#include "stf.h"
-#include "halomaker.h"
-
 
 
 void Catalog_init (Catalog * ctlg)

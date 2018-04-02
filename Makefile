@@ -18,6 +18,13 @@ HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/l
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
 endif
 
+ifeq ($(MACHINE),pulsar)
+HDF5_INCL   = -I/opt/gcc/5.4.0/zlib/1.2.11/include  -I/opt/gcc/5.4.0/hdf5/1.8.18/include
+HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5_hl.a /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5.a -L/opt/gcc/5.4.0/zlib/1.2.11/lib
+HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
+endif
+
+
 INC         = $(HDF5_INCL)
 LIB         = $(HDF5_LIB)
 FLAGS       = -lm $(HDF5_FLAGS)
@@ -34,3 +41,6 @@ convert: convert.c archive.c catalog.c stf.c halomaker.c
 
 test: test.c archive.c catalog.c stf.c simulation.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 	$(CC) $(INC) $(LIB) test.c archive.c catalog.c stf.c halomaker.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
+
+get_strucutre: get_structure.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+	$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)

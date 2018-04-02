@@ -4,9 +4,7 @@
  *
  */
 
-#include "particle.h"
-#include "structure.h"
-#include "catalog.h"
+
 #include "stf.h"
 
 
@@ -61,6 +59,7 @@ void stf_read_properties (Catalog * stf)
     stf->strctProps[i].SubIDs     = NULL;
     stf->strctProps[i].MatchIDs   = NULL;
     stf->strctProps[i].MatchMrrts = NULL;
+    stf->strctProps[i].Part       = NULL;
   }
 
   //
@@ -70,16 +69,13 @@ void stf_read_properties (Catalog * stf)
 
   for (i = 0; i < stf->nprocs; i++)
   {
-    if (stf->nprocs == 1)
-      sprintf (propts_fname, "%s/%s.properties", stf->archive.path, stf->archive.prefix);
-    else
+    sprintf (propts_fname, "%s/%s.properties", stf->archive.path, stf->archive.prefix);
+    if ((f = fopen (propts_fname, "r")) == NULL)
       sprintf (propts_fname, "%s/%s.properties.%d", stf->archive.path, stf->archive.prefix, i);
-
-    //printf ("Openning file  %s  \n", propts_fname);
 
     if ((f = fopen (propts_fname, "r")) == NULL)
     {
-      printf ("ERROR: Cannot open file  %s", propts_fname);
+      printf ("ERROR: Cannot open file  %s\n", propts_fname);
       exit (0);
     }
 
@@ -207,36 +203,6 @@ void stf_write_catalog_particles (Catalog * stf)
 
 
 
-int read_stf_filesofgroup (Catalog * stf, Structure * strct, int ** files_of_strct)
-{
-  int i, j, k;
-  FILE * f;
-
-  char fname [NAME_LENGTH];
-
-  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
-
-  int tmpid;
-  int nfiles;
-
-  f = fopen (buffer, "r");
-  do
-  {
-    fgets (buffer, NAME_LENGTH, f);
-    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
-    fgets (buffer, NAME_LENGTH, f);
-    get_n_num_from_string (buffer, nfiles, files_of_strct);
-  }
-  while (tmpid != strct_id);
-
-  fclose (f);
-
-  return nfiles;
-}
-
-
-
-
 void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 {
   int i, j, k;
@@ -360,60 +326,104 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
     //     Simulation_load_particles (sim, i, &part);
     ;
   }
-
-
-  //
-  //  Shift particles to the structure centre of mass
-  //
-  /*
-  for (i = 1; i <= stf->nstruct; i++)
-  {
-    strct = &stf->strctProps[i];
-    for (j = 0; j < strct->NumPart; j++)
-    {
-      strct->Part[j].Pos[0] -= strct->Pos[0];
-      strct->Part[j].Pos[1] -= strct->Pos[1];
-      strct->Part[j].Pos[2] -= strct->Pos[2];
-
-      strct->Part[j].Vel[0] -= strct->Vel[0];
-      strct->Part[j].Vel[1] -= strct->Vel[1];
-      strct->Part[j].Vel[2] -= strct->Vel[2];
-    }
-  }
-  */
 }
 
 
 
-void  stf_structure_get_particle_properties (Catalog * stf, int id, Simulation * sim)
+void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, int * strcts_to_get)
 {
+  int    i, j, k;
+  FILE * f;
 
-  int     i, nfiles;
-  int   * file;
-  FILE  * f;
-  char    fname [NAME_LENGTH];
+  char   fname  [NAME_LENGTH];
+  char   buffer [NAME_LENGTH];
+
+  int *  files_to_read;
+
   stfExtendedOutput * xtndd;
+  int                 ninextended;
+  int                 id;
+  int                 indx;
 
+  Particle  * part;
+  Structure * strct;
+
+  files_to_read = (int *) malloc (sim->archive.nfiles * sizeof(int));
+
+  for (i = 0; i < sim->archive.nfiles; i++)
+    files_to_read[i] = 0;
+
+  stf_get_files_to_read (stf, strcts_to_get, files_to_read);
+
+  //
+  //  Allocate memory for structures
+  //
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    if (strcts_to_get[i])
+    {
+      strct = &stf->strctProps[i];
+
+      strct->dummyi = 0;
+      strct->iPart  = 0;
+      strct->Part   = NULL;
+
+      if ((strct->Part = (Particle *) malloc (strct->NumPart * sizeof(Particle))) == NULL)
+      {
+        printf ("Error not enough memory to allocate Particle to Structure\n");
+        exit(0);
+      }
+      else
+        strct->iPart = 1;
+    }
+  }
+
+  //
+  //  Load particles to structures
+  //
   sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
   if ((f = fopen(fname,"r")) != NULL)
   {
     fclose (f);
-    // Extended Output files should (in principle) exist
-    for (i = 0; i < nfiles; i++)
-      stf_load_extended_output (stf, file[i], &xtndd);
-    free (file);
-    free (xtndd);
+    //
+    // Go through every file of simulation/extendedOutput
+    //
+    for (i = 0; i < sim->archive.nfiles; i++)
+    {
+      if (files_to_read[i])
+      {
+
+        ninextended = stf_load_extended_output (stf, i, &xtndd);
+
+        if (ninextended)
+        {
+          Simulation_load_particles (sim, i, &part);
+
+          for (j = 0; j < ninextended; j++)
+          {
+            id    = xtndd[j].IdStruct;
+            indx  = xtndd[j].oIndex;
+
+            if (strcts_to_get[id])
+            {
+              strct = &stf->strctProps[id];
+              Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
+              strct->dummyi++;
+            }
+          }
+          free (xtndd);
+          free (part);
+        }
+      }
+    }
   }
   else
   {
-    // 1.  Read .catalog_* files
-
-    // 2.  Open Simulation file and assign particles
+    ;
   }
+  free (files_to_read);
   return;
 }
-
-
 
 
 
@@ -461,4 +471,48 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
   }
 
   return nparts;
+}
+
+
+
+int stf_get_files_to_read (Catalog * stf, int * strcts_to_get, int * files_to_read)
+{
+  //
+  //  strct_to_get   - is a boolean array nstruct long tells which
+  //                   structures to get
+  //  files_to_read - is a boolean array nfiles  long to be filled
+  //                   with files that need to be read
+  //
+  int     i, j;
+  FILE  * f;
+
+  char    fname  [NAME_LENGTH];
+  char    buffer [NAME_LENGTH];
+
+  int     tmpid;
+  int     nfiles;
+  int *   files_of_strct = NULL;
+
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
+  f = fopen (fname, "r");
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    fgets  (buffer, NAME_LENGTH, f);
+    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
+    fgets  (buffer, NAME_LENGTH, f);
+
+    if (strcts_to_get[tmpid])
+    {
+      get_n_num_from_string (buffer, nfiles, &files_of_strct);
+
+      for (j = 0; j < nfiles; j++)
+        files_to_read[files_of_strct[j]] = 1;
+
+      free (files_of_strct);
+    }
+  }
+
+  fclose (f);
+
+  return nfiles;
 }

@@ -1,5 +1,11 @@
+/*
+ *  \file misc.c
+ *  \brief This file contains misc functions.
+ *
+ */
 
 
+#include "misc.h"
 
 
 int get_n_num_from_string (char * strng, int n_num, int ** nums)
@@ -39,8 +45,5 @@ int get_n_num_from_string (char * strng, int n_num, int ** nums)
       j = 0;
     }
   }
-
-
   return 0;
-
 }

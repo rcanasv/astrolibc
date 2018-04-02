@@ -5,9 +5,8 @@
  *
  */
 
-#include "base.h"
+
 #include "structure.h"
-#include "particle.h"
 
 
 void Structure_correct_periodicity (Structure * strct, Simulation * sim)
@@ -117,4 +116,11 @@ void Structure_get_particle_radius (Structure * strct)
   int i;
   for (i = 0; i < strct->NumPart; i++)
     Particle_get_radius (&strct->Part[i]);
+}
+
+
+void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+{
+  if (ctlg->format == STF)
+    stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
 }

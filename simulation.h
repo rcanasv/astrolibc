@@ -14,6 +14,7 @@
 #include "typedef.h"
 #include "format.h"
 #include "ramses.h"
+#include "gadget.h"
 #include "hdf5sim.h"
 
 
