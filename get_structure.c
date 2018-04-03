@@ -80,13 +80,16 @@ int main (int argc, char ** argv)
       strct_to_get[i] = 1;
 */
 
+/*
   for (i = 1; i <= opt.catalog.nstruct; i++)
-    if (opt.catalog.strctProps[i].HostID == opt.id[0])
+    if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
+*/
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
 
 
+/*
   Particle * P;
   int        numpart = 0;
 
@@ -113,35 +116,22 @@ int main (int argc, char ** argv)
   gadget_write_snapshot (P, numpart, &header, &opt.output);
 
   free (P);
+*/
 
-/*
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+
+  for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
   {
     if (strct_to_get[i] == 1)
     {
       strct = &opt.catalog.strctProps[i];
       for (j = 0; j < strct->NumPart; j++)
         strct->Part[j].Type = 1;
-      sprintf (opt.output.name, "%s_%03d.gdt_000", opt.output.prefix, i);
-
-      //
-      // opt.output.file = fopen (opt.output.name, "w");
-      // for (j = 0; j < strct->NumPart; j++)
-      // {
-      //   fprintf (opt.output.file, "%e  ", strct->Part[j].Pos[0]);
-      //   fprintf (opt.output.file, "%e  ", strct->Part[j].Pos[1]);
-      //   fprintf (opt.output.file, "%e\n", strct->Part[j].Pos[2]);
-      // }
-      //
-
-      fclose (opt.output.file);
+      sprintf (opt.output.name, "%s.gdt_%03d", opt.output.prefix, k);
 
       gadget_write_snapshot (strct->Part, strct->NumPart, &header, &opt.output);
+      k++;
     }
   }
- */
-
-
 
 
 
