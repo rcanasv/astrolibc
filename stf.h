@@ -39,6 +39,8 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
 int   stf_load_extended_output              (Catalog * stf, int filenum, stfExtendedOutput ** xtndd);
 int   stf_get_files_to_read                 (Catalog * stf, int * strcts_to_get, int * files_to_read);
 
+void  stf_catalog_fill_isolated             (Catalog * stf);
+
 //int load_stf_extended_output (char * prefix, int filenum);
 //void free_extended_arrays (void);
 //int read_stf_filesofgroup (char * prefix, int strct_id, int ** files_of_strct);

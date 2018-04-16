@@ -138,6 +138,28 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
 }
 
 
+void Catalog_fill_isolated (Catalog * ctlg)
+{
+  if (ctlg.format == STF)  stf_catalog_fill_isolated (ctlg);
+}
+
+
+  //
+  // Tag central galaxies
+  //
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+  {
+    strct1 = &opt.catalog.strctProps[i];
+    strct2 = &opt.catalog.strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+      if (strct1->ID == strct2->dummyi)
+        central[i] = 1;
+  }
+}
+
+
+
 /*
 void Catalog_fill_ProgIDs (Catalog * catalog, char * tffile)
 {

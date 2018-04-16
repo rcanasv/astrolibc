@@ -111,6 +111,89 @@ void Structure_shift_to_centre_of_mass (Structure * strct)
 }
 
 
+Structure_calculate_surface_density (Structure * strct, double * rotation, double ledge, double redge, int nbins, double ** bins, double ** Sigma)
+{
+  //
+  // rotation - is assumed to be a double array with size 3
+  //            containing the rotation angles for x y and z
+  //            if rotation == NULL  no rotation is done
+  //
+
+  int      i;
+  double   ledge,
+  double   redge;
+  double   deltar;
+  float  * tmppos;
+
+  double * surface_density = *(Sigma);
+  double * radius          = *(bins);
+
+  //
+  // Rotate
+  //
+  if (rotation != NULL)
+  {
+    ;
+  }
+
+
+  //
+  // Radii array
+  //
+  if (radius == NULL)
+  {
+    radius  = (double *) malloc ((nbins + 1) * sizeof(double));
+
+    // Particles are assumed to be sorted by radius
+    if (ledge == 0 && redge == 0)
+    {
+      ledge = 0;
+      redge = strct->Particle[strct->NumPart-1].Radius;
+    }
+
+    deltar = (log10(redge) - log10(ledge)) / (double) nbins;
+
+    for (i = 0; i <= nbins; i++)
+      radius[i] = i * nbins;
+  }
+
+
+  //
+  // Surface density
+  //
+  if (surface_density == NULL)
+    surface_density = (double *) malloc (nbins * sizeof(double));
+
+  for (i = 0; i < nbins; i++)
+    surface_density[i] = 0;
+
+  tmppos = (float *) malloc (strct->NumPart * sizeof(float));
+
+  for (k = 0; k < strct->NumPart; k++)
+  {
+    tmppos[i] = strct->Part[k].Pos[2];
+    strct->Part[k].Pos[2] = 0.0;
+  }
+
+  Structure_get_particle_radius (strct);
+  qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    bob = (int) (log10(strct->Part[i].Radius) / deltar);
+    surface_density[bob] += strct->Part[i].Mass;
+  }
+
+  for (i = 1; i <= nbins; i++)
+    surface_density[i-1] /= (acos(-1) * (radius[i]*radius[i] - radius[i-1]*radius[i-1]));
+
+  for (i = 0; i < strct->NumPart; i++)
+    strct->Part[i].Pos[2] = tmppos[i];
+    
+  free (tmppos);
+}
+
+
 void Structure_get_particle_radius (Structure * strct)
 {
   int i;

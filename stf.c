@@ -516,3 +516,101 @@ int stf_get_files_to_read (Catalog * stf, int * strcts_to_get, int * files_to_re
 
   return nfiles;
 }
+
+
+
+void stf_catalog_fill_isolated (Catalog * stf)
+{
+  int         i;
+  Structure * strct1;
+  Structure * strct2;
+
+  //
+  // Clear properties
+  //
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    strct1 = &stf->strctProps[i];
+    strct1->dummyd     = 0;
+    strct1->dummyi     = 0;
+    strct1->Isolated   = 0;
+    strct1->Looselyint = 0;
+    strct1->Highlyint  = 0;
+    strct1->Central    = 0;
+  }
+
+  //
+  // Set isolation status
+  //
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    strct1 = &stf->strctProps[i];
+    strct2 = &stf->strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+    {
+      //
+      // If structure doesn't have IHSC
+      //
+      if (strct1->HostID == -1)
+      {
+        strct1->dummyd = strct1->TotMass;
+        strct1->dummyi = strct1->ID;
+        strct1->Central = 1;
+
+        if (strct1->NumSubs == 0)
+          strct1->Isolated = 1;
+        else
+          strct1->Highlyint = 1;
+        continue;
+      }
+
+      //
+      // If first structure save values
+      // largest structure in the IHSC will
+      // be the central
+      //
+      if (strct2->dummyi == 0)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+
+      //
+      // Determine if galaxy is TRULY isolated
+      //
+      if (strct2->NumSubs == 1)
+         strct1->Isolated = 1;
+      else
+      {
+        if ((strct1->Type == 10) && (strct1->NumSubs == 0))
+          strct1->Looselyint = 1;
+        else
+          strct1->Highlyint = 1;
+      }
+
+      //
+      // If mass is greater than current 'central'
+      // update central
+      //
+      if (strct1->TotMass > strct2->dummyd)
+      {
+        strct2->dummyd = strct1->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
+    }
+  }
+
+  //
+  // Tag central galaxies
+  //
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+  {
+    strct1 = &opt.catalog.strctProps[i];
+    strct2 = &opt.catalog.strctProps[strct1->HostID];
+
+    if (strct1->Type > 7)
+      if (strct1->ID == strct2->dummyi)
+        strct1->Central = 1;
+  }
+}

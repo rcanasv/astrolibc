@@ -82,6 +82,12 @@ typedef struct Structure
   double     R20;
   double     R90;
 
+  // Isolation
+  char       Isolated;
+  char       Looselyint;
+  char       Highlyint;
+  char       Central;
+
   // Additioanl data
   int        Timestep;
   int        Level;
