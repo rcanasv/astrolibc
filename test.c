@@ -6,6 +6,7 @@
  *
  */
 
+
 #include "base.h"
 #include "typedef.h"
 #include "archive.h"
@@ -41,89 +42,97 @@ int main (int argc, char ** argv)
   //
   //  Load catalogs
   //
-  Simulation_init (&opt.simulation);
-  Catalog_init (&opt.catalog);
-  Catalog_load_properties (&opt.catalog);
+  Simulation_init                 (&opt.simulation);
+  Catalog_init                    (&opt.catalog);
+  Catalog_load_properties         (&opt.catalog);
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
+  Catalog_fill_isolated           (&opt.catalog);
 
 
-  Structure * strct;
-  Structure * strct1;
-  Structure * strct2;
-  Particle  * p;
+  Structure  ** strct;
+  Structure   * strct1;
+  Structure   * strct2;
+  Structure   * strct3;
+  int         * strct_to_get;
 
+
+  strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    strct_to_get[i] = 0;
+
+  for (i = 0; i < opt.nstruct; i++)
+    strct_to_get[opt.id[i]] = 1;
+
+  strct = (Structure **) malloc (opt.nstruct*3*sizeof(Structure *));
 
 
   //
   // Merge central with IHSM
   //
-  Structure   tmpstrct;
-  FILE      * fpart;
   int         totpart;
+  Structure   tmpstrct;
   int         n;
-  char        buff [NAME_LENGTH];
+
+  for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
+  {
+    strct1 = &opt.catalog.strctProps[i];
+
+    if ((strct1->Central == 1) && (strct_to_get[i] == 1) && (strct1->HostID > 0))
+    {
+      strct2 = &opt.catalog.strctProps[strct1->HostID];
+      totpart = strct1->NumPart + strct2->NumPart;
+      tmpstrct.npart = totpart;
+      tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
+
+
+      for (j = 0, k = 0; j < strct1->NumPart; j++, k++)
+        Particle_copy (&strct1->Part[j], &tmpstrct.Part[k]);
+
+      for (j = 0; j < strct2->NumPart; j++, k++)
+        Particle_copy (&strct2->Part[j], &tmpstrct.Part[k]);
+
+
+      //
+      // <<<<<<<<< HERE >>>>>>>>>
+      //
+
+      Structure_correct_periodicity       (strct, &opt.simulation);
+      Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+
+
+      strct[n++] = strct1;
+      strct[n++] = strct2;
+      strct[n++] = &tmpstrct;
+    }
+  }
+
+
+  //
+  //  Calculate Surface density and create files
+  //
   FILE      * f;
   char        buffer [NAME_LENGTH];
   sprintf (buffer, "sizemass_eagle_velociraptor.dat");
   f = fopen (buffer, "w");
-
-  for (i = 1; i < opt.catalog.nstruct; i++)
-    strct = &opt.catalog.strctProps[i];
-
   fclose (f);
 
 
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  //
+  // Free Memory
+  //
+  for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
   {
-
-
-
-
-
-
-
-
-
-
     strct1 = &opt.catalog.strctProps[i];
-    if ((central[i] == 1) && (strct1->HostID > 0) && (strct1->Type > 7))
+    if ((strct1->Central == 1) && (strct_to_get[i] == 1) && (strct1->HostID > 0))
     {
-      strct1 = &opt.catalog.strctProps[i];
-      strct2 = &opt.catalog.strctProps[strct1->HostID];
-
-      totpart = strct1->NumPart + strct2->NumPart;
-
-      tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
-      for (j = 0, n = 0; j < strct1->NumPart; j++, n++)
-        Particle_copy (&strct1->Part[j], &tmpstrct.Part[n]);
-      for (j = 0; j < strct2->NumPart; j++, n++)
-        Particle_copy (&strct2->Part[j], &tmpstrct.Part[n]);
-      free (strct1->Part);
-
-      strct1->NumPart = totpart;
-      strct1->Part = (Particle *) malloc (totpart * (sizeof(Particle)));
-
-      for (j = 0; j < totpart; j++)
-        Particle_copy (&tmpstrct.Part[j], &strct1->Part[j]);
-
-      free (tmpstrct.Part);
+      n = n + 2;
+      free (strct[n++]);
     }
-
-
-
-
-
-
-
   }
-
-
-  free (isolated);
-  free (looselyint);
-  free (highlyint);
-  free (central);
-
-  //Catalog_free (&opt.catalog);
+  free (strct_to_get);
+  free (strct);
+  Catalog_free (&opt.catalog);
 
   return (0);
 }

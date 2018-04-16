@@ -604,10 +604,10 @@ void stf_catalog_fill_isolated (Catalog * stf)
   //
   // Tag central galaxies
   //
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  for (i = 1; i <= stf->nstruct; i++)
   {
-    strct1 = &opt.catalog.strctProps[i];
-    strct2 = &opt.catalog.strctProps[strct1->HostID];
+    strct1 = &stf->strctProps[i];
+    strct2 = &stf->strctProps[strct1->HostID];
 
     if (strct1->Type > 7)
       if (strct1->ID == strct2->dummyi)
