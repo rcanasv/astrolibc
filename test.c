@@ -17,6 +17,10 @@
 typedef struct Options
 {
   int            verbose;
+  int            nstruct;
+  int            ilist;
+  int          * id;
+  Archive        list;
   Archive        param;
   Archive        output;
   Catalog        catalog;
@@ -81,9 +85,8 @@ int main (int argc, char ** argv)
     {
       strct2 = &opt.catalog.strctProps[strct1->HostID];
       totpart = strct1->NumPart + strct2->NumPart;
-      tmpstrct.npart = totpart;
+      tmpstrct.NumPart = totpart;
       tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
-
 
       for (j = 0, k = 0; j < strct1->NumPart; j++, k++)
         Particle_copy (&strct1->Part[j], &tmpstrct.Part[k]);
@@ -91,15 +94,21 @@ int main (int argc, char ** argv)
       for (j = 0; j < strct2->NumPart; j++, k++)
         Particle_copy (&strct2->Part[j], &tmpstrct.Part[k]);
 
+      strct2->Pos[0] = strct1->Pos[0];
+      strct2->Pos[1] = strct1->Pos[1];
+      strct2->Pos[2] = strct1->Pos[2];
 
-      //
-      // <<<<<<<<< HERE >>>>>>>>>
-      //
+      tmpstrct.Pos[0] = strct1->Pos[0];
+      tmpstrct.Pos[1] = strct1->Pos[1];
+      tmpstrct.Pos[2] = strct1->Pos[2];
 
-      Structure_correct_periodicity       (strct, &opt.simulation);
-      Structure_shift_to_centre_of_mass   (strct);
-      Structure_get_particle_radius       (strct);
+      strct1->dummyi   = strct1->ID;
+      strct2->dummyi   = strct1->ID;
+      tmpstrct.dummyi = strct1->ID;
 
+      Structure_correct_periodicity (strct1,    &opt.simulation);
+      Structure_correct_periodicity (strct2,    &opt.simulation);
+      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
 
       strct[n++] = strct1;
       strct[n++] = strct2;
@@ -107,28 +116,56 @@ int main (int argc, char ** argv)
     }
   }
 
-
   //
   //  Calculate Surface density and create files
   //
   FILE      * f;
+  double    * r     = NULL;
+  double    * Sigma = NULL;
   char        buffer [NAME_LENGTH];
-  sprintf (buffer, "sizemass_eagle_velociraptor.dat");
-  f = fopen (buffer, "w");
-  fclose (f);
+  int         bob;
+  int         nbins = 20;
+  double      rmin = 0.0;
+  double      rmax = 200.0;
 
+
+  for (i = 0, n = 0; i < opt.nstruct; i++)
+  {
+    // Central
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_central.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+
+    // IHSC
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_ihsc.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+
+    // Both
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_both.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+  }
 
   //
   // Free Memory
   //
-  for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
+  for (i = 0, n = 0; i < opt.nstruct; i++)
   {
-    strct1 = &opt.catalog.strctProps[i];
-    if ((strct1->Central == 1) && (strct_to_get[i] == 1) && (strct1->HostID > 0))
-    {
-      n = n + 2;
-      free (strct[n++]);
-    }
+    n = n + 2;
+    free (strct[n++]->Part);
   }
   free (strct_to_get);
   free (strct);
@@ -179,67 +216,21 @@ void test_params (Options * opt)
   // Close
   fclose (opt->param.file);
 
-
-
-  //
-  //  Parameters
-  //
-  void get_structure_params (Options * opt)
-  {
-    int   i;
-    int   dummy;
-    char  buffer [NAME_LENGTH];
-
-    opt->param.file = fopen (opt->param.name, "r");
-    if (opt->param.file == NULL)
+ if (opt->ilist)
+ {
+    opt->list.file = fopen (opt->list.name, "r");
+    if (opt->list.file == NULL)
     {
-      printf ("Couldn't open file  %s\n", opt->param.name);
+      printf ("Couldn't open file  %s\n", opt->list.name);
       printf ("Exiting...\n");
       exit (0);
     }
-
-    // Catalog
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog.archive, buffer);
-                                             Archive_prefix (&opt->catalog.archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog.archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog.archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog.archive, dummy);
-
-    // Simulation
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation.archive, buffer);
-                                             Archive_prefix (&opt->simulation.archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation.archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation.archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation.archive, dummy);
-
-    // Output
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
-                                             Archive_prefix (&opt->output, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
-
-    // Close
-    fclose (opt->param.file);
-
-   if (opt->ilist)
-   {
-      opt->list.file = fopen (opt->list.name, "r");
-      if (opt->list.file == NULL)
-      {
-        printf ("Couldn't open file  %s\n", opt->list.name);
-        printf ("Exiting...\n");
-        exit (0);
-      }
-      fscanf (opt->list.file, "%d", &opt->nstruct);
-      opt->id = (int *) malloc (opt->nstruct * sizeof(int));
-      for (i = 0; i < opt->nstruct; i++)
-        fscanf (opt->list.file, "%d", &opt->id[i]);
-      fclose (opt->list.file);
-    }
+    fscanf (opt->list.file, "%d", &opt->nstruct);
+    opt->id = (int *) malloc (opt->nstruct * sizeof(int));
+    for (i = 0; i < opt->nstruct; i++)
+      fscanf (opt->list.file, "%d", &opt->id[i]);
+    fclose (opt->list.file);
   }
-
-
 }
 
 
@@ -259,16 +250,33 @@ int test_options (int argc, char ** argv, Options * opt)
   struct option lopts[] = {
     {"help",    0, NULL, 'h'},
     {"verbose", 0, NULL, 'v'},
-    {"input",   0, NULL, 'i'},
+    {"param",   1, NULL, 'p'},
+    {"id",      2, NULL, 'i'},
+    {"list",    2, NULL, 'l'},
     {0,         0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "i:vh", lopts, &index)) != -1)
+  opt->ilist = 0;
+
+  while ((myopt = getopt_long (argc, argv, "i:p:l:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
-      case 'i':
+      case 'p':
       	strcpy (opt->param.name, optarg);
+        flag++;
+        break;
+
+      case 'i':
+        opt->nstruct = 1;
+      	opt->id = (int *) malloc (opt->nstruct * sizeof(int));
+        opt->id[0] = atoi(optarg);
+        flag++;
+        break;
+
+      case 'l':
+        opt->ilist = 1;
+        strcpy (opt->list.name, optarg);
         flag++;
         break;
 
@@ -287,69 +295,6 @@ int test_options (int argc, char ** argv, Options * opt)
 
   if (flag == 0)
     test_usage (1, argv);
-
-
-
-
-
-    int   myopt;
-    int   index;
-    int   flag = 0;
-
-    extern char * optarg;
-    extern int    opterr;
-    extern int    optopt;
-
-    struct option lopts[] = {
-      {"help",    0, NULL, 'h'},
-      {"verbose", 0, NULL, 'v'},
-      {"param",   1, NULL, 'p'},
-      {"id",      2, NULL, 'i'},
-      {"list",    2, NULL, 'l'},
-      {0,         0, NULL, 0}
-    };
-
-    opt->ilist = 0;
-
-    while ((myopt = getopt_long (argc, argv, "i:p:l:vh", lopts, &index)) != -1)
-    {
-      switch (myopt)
-      {
-        case 'p':
-        	strcpy (opt->param.name, optarg);
-          flag++;
-          break;
-
-        case 'i':
-          opt->nstruct = 1;
-        	opt->id = (int *) malloc (opt->nstruct * sizeof(int));
-          opt->id[0] = atoi(optarg);
-          flag++;
-          break;
-
-        case 'l':
-          opt->ilist = 1;
-          strcpy (opt->list.name, optarg);
-          flag++;
-          break;
-
-        case 'v':
-        	opt->verbose = 1;
-        	break;
-
-        case 'h':
-        	get_structure_usage (0, argv);
-          break;
-
-        default:
-        	get_structure_usage (1, argv);
-      }
-    }
-
-    if (flag == 0)
-      get_structure_usage (1, argv);
-
-
 }
 
 

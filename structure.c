@@ -111,87 +111,93 @@ void Structure_shift_to_centre_of_mass (Structure * strct)
 }
 
 
-Structure_calculate_surface_density (Structure * strct, double * rotation, double ledge, double redge, int nbins, double ** bins, double ** Sigma)
+void Structure_calculate_surface_density (Structure * strct, double * rotation, double ledge, double redge, int nbins, double ** bins, double ** Sigma)
 {
+  // This function assumes bins of same size
+  //
   //
   // rotation - is assumed to be a double array with size 3
   //            containing the rotation angles for x y and z
   //            if rotation == NULL  no rotation is done
   //
-
-  int      i;
-  double   ledge,
-  double   redge;
+  int      i, j, k;
   double   deltar;
   float  * tmppos;
+  int      bob;
 
   double * surface_density = *(Sigma);
-  double * radius          = *(bins);
+  double * radius = *(bins);
 
-  //
+
   // Rotate
-  //
   if (rotation != NULL)
   {
     ;
   }
 
-
-  //
   // Radii array
-  //
   if (radius == NULL)
   {
     radius  = (double *) malloc ((nbins + 1) * sizeof(double));
-
     // Particles are assumed to be sorted by radius
     if (ledge == 0 && redge == 0)
     {
       ledge = 0;
-      redge = strct->Particle[strct->NumPart-1].Radius;
+      redge = strct->Part[strct->NumPart-1].Radius;
     }
 
-    deltar = (log10(redge) - log10(ledge)) / (double) nbins;
+    if (ledge == 0)
+      deltar = redge / (double) nbins;
+    else
+      deltar = (redge - ledge) / (double) nbins;
 
     for (i = 0; i <= nbins; i++)
-      radius[i] = i * nbins;
+      radius[i] = i * deltar;
+  }
+  else
+  {
+    deltar = radius[1] - radius[0];
   }
 
-
-  //
-  // Surface density
-  //
-  if (surface_density == NULL)
-    surface_density = (double *) malloc (nbins * sizeof(double));
-
-  for (i = 0; i < nbins; i++)
-    surface_density[i] = 0;
-
+  // Copy z-coordinate
   tmppos = (float *) malloc (strct->NumPart * sizeof(float));
-
   for (k = 0; k < strct->NumPart; k++)
   {
-    tmppos[i] = strct->Part[k].Pos[2];
+    tmppos[k] = strct->Part[k].Pos[2];
     strct->Part[k].Pos[2] = 0.0;
   }
 
   Structure_get_particle_radius (strct);
   qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
 
+  // Surface density
+  if  (surface_density == NULL)
+    surface_density = (double *) malloc (nbins * sizeof(double));
+  for (i = 0; i < nbins; i++)
+    surface_density[i] = 0;
+
   for (i = 0; i < strct->NumPart; i++)
   {
-    bob = (int) (log10(strct->Part[i].Radius) / deltar);
-    surface_density[bob] += strct->Part[i].Mass;
+    bob = (int) (strct->Part[i].Radius / deltar);
+    if ((bob < nbins) && (bob > 0))
+      surface_density[bob] += strct->Part[i].Mass;
   }
 
-  for (i = 1; i <= nbins; i++)
-    surface_density[i-1] /= (acos(-1) * (radius[i]*radius[i] - radius[i-1]*radius[i-1]));
+  for (i = 0; i < nbins; i++)
+    surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1] - radius[i]*radius[i]));
 
   for (i = 0; i < strct->NumPart; i++)
     strct->Part[i].Pos[2] = tmppos[i];
-    
+
+  // Free memory
+  if (*(Sigma) == NULL || *(bins) == NULL)
+  {
+    *(Sigma) = surface_density;
+    *(bins)  = radius;
+  }
   free (tmppos);
 }
+
 
 
 void Structure_get_particle_radius (Structure * strct)
@@ -200,6 +206,7 @@ void Structure_get_particle_radius (Structure * strct)
   for (i = 0; i < strct->NumPart; i++)
     Particle_get_radius (&strct->Part[i]);
 }
+
 
 
 void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)

@@ -39,8 +39,8 @@ ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c partic
 convert: convert.c archive.c catalog.c stf.c halomaker.c
 	gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
 
-test: test.c archive.c catalog.c stf.c simulation.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-	$(CC) $(INC) $(LIB) test.c archive.c catalog.c stf.c halomaker.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
+test: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
 
 get_strucutre: get_structure.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 	$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
