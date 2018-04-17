@@ -190,6 +190,7 @@ int main (int argc, char ** argv)
   for (i = 0, n = 0; i < opt.nstruct; i++)
   {
     // Central
+    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_central.dat", strct1->dummyi);
@@ -199,6 +200,7 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // IHSC
+    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_ihsc.dat", strct1->dummyi);
@@ -208,6 +210,7 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // Central + IHSC
+    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_both.dat", strct1->dummyi);
@@ -217,6 +220,7 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // 3DFOF
+    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_3dfof.dat", strct1->dummyi);
