@@ -164,7 +164,7 @@ void Structure_calculate_surface_density (Structure * strct, double * rotation, 
   for (k = 0; k < strct->NumPart; k++)
   {
     tmppos[k] = strct->Part[k].Pos[2];
-    strct->Part[k].Pos[2] = 0.0;
+    //strct->Part[k].Pos[2] = 0.0;
   }
 
   Structure_get_particle_radius (strct);
@@ -179,12 +179,13 @@ void Structure_calculate_surface_density (Structure * strct, double * rotation, 
   for (i = 0; i < strct->NumPart; i++)
   {
     bob = (int) (strct->Part[i].Radius / deltar);
-    if ((bob < nbins) && (bob > 0))
+    if ((bob < nbins) && (bob >= 0))
       surface_density[bob] += strct->Part[i].Mass;
   }
 
   for (i = 0; i < nbins; i++)
-    surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1] - radius[i]*radius[i]));
+//   surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1] - radius[i]*radius[i]));
+   surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
 
   for (i = 0; i < strct->NumPart; i++)
     strct->Part[i].Pos[2] = tmppos[i];

@@ -92,7 +92,7 @@ int main (int argc, char ** argv)
     else
       strct2 = &opt.catalog.strctProps[strct1->HostID];
 
-    if (strct1->Type > 7)
+    if (strct1->Type > 7 && strct2->Type == 7)
       in3dfof[strct2->ID][strct2->dummyi++] = strct1->ID;
   }
 
@@ -102,6 +102,7 @@ int main (int argc, char ** argv)
   //
   strct = (Structure **) malloc (opt.nstruct*4*sizeof(Structure *));
 
+  printf ("HERE\n");
 
   //
   // Merge central with IHSM and fill 3DFOF
@@ -117,25 +118,21 @@ int main (int argc, char ** argv)
     if ((strct1->Central == 1) && (strct_to_get[i] == 1))
     {
       // Central
-      printf ("HERE\n");
       totpart = strct1->NumPart;
-      strct1->dummyi   = strct1->ID;
-      Structure_correct_periodicity (strct1, &opt.simulation);
+      strct1->dummyi = strct1->ID;
       strct[n++] = strct1;
 
       // IHSC
-      printf ("HERE\n");
       strct2 = &opt.catalog.strctProps[strct1->HostID];
-      totpart = strct2->NumPart;
+      totpart += strct2->NumPart;
       strct2->Pos[0] = strct1->Pos[0];
       strct2->Pos[1] = strct1->Pos[1];
       strct2->Pos[2] = strct1->Pos[2];
-      strct2->dummyi   = strct1->ID;
-      Structure_correct_periodicity (strct2, &opt.simulation);
+      strct2->dummyi = strct1->ID;
       strct[n++] = strct2;
 
       // Central + IHSC
-      printf ("HERE\n");
+      tmpstrct.NumPart = totpart;
       tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
       tmpstrct.Pos[0] = strct1->Pos[0];
       tmpstrct.Pos[1] = strct1->Pos[1];
@@ -145,17 +142,16 @@ int main (int argc, char ** argv)
       for (j = 0; j < strct2->NumPart; j++, k++)
         Particle_copy (&strct2->Part[j], &tmpstrct.Part[k]);
       tmpstrct.dummyi = strct1->ID;
-      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
       strct[n++] = &tmpstrct;
 
       // 3DFOF
-      printf ("HERE\n");
       totpart = 0;
       for (j = 0; j <= strct2->NumSubs; j++)
       {
         strct3 = &opt.catalog.strctProps[in3dfof[strct2->ID][j]];
         totpart += strct3->NumPart;
       }
+      tmpstrct2.NumPart = totpart;
       tmpstrct2.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
       tmpstrct2.Pos[0] = strct1->Pos[0];
       tmpstrct2.Pos[1] = strct1->Pos[1];
@@ -167,12 +163,16 @@ int main (int argc, char ** argv)
           Particle_copy (&strct3->Part[l], &tmpstrct2.Part[k]);
       }
       tmpstrct2.dummyi = strct1->ID;
-      Structure_correct_periodicity (&tmpstrct2, &opt.simulation);
       strct[n++] = &tmpstrct2;
-      printf ("HERE\n");
+
+      Structure_correct_periodicity (strct1, &opt.simulation);
+      Structure_correct_periodicity (strct2, &opt.simulation);
+      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
+      Structure_correct_periodicity (&tmpstrct2, &opt.simulation);
     }
   }
 
+printf ("HERE\n");
 
   //
   //  Calculate Surface density and create files
@@ -182,15 +182,14 @@ int main (int argc, char ** argv)
   double    * Sigma = NULL;
   char        buffer [NAME_LENGTH];
   int         bob;
-  int         nbins = 20;
+  int         nbins = 100;
   double      rmin = 0.0;
-  double      rmax = 200.0;
+  double      rmax = 500.0;
 
 
   for (i = 0, n = 0; i < opt.nstruct; i++)
   {
     // Central
-    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_central.dat", strct1->dummyi);
@@ -200,7 +199,6 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // IHSC
-    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_ihsc.dat", strct1->dummyi);
@@ -210,7 +208,6 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // Central + IHSC
-    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_both.dat", strct1->dummyi);
@@ -220,7 +217,6 @@ int main (int argc, char ** argv)
     fclose (f);
 
     // 3DFOF
-    printf ("HERE\n");
     strct1 = strct[n++];
     Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
     sprintf (buffer, "surface_density_%07d_3dfof.dat", strct1->dummyi);
@@ -237,7 +233,7 @@ int main (int argc, char ** argv)
   {
     n = n + 2;
     free (strct[n++]->Part);
-    free (strct[n++]);
+    free (strct[n++]->Part);
   }
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
