@@ -31,19 +31,19 @@ FLAGS       = -lm $(HDF5_FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
-	gcc analyze_galaxy_catalog.c -lm -o bin/analyze_galaxy_catalog
+		gcc analyze_galaxy_catalog.c -lm -o bin/analyze_galaxy_catalog
 
 ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-	$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c -o bin/ctlgMatch $(FLAGS)
+		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c -o bin/ctlgMatch $(FLAGS)
 
 convert: convert.c archive.c catalog.c stf.c halomaker.c
-	gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
+		gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
 
 test: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
 
-get_strucutre: get_structure.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-	$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
+get_structure: get_structure.c archive.c catalog.c stf.c gadget.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c stf.c gadget.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
 
-sizemass_eagle: test.c archive.c catalog.c stf.c simulation.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) test.c archive.c catalog.c stf.c halomaker.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/sizemass_eagle $(FLAGS)
+sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) sizemass_eagle.c archive.c catalog.c stf.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/sizemass_eagle $(FLAGS)

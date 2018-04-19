@@ -102,7 +102,6 @@ int main (int argc, char ** argv)
   //
   strct = (Structure **) malloc (opt.nstruct*4*sizeof(Structure *));
 
-  printf ("HERE\n");
 
   //
   // Merge central with IHSM and fill 3DFOF
@@ -172,7 +171,6 @@ int main (int argc, char ** argv)
     }
   }
 
-printf ("HERE\n");
 
   //
   //  Calculate Surface density and create files
@@ -182,9 +180,9 @@ printf ("HERE\n");
   double    * Sigma = NULL;
   char        buffer [NAME_LENGTH];
   int         bob;
-  int         nbins = 100;
+  int         nbins = 200;
   double      rmin = 0.0;
-  double      rmax = 500.0;
+  double      rmax = 400.0;
 
 
   for (i = 0, n = 0; i < opt.nstruct; i++)
