@@ -51,66 +51,198 @@ int main (int argc, char ** argv)
   Catalog_load_properties         (&opt.catalog);
   Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
   Catalog_fill_isolated           (&opt.catalog);
-  stf_read_treefrog               (&opt.mtree);
 
 
+  Structure  ** strct;
   Structure   * strct1;
   Structure   * strct2;
   Structure   * strct3;
 
+  int         * strct_to_get;
+
+  int        ** in3dfof;
+  Structure     fof3d;
+
+  Structure     ihsc;
+
 
   //
-  // Tag central galaxy and add stellar mass
+  //  Strct_to_get  tells which Centrals + IHSC use
   //
+  strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    strct_to_get[i] = 0;
+  for (i = 0; i < opt.nstruct; i++)
+    strct_to_get[opt.id[i]] = 1;
+
+
+  //
+  // Get IDs of members of 3DFOF
+  //
+  in3dfof = (int **) malloc ((opt.catalog.nstruct+1) * sizeof(int *));
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if (strct->Central == 1)
+    if (strct1->Type == 7)
     {
+      strct1->dummyi = 0;
+      in3dfof[i] = (int *) malloc ((opt.catalog.strctProps[i].NumSubs+1)*sizeof(int));
+      in3dfof[i][strct1->dummyi++] = strct1->ID;
+    }
+    else
       strct2 = &opt.catalog.strctProps[strct1->HostID];
-      strct1->dummyd = strct1->TotMass + strct2->TotMass;
+
+    if (strct1->Type > 7 && strct2->Type == 7)
+      in3dfof[strct2->ID][strct2->dummyi++] = strct1->ID;
+  }
+
+
+  //
+  // strct is the array of all structures to calculate Sigma
+  //
+  strct = (Structure **) malloc (opt.nstruct*4*sizeof(Structure *));
+
+
+  //
+  // Merge central with IHSM and fill 3DFOF
+  //
+  int         totpart;
+  Structure   tmpstrct;
+  Structure   tmpstrct2;
+  int         n;
+
+  for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
+  {
+    strct1 = &opt.catalog.strctProps[i];
+    if ((strct1->Central == 1) && (strct_to_get[i] == 1))
+    {
+      // Central
+      totpart = strct1->NumPart;
+      strct1->dummyi = strct1->ID;
+      strct[n++] = strct1;
+
+      // IHSC
+      strct2 = &opt.catalog.strctProps[strct1->HostID];
+      totpart += strct2->NumPart;
+      strct2->Pos[0] = strct1->Pos[0];
+      strct2->Pos[1] = strct1->Pos[1];
+      strct2->Pos[2] = strct1->Pos[2];
       strct2->dummyi = strct1->ID;
+      strct[n++] = strct2;
+
+      // Central + IHSC
+      tmpstrct.NumPart = totpart;
+      tmpstrct.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
+      tmpstrct.Pos[0] = strct1->Pos[0];
+      tmpstrct.Pos[1] = strct1->Pos[1];
+      tmpstrct.Pos[2] = strct1->Pos[2];
+      for (j = 0, k = 0; j < strct1->NumPart; j++, k++)
+        Particle_copy (&strct1->Part[j], &tmpstrct.Part[k]);
+      for (j = 0; j < strct2->NumPart; j++, k++)
+        Particle_copy (&strct2->Part[j], &tmpstrct.Part[k]);
+      tmpstrct.dummyi = strct1->ID;
+      strct[n++] = &tmpstrct;
+
+      // 3DFOF
+      totpart = 0;
+      for (j = 0; j <= strct2->NumSubs; j++)
+      {
+        strct3 = &opt.catalog.strctProps[in3dfof[strct2->ID][j]];
+        totpart += strct3->NumPart;
+      }
+      tmpstrct2.NumPart = totpart;
+      tmpstrct2.Part = (Particle *) malloc (totpart * (sizeof(Particle)));
+      tmpstrct2.Pos[0] = strct1->Pos[0];
+      tmpstrct2.Pos[1] = strct1->Pos[1];
+      tmpstrct2.Pos[2] = strct1->Pos[2];
+      for (j = 0, k = 0; j <= strct2->NumSubs; j++)
+      {
+        strct3 = &opt.catalog.strctProps[in3dfof[strct2->ID][j]];
+        for (l = 0; l < strct3->NumPart; l++, k++)
+          Particle_copy (&strct3->Part[l], &tmpstrct2.Part[k]);
+      }
+      tmpstrct2.dummyi = strct1->ID;
+      strct[n++] = &tmpstrct2;
+
+      Structure_correct_periodicity (strct1, &opt.simulation);
+      Structure_correct_periodicity (strct2, &opt.simulation);
+      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
+      Structure_correct_periodicity (&tmpstrct2, &opt.simulation);
     }
   }
 
+
+  //
+  //  Calculate Surface density and create files
+  //
+  FILE      * f;
+  double    * r     = NULL;
+  double    * Sigma = NULL;
+  char        buffer [NAME_LENGTH];
+  int         bob;
+  int         nbins = 200;
+  double      rmin = 0.0;
+  double      rmax = 400.0;
+
+
+  for (i = 0, n = 0; i < opt.nstruct; i++)
+  {
+    // Central
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_central.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+
+    // IHSC
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_ihsc.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+
+    // Central + IHSC
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_both.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+
+    // 3DFOF
+    strct1 = strct[n++];
+    Structure_calculate_surface_density (strct1, NULL, rmin, rmax, nbins, &r, &Sigma);
+    sprintf (buffer, "surface_density_%07d_3dfof.dat", strct1->dummyi);
+    f = fopen (buffer, "w");
+    for (j = 0; j < nbins; j++)
+      fprintf (f, "%e  %e\n", r[j], Sigma[j]);
+    fclose (f);
+  }
+
+  //
+  // Free Memory
+  //
+  for (i = 0, n = 0; i < opt.nstruct; i++)
+  {
+    n = n + 2;
+    free (strct[n++]->Part);
+    free (strct[n++]->Part);
+  }
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct1 = &opt.catalog.strctProps[i];
-    if (strct->Central != 1 && strct->Type > 7)
-    {
-      strct2 = &opt.catalog.strctProps[strct1->HostID];
-      strct3 = &opt.catalog.strctProps[strct2->dummyi];
-      strct3->TotMass += strct1->TotMass;
-    }
+    if (strct1->Type == 7)
+      free(in3dfof[i]);
   }
+  free (in3dfof);
+  free (strct_to_get);
+  free (strct);
 
-
-  //
-  // Write file with Diffuse stellar mass
-  //
-  FILE * f;
-  char buffer [NAME_LENGTH];
-  sprintf (buffer, "%s.ihsc", opt.output.prefix);
-  f = fopen (buffer, "w");
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-  {
-    strct1 = &opt.catalog.strctProps[i];
-    if (strct1 == 7)
-    {
-      strct2 = &opt.catalog.strctProps[strct1->dummyi];
-      fprintf (f, "%e  ", strct1->TotMass);
-      fprintf (f, "%e  ", strct2->TotMass);
-      fprintf (f, "%e  ", strct2->dummyd);
-      fprintf (f, "%e  ", strct1->NumSubs);
-      fprintf (f, "\n");
-    }
-  }
-  fclose (f);
-
-
-  //
-  // Free catalog
-  //
   Catalog_free (&opt.catalog);
 
   return (0);
