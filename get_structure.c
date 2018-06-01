@@ -81,16 +81,16 @@ int main (int argc, char ** argv)
       strct_to_get[i] = 1;
 */
 
-/*
+
   for (i = 1; i <= opt.catalog.nstruct; i++)
-    if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
+    if (opt.catalog.strctProps[i].HostID == opt.id[0])
       strct_to_get[i] = 1;
-*/
+
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
 
 
-/*
+
   Particle * P;
   int        numpart = 0;
 
@@ -117,8 +117,8 @@ int main (int argc, char ** argv)
   gadget_write_snapshot (P, numpart, &header, &opt.output);
 
   free (P);
-*/
 
+/*
 
   for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
   {
@@ -133,7 +133,7 @@ int main (int argc, char ** argv)
       k++;
     }
   }
-
+*/
 
 
   free (strct_to_get);

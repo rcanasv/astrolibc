@@ -40,8 +40,8 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
     header->npart[k]      = 0;
     header->npartTotal[k] = 0;
     header->mass[k]       = 0;
-    ref_mass[k]          = 0;
-    id_ref[k]            = 0;
+    ref_mass[k]           = 0;
+    id_ref[k]             = 0;
   }
   header->time           = 1;
   header->redshift       = 0;
@@ -49,9 +49,9 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   header->flag_feedback  = 0;
   header->flag_cooling   = 0;
   header->num_files      = 1;
-  header->BoxSize        = 100000;
+  header->BoxSize        = 142045.45454545456;
   header->Omega0         = 1;
-  header->OmegaLambda    = 1;
+  header->OmegaLambda    = 0;
   header->HubbleParam    = 1;
 
 
