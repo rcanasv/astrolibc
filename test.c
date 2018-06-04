@@ -17,14 +17,13 @@
 typedef struct Options
 {
   int            verbose;
-  int            nstruct;
-  int            ilist;
-  int          * id;
-  Archive        list;
+  int            nsnap;
+  int            ntrees;
   Archive        param;
   Archive        output;
-  Catalog        catalog;
-  Simulation     simulation;
+  Catalog      * catalog;
+  Archive      * tree;
+  Simulation   * simulation;
 } Options;
 
 
@@ -37,6 +36,9 @@ int main (int argc, char ** argv)
 {
   int          i, j, k, l;
   Options      opt;
+  Structure   * strct1;
+  Structure   * strct2;
+  Structure   * strct3;
 
 
   test_options (argc, argv, &opt);
@@ -44,77 +46,97 @@ int main (int argc, char ** argv)
 
 
   //
-  //  Load catalogs
+  //  Load catalogs and simulation details
+  // for Horizon-AGN only info_XXXX is needed
   //
-  Simulation_init                 (&opt.simulation);
-  Catalog_init                    (&opt.catalog);
-  Catalog_load_properties         (&opt.catalog);
-  Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
-  Catalog_fill_isolated           (&opt.catalog);
-  stf_read_treefrog               (&opt.mtree);
-
-
-  Structure   * strct1;
-  Structure   * strct2;
-  Structure   * strct3;
-
+  // Here I am assuming progenitor trees with a single
+  // snapshot connection AND only two snapshots per tree file
+  //
+  // This means  opt.tree[n] has the progenitors of
+  // opt.catalos[n] in opt.catalog[n+1] and so on
+  //
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    Simulation_init                 (&opt.simulation[i]);
+    Catalog_init                    (&opt.catalog[i]);
+    Catalog_load_properties         (&opt.catalog[i]);
+    //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    Catalog_fill_isolated           (&opt.catalog[i]);
+    if (i < (opt.nsnap - 1))
+      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
+  }
 
   //
   // Tag central galaxy and add stellar mass
   //
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  for (i = 0; i < opt.nsnap; i++)
   {
-    strct1 = &opt.catalog.strctProps[i];
-    if (strct->Central == 1)
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
     {
-      strct2 = &opt.catalog.strctProps[strct1->HostID];
-      strct1->dummyd = strct1->TotMass + strct2->TotMass;
-      strct2->dummyi = strct1->ID;
+      strct1 = &opt.catalog[i].strctProps[j];
+      if (strct1->Central == 1)
+      {
+        strct2 = &opt.catalog[i].strctProps[strct1->HostID];
+        strct1->dummyd = strct1->TotMass + strct2->TotMass;
+        strct2->dummyi = strct1->ID;
+      }
     }
   }
 
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  for (i = 0; i < opt.nsnap; i++)
   {
-    strct1 = &opt.catalog.strctProps[i];
-    if (strct->Central != 1 && strct->Type > 7)
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
     {
-      strct2 = &opt.catalog.strctProps[strct1->HostID];
-      strct3 = &opt.catalog.strctProps[strct2->dummyi];
-      strct3->TotMass += strct1->TotMass;
+      strct1 = &opt.catalog[i].strctProps[j];
+      if (strct1->Central != 1 && strct1->Type > 7)
+      {
+        strct2 = &opt.catalog[i].strctProps[strct1->HostID];
+        strct3 = &opt.catalog[i].strctProps[strct2->dummyi];
+        strct3->TotMass += strct1->TotMass;
+      }
     }
   }
-
 
   //
   // Write file with Diffuse stellar mass
   //
   FILE * f;
   char buffer [NAME_LENGTH];
-  sprintf (buffer, "%s.ihsc", opt.output.prefix);
-  f = fopen (buffer, "w");
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  for (i = 0; i < opt.nsnap; i++)
   {
-    strct1 = &opt.catalog.strctProps[i];
-    if (strct1 == 7)
+    sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
+    f = fopen (buffer, "w");
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
     {
-      strct2 = &opt.catalog.strctProps[strct1->dummyi];
-      fprintf (f, "%e  ", strct1->TotMass);
-      fprintf (f, "%e  ", strct2->TotMass);
-      fprintf (f, "%e  ", strct2->dummyd);
-      fprintf (f, "%e  ", strct1->NumSubs);
-      fprintf (f, "\n");
+      strct1 = &opt.catalog[i].strctProps[j];
+      if (strct1->Type == 7)
+      {
+        strct2 = &opt.catalog[i].strctProps[strct1->dummyi];
+        fprintf (f, "%e  ", strct1->TotMass);
+        fprintf (f, "%e  ", strct2->TotMass);
+        fprintf (f, "%e  ", strct2->dummyd);
+        fprintf (f, "%5d ", strct1->NumSubs);
+        fprintf (f, "\n");
+      }
     }
-  }
-  fclose (f);
+    fclose (f);
+ }
 
 
   //
-  // Free catalog
+  // Create `evolutionary tracks'
   //
-  Catalog_free (&opt.catalog);
+
+
+  //
+  // Free catalogues
+  //
+  for (i = 0; i < opt.nsnap; i++)
+    Catalog_free (&opt.catalog[i]);
 
   return (0);
 }
+
 
 
 //
@@ -134,19 +156,38 @@ void test_params (Options * opt)
     exit (0);
   }
 
-  // Catalog
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog.archive, buffer);
-                                           Archive_prefix (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog.archive, dummy);
+  fscanf (opt->param.file, "%d", &opt->nsnap);
+  opt->ntrees = opt->nsnap - 1;
+
+  // Catalogues
+  for (i = 0; i < opt->nsnap; i++)
+  {
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog[i].archive, buffer);
+                                             Archive_prefix (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
+    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog[i].archive, dummy);
+  }
+
+  // Trees
+  for (i = 0; i < opt->ntrees; i++)
+  {
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->tree[i], buffer);
+                                             Archive_prefix (&opt->tree[i], buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->tree[i], buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->tree[i], buffer);
+    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->tree[i], dummy);
+  }
 
   // Simulation
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation.archive, buffer);
-                                           Archive_prefix (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation.archive, dummy);
+  for (i = 0; i < opt->nsnap; i++)
+  {
+    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation[i].archive, buffer);
+                                             Archive_prefix (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation[i].archive, buffer);
+    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation[i].archive, dummy);
+  }
 
   // Output
   fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
@@ -157,24 +198,7 @@ void test_params (Options * opt)
 
   // Close
   fclose (opt->param.file);
-
- if (opt->ilist)
- {
-    opt->list.file = fopen (opt->list.name, "r");
-    if (opt->list.file == NULL)
-    {
-      printf ("Couldn't open file  %s\n", opt->list.name);
-      printf ("Exiting...\n");
-      exit (0);
-    }
-    fscanf (opt->list.file, "%d", &opt->nstruct);
-    opt->id = (int *) malloc (opt->nstruct * sizeof(int));
-    for (i = 0; i < opt->nstruct; i++)
-      fscanf (opt->list.file, "%d", &opt->id[i]);
-    fclose (opt->list.file);
-  }
 }
-
 
 //
 //  Options
@@ -192,33 +216,15 @@ int test_options (int argc, char ** argv, Options * opt)
   struct option lopts[] = {
     {"help",    0, NULL, 'h'},
     {"verbose", 0, NULL, 'v'},
-    {"param",   1, NULL, 'p'},
-    {"id",      2, NULL, 'i'},
-    {"list",    2, NULL, 'l'},
     {0,         0, NULL, 0}
   };
 
-  opt->ilist = 0;
-
-  while ((myopt = getopt_long (argc, argv, "i:p:l:vh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "p:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
       case 'p':
       	strcpy (opt->param.name, optarg);
-        flag++;
-        break;
-
-      case 'i':
-        opt->nstruct = 1;
-      	opt->id = (int *) malloc (opt->nstruct * sizeof(int));
-        opt->id[0] = atoi(optarg);
-        flag++;
-        break;
-
-      case 'l':
-        opt->ilist = 1;
-        strcpy (opt->list.name, optarg);
         flag++;
         break;
 
@@ -248,11 +254,11 @@ void test_usage (int opt, char ** argv)
   if (opt == 0)
   {
     printf ("                                                                         \n");
-    printf ("  test.c                                                                 \n");
+    printf ("  ihsc                                                                   \n");
     printf ("                                                                         \n");
     printf ("  Author:            Rodrigo Can\\~as                                    \n");
     printf ("                                                                         \n");
-    printf ("  Last edition:      16 - 04 - 2018                                      \n");
+    printf ("  Last edition:      04 - 06 - 2018                                      \n");
     printf ("                                                                         \n");
     printf ("                                                                         \n");
     printf ("  Usage:             %s [Option] [Parameter [argument]] ...\n",      argv[0]);
