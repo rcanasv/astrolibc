@@ -74,7 +74,7 @@ int main (int argc, char ** argv)
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
     {
       strct1 = &opt.catalog[i].strctProps[j];
-      if (strct1->Central == 1)
+      if (strct1->Central == 1 && strct1->HostID > 0)
       {
         strct2 = &opt.catalog[i].strctProps[strct1->HostID];
         strct1->dummyd = strct1->TotMass + strct2->TotMass;
@@ -98,7 +98,7 @@ int main (int argc, char ** argv)
   }
 
   //
-  // Write file with Diffuse stellar mass
+  // Diffuse stellar fraction
   //
   FILE * f;
   char buffer [NAME_LENGTH];
@@ -120,12 +120,60 @@ int main (int argc, char ** argv)
       }
     }
     fclose (f);
- }
-
+  }
 
   //
   // Create `evolutionary tracks'
   //
+  /*
+  FILE * f1;
+  FILE * f2;
+  FILE * f3;
+  char   buffer1 [NAME_LENGTH];
+  char   buffer2 [NAME_LENGTH];
+  char   buffer3 [NAME_LENGTH];
+
+  sprintf (buffer1, "%s.track_mihsc", opt.catalog[i].archive.prefix);
+  sprintf (buffer2, "%s.track_mctrl", opt.catalog[i].archive.prefix);
+  sprintf (buffer3, "%s.track_mstot", opt.catalog[i].archive.prefix);
+
+  f1 = fopen (buffer1, "w");
+  f2 = fopen (buffer2, "w");
+  f3 = fopen (buffer3, "w");
+  */
+  Structure * ihsc;
+  Structure * ctrl;
+  Structure * ihscp;
+  Structure * ctrlp;
+
+//  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+
+  printf ("ihsc      ctrl      ihscp     ctrlp    ihscpc   ctrlph\n");
+  for (i = 1; i <= 1; i++)
+  {
+    ihsc = &opt.catalog[0].strctProps[i];
+    if (ihsc->Type == 7)
+    {
+      ctrl = &opt.catalog[0].strctProps[ihsc->dummyi];
+      for (j = 1; j < opt.ntrees; j++)
+      {
+        ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
+        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+
+        printf ("%d     %d  ", ihsc->ID,  ctrl->ID);
+        printf ("%d     %d  ", ihscp->ID, ctrlp->ID);
+        printf ("%d     %d\n", ihscp->dummyi, ctrlp->HostID);
+
+        ihsc = ihscp;
+        ctrl = ctrlp;
+      }
+    }
+  }
+  /*
+  fclose (f1);
+  fclose (f2);
+  fclose (f3);
+  */
 
 
   //
@@ -133,6 +181,10 @@ int main (int argc, char ** argv)
   //
   for (i = 0; i < opt.nsnap; i++)
     Catalog_free (&opt.catalog[i]);
+
+  free (opt.catalog);
+  free (opt.tree);
+  free (opt.simulation);
 
   return (0);
 }
@@ -158,6 +210,11 @@ void test_params (Options * opt)
 
   fscanf (opt->param.file, "%d", &opt->nsnap);
   opt->ntrees = opt->nsnap - 1;
+
+  opt->catalog    = (Catalog    *) malloc (opt->nsnap * sizeof(Catalog));
+  opt->tree       = (Archive    *) malloc (opt->nsnap * sizeof(Archive));
+  opt->simulation = (Simulation *) malloc (opt->nsnap * sizeof(Simulation));
+
 
   // Catalogues
   for (i = 0; i < opt->nsnap; i++)
