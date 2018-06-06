@@ -122,10 +122,39 @@ int main (int argc, char ** argv)
     fclose (f);
   }
 
+
+  int top = 5;
+  double top_mass[top];
+  int    top_id[top];
+  for (i = 0; i < top; i++)
+    massive[i] = 0.0;
+  double tmp;
+
+  for (i = 1; i <= &opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    if (strct1->Type == 7)
+    {
+      j = 0;
+      do
+      {
+        if (strct->TotMass > massive[j])
+        {
+          for (k = top-2; k > j; k--)
+          {
+            massive[k+1] = massive[k];
+          }
+        }
+      } while(j < top);
+    }
+  }
+
+
+
   //
   // Create `evolutionary tracks'
   //
-  /*
+
   FILE * f1;
   FILE * f2;
   FILE * f3;
@@ -133,47 +162,52 @@ int main (int argc, char ** argv)
   char   buffer2 [NAME_LENGTH];
   char   buffer3 [NAME_LENGTH];
 
-  sprintf (buffer1, "%s.track_mihsc", opt.catalog[i].archive.prefix);
-  sprintf (buffer2, "%s.track_mctrl", opt.catalog[i].archive.prefix);
-  sprintf (buffer3, "%s.track_mstot", opt.catalog[i].archive.prefix);
+  sprintf (buffer1, "%s.track_mihsc", opt.output.prefix);
+  sprintf (buffer2, "%s.track_mctrl", opt.output.prefix);
+  sprintf (buffer3, "%s.track_mstot", opt.output.prefix);
 
   f1 = fopen (buffer1, "w");
   f2 = fopen (buffer2, "w");
   f3 = fopen (buffer3, "w");
-  */
+
   Structure * ihsc;
   Structure * ctrl;
   Structure * ihscp;
   Structure * ctrlp;
 
 //  for (i = 1; i <= opt.catalog[0].nstruct; i++)
-
-  printf ("ihsc      ctrl      ihscp     ctrlp    ihscpc   ctrlph\n");
-  for (i = 1; i <= 1; i++)
+  for (i = 1; i <= top; i++)
   {
     ihsc = &opt.catalog[0].strctProps[i];
     if (ihsc->Type == 7)
     {
       ctrl = &opt.catalog[0].strctProps[ihsc->dummyi];
+
+      fprintf (f1, "%e  ", ihsc->TotMass);
+      fprintf (f2, "%e  ", ctrl->TotMass);
+      fprintf (f3, "%e  ", ctrl->dummyd);
+
       for (j = 1; j < opt.ntrees; j++)
       {
         ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
         ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
 
-        printf ("%d     %d  ", ihsc->ID,  ctrl->ID);
-        printf ("%d     %d  ", ihscp->ID, ctrlp->ID);
-        printf ("%d     %d\n", ihscp->dummyi, ctrlp->HostID);
+        fprintf (f1, "%e  ", ihscp->TotMass);
+        fprintf (f2, "%e  ", ctrlp->TotMass);
+        fprintf (f3, "%e  ", ctrlp->dummyd);
 
         ihsc = ihscp;
         ctrl = ctrlp;
       }
+
+      fprintf (f1, "\n");
+      fprintf (f2, "\n");
+      fprintf (f3, "\n");
     }
   }
-  /*
   fclose (f1);
   fclose (f2);
   fclose (f3);
-  */
 
 
   //
