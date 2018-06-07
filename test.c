@@ -124,6 +124,7 @@ int main (int argc, char ** argv)
 
 
   int top = 5;
+  /*
   double top_mass[top];
   int    top_id[top];
   for (i = 0; i < top; i++)
@@ -148,7 +149,7 @@ int main (int argc, char ** argv)
       } while(j < top);
     }
   }
-
+  */
 
 
   //
@@ -232,7 +233,11 @@ void test_params (Options * opt)
 {
   int   i;
   int   dummy;
-  char  buffer [NAME_LENGTH];
+  char  buffer   [NAME_LENGTH];
+  char  namebuff [NAME_LENGTH];
+  char  frmtbuff [NAME_LENGTH];
+  char  pathbuff [NAME_LENGTH];
+  int   nflsbuff;
 
   opt->param.file = fopen (opt->param.name, "r");
   if (opt->param.file == NULL)
@@ -253,39 +258,43 @@ void test_params (Options * opt)
   // Catalogues
   for (i = 0; i < opt->nsnap; i++)
   {
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog[i].archive, buffer);
-                                             Archive_prefix (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog[i].archive, dummy);
+    fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->catalog[i].archive, namebuff);
+    Archive_prefix (&opt->catalog[i].archive, namebuff);
+    Archive_format (&opt->catalog[i].archive, frmtbuff);
+    Archive_path   (&opt->catalog[i].archive, pathbuff);
+    Archive_nfiles (&opt->catalog[i].archive, nflsbuff);
   }
 
   // Trees
   for (i = 0; i < opt->ntrees; i++)
   {
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->tree[i], buffer);
-                                             Archive_prefix (&opt->tree[i], buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->tree[i], buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->tree[i], buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->tree[i], dummy);
+    fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->tree[i], namebuff);
+    Archive_prefix (&opt->tree[i], namebuff);
+    Archive_format (&opt->tree[i], frmtbuff);
+    Archive_path   (&opt->tree[i], pathbuff);
+    Archive_nfiles (&opt->tree[i], nflsbuff);
   }
 
   // Simulation
   for (i = 0; i < opt->nsnap; i++)
   {
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation[i].archive, buffer);
-                                             Archive_prefix (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation[i].archive, dummy);
+    fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->simulation[i].archive, namebuff);
+    Archive_prefix (&opt->simulation[i].archive, namebuff);
+    Archive_format (&opt->simulation[i].archive, frmtbuff);
+    Archive_path   (&opt->simulation[i].archive, pathbuff);
+    Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
   }
 
   // Output
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
-                                           Archive_prefix (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
+  fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->output, namebuff);
+  Archive_prefix (&opt->output, namebuff);
+  Archive_format (&opt->output, frmtbuff);
+  Archive_path   (&opt->output, pathbuff);
+  Archive_nfiles (&opt->output, nflsbuff);
 
   // Close
   fclose (opt->param.file);
