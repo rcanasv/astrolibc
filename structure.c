@@ -215,3 +215,31 @@ void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * 
   if (ctlg->format == STF)
     stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
 }
+
+
+int Structure_mass_compare (const void * a, const void * b)
+{
+  Structure * strct1 = (Structure *) a;
+  Structure * strct2 = (Structure *) b;
+
+  if (strct1->TotMass > strct2->TotMass)
+    return  1;
+  if (strct1->TotMass == strct2->TotMass)
+    return  0;
+  if (strct1->TotMass < strct2->TotMass)
+    return -1;
+}
+
+
+int Structure_dummyd_compare (const void * a, const void * b)
+{
+  Structure * strct1 = (Structure *) a;
+  Structure * strct2 = (Structure *) b;
+
+  if (strct1->dummyd > strct2->dummyd)
+    return  1;
+  if (strct1->dummyd == strct2->dummyd)
+    return  0;
+  if (strct1->dummyd < strct2->dummyd)
+    return -1;
+}

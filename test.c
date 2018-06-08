@@ -39,11 +39,11 @@ int main (int argc, char ** argv)
   Structure   * strct1;
   Structure   * strct2;
   Structure   * strct3;
+  Structure   * sorted;
 
 
   test_options (argc, argv, &opt);
   test_params  (&opt);
-
 
   //
   //  Load catalogs and simulation details
@@ -69,6 +69,15 @@ int main (int argc, char ** argv)
   //
   // Tag central galaxy and add stellar mass
   //
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    {
+      strct1 = &opt.catalog[i].strctProps[j];
+      strct1->dummyd = 0.0;
+    }
+  }
+
   for (i = 0; i < opt.nsnap; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -116,6 +125,8 @@ int main (int argc, char ** argv)
         fprintf (f, "%e  ", strct2->TotMass);
         fprintf (f, "%e  ", strct2->dummyd);
         fprintf (f, "%5d ", strct1->NumSubs);
+        fprintf (f, "%5d ", strct2->Central);
+        fprintf (f, "%5d ", strct2->ID);
         fprintf (f, "\n");
       }
     }
@@ -124,91 +135,73 @@ int main (int argc, char ** argv)
 
 
   int top = 5;
-  /*
-  double top_mass[top];
-  int    top_id[top];
-  for (i = 0; i < top; i++)
-    massive[i] = 0.0;
-  double tmp;
-
-  for (i = 1; i <= &opt.catalog[0].nstruct; i++)
-  {
-    strct1 = &opt.catalog[0].strctProps[i];
-    if (strct1->Type == 7)
-    {
-      j = 0;
-      do
-      {
-        if (strct->TotMass > massive[j])
-        {
-          for (k = top-2; k > j; k--)
-          {
-            massive[k+1] = massive[k];
-          }
-        }
-      } while(j < top);
-    }
-  }
-  */
-
+  sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
+  memcpy(sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
+  qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
   //
   // Create `evolutionary tracks'
   //
-
   FILE * f1;
   FILE * f2;
   FILE * f3;
+  FILE * f4;
   char   buffer1 [NAME_LENGTH];
   char   buffer2 [NAME_LENGTH];
   char   buffer3 [NAME_LENGTH];
+  char   buffer4 [NAME_LENGTH];
 
-  sprintf (buffer1, "%s.track_mihsc", opt.output.prefix);
-  sprintf (buffer2, "%s.track_mctrl", opt.output.prefix);
-  sprintf (buffer3, "%s.track_mstot", opt.output.prefix);
+  sprintf (buffer1, "%s.track_mihsc",  opt.output.prefix);
+  sprintf (buffer2, "%s.track_mctrl",  opt.output.prefix);
+  sprintf (buffer3, "%s.track_mstot",  opt.output.prefix);
+  sprintf (buffer4, "%s.track_idctrl", opt.output.prefix);
 
   f1 = fopen (buffer1, "w");
   f2 = fopen (buffer2, "w");
   f3 = fopen (buffer3, "w");
+  f4 = fopen (buffer4, "w");
 
   Structure * ihsc;
   Structure * ctrl;
   Structure * ihscp;
   Structure * ctrlp;
 
-//  for (i = 1; i <= opt.catalog[0].nstruct; i++)
-  for (i = 1; i <= top; i++)
+  //  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  for (i = opt.catalog[0].nstruct, k = 0; k < top; i--, k++)
   {
-    ihsc = &opt.catalog[0].strctProps[i];
-    if (ihsc->Type == 7)
+    ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
+    ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
+
+    fprintf (f1, "%e  ", ihsc->TotMass);
+    fprintf (f2, "%e  ", ctrl->TotMass);
+    fprintf (f3, "%e  ", ctrl->dummyd);
+    fprintf (f4, "%5d  %5d   |   ", ctrl->ID, ihsc->dummyi);
+
+    for (j = 1; j < opt.ntrees; j++)
     {
-      ctrl = &opt.catalog[0].strctProps[ihsc->dummyi];
+//      ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
+//      ctrlp = &opt.catalog[j].strctProps[ihscp->dummyi];
+      ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+      ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
 
-      fprintf (f1, "%e  ", ihsc->TotMass);
-      fprintf (f2, "%e  ", ctrl->TotMass);
-      fprintf (f3, "%e  ", ctrl->dummyd);
+      fprintf (f1, "%e  ", ihscp->TotMass);
+      fprintf (f2, "%e  ", ctrlp->TotMass);
+      fprintf (f3, "%e  ", ctrlp->dummyd);
+      fprintf (f4, "%5d  %5d   |   ", ctrlp->ID, ihscp->dummyi);
 
-      for (j = 1; j < opt.ntrees; j++)
-      {
-        ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
-        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
-
-        fprintf (f1, "%e  ", ihscp->TotMass);
-        fprintf (f2, "%e  ", ctrlp->TotMass);
-        fprintf (f3, "%e  ", ctrlp->dummyd);
-
-        ihsc = ihscp;
-        ctrl = ctrlp;
-      }
-
-      fprintf (f1, "\n");
-      fprintf (f2, "\n");
-      fprintf (f3, "\n");
+      ihsc = ihscp;
+      ctrl = ctrlp;
     }
+
+    fprintf (f1, "\n");
+    fprintf (f2, "\n");
+    fprintf (f3, "\n");
+    fprintf (f4, "\n");
   }
   fclose (f1);
   fclose (f2);
   fclose (f3);
+  fclose (f4);
 
 
   //

@@ -25,6 +25,8 @@ void  Structure_get_particle_radius       (Structure * strct);
 void  Structure_get_particle_properties   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
 
 void  Structure_shift_to_centre_of_mass   (Structure * strct);
+int   Structure_mass_compare              (const void * a, const void * b);
+int   Structure_dummyd_compare            (const void * a, const void * b);
 
 
 #endif    /*  STRUCTURE_H  */
