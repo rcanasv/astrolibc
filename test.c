@@ -330,7 +330,10 @@ int main (int argc, char ** argv)
     }
 
     if (m == numpart)
+    {
+      sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, 0);
       gadget_write_snapshot (P, m, &header, &opt.output);
+    }
     else
       printf ("Error in total number of particles\n");
     free (P);
@@ -374,7 +377,10 @@ int main (int argc, char ** argv)
 
 
       if (m == numpart)
+      {
+        sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, j);
         gadget_write_snapshot (P, m, &header, &opt.output);
+      }
       else
         printf ("Error in total number of particles\n");
       free (P);
