@@ -34,7 +34,7 @@ void  test_params  (Options * opt);
 
 int main (int argc, char ** argv)
 {
-  int          i, j, k, l;
+  int          i, j, k, l, n, m;
   Options      opt;
   Structure   * strct1;
   Structure   * strct2;
@@ -61,10 +61,15 @@ int main (int argc, char ** argv)
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
     //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
     if (i < (opt.nsnap - 1))
       stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
+
+
+  // --------------------------------------------------- //
+
 
   //
   // Tag central galaxy and add stellar mass
@@ -106,6 +111,10 @@ int main (int argc, char ** argv)
     }
   }
 
+
+  // --------------------------------------------------- //
+
+
   //
   // Diffuse stellar fraction
   //
@@ -133,11 +142,14 @@ int main (int argc, char ** argv)
     fclose (f);
   }
 
-
   int top = 5;
   sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
   memcpy(sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
+
+
+  // --------------------------------------------------- //
+
 
   //
   // Create `evolutionary tracks'
@@ -204,12 +216,184 @@ int main (int argc, char ** argv)
   fclose (f4);
 
 
+  // --------------------------------------------------- //
+
+
+  //
+  // Write snapshots for visualization
+  //
+  int          numpart;
+  int       ** strct_to_get;
+  Particle   * P;
+  gheader      header;
+
+  strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    strct_to_get[i] = (int *) malloc (opt.catalog[i].nstruct+1);
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      strct_to_get[i][j] = 0;
+  }
+
+  //
+  // Tag galaxies to be extracted.
+  // For visualization purposes label is used
+  // also as type of particles
+  //
+  //   1 - central
+  //   2 - ihsc
+  //   3 - rest
+  //
+  for (i = opt.catalog[0].nstruct, k = 0; k < top; i--, k++)
+  {
+    numpart = 0;
+    ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
+    ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
+
+    strct_to_get[0][ihsc->ID] = 2;
+    numpart += ihsc->NumPart;
+
+    for (n = 0; n < ihsc->NumSubs; n++)
+    {
+      strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
+      strct_to_get[0][strct1->ID] = 3;
+      numpart += strct1->NumPart;
+    }
+
+    numpart += ctrl->NumPart;
+    strct_to_get[0][ctrl->ID] = numpart;
+
+    for (j = 1; j < opt.ntrees; j++)
+    {
+//      ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
+//      ctrlp = &opt.catalog[j].strctProps[ihscp->dummyi];
+      ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+      ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
+
+      strct_to_get[j][ihscp->ID] = 2;
+      numpart += ihscp->NumPart;
+
+      for (n = 0; n < ihscp->NumSubs; n++)
+      {
+        strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
+        strct_to_get[j][strct1->ID] = 3;
+        numpart += strct1->NumPart;
+      }
+
+      numpart += ctrlp->NumPart;
+      strct_to_get[j][ctrlp->ID] = numpart;
+
+      ihsc = ihscp;
+      ctrl = ctrlp;
+    }
+  }
+
+
+  // Load Particles
+  for (i = 0; i < opt.nsnap; i++)
+    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
+
+
+  // Write Gadget Snapshots
+  for (i = opt.catalog[0].nstruct, k = 0; k < top; i--, k++)
+  {
+    m = 0;
+    numpart = strct_to_get[0][sorted[i].ID];
+    P = (Particle *) malloc (numpart * sizeof(Particle));
+
+    ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
+    ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
+
+    // Tag IHSC as 2
+    for (n = 0; n < ihsc->NumPart; n++, m++)
+    {
+      Particle_copy (&ihsc->Part[n], &P[m]);
+      P[m].Type = 2;
+    }
+
+    // Tag Satellites as 3
+    for (n = 0; n < ihsc->NumSubs; n++)
+    {
+      strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
+      for (l = 0; l < strct1->NumPart; l++, m++)
+      {
+        Particle_copy (&strct1->Part[l], &P[m]);
+        P[m].Type = 3;
+      }
+    }
+
+    // Tag Central as 1
+    for (n = 0; n < ctrl->NumPart; n++, m++)
+    {
+      Particle_copy (&ctrl->Part[l], &P[m]);
+      P[m].Type = 1;
+    }
+
+    if (m == numpart)
+      gadget_write_snapshot (P, m, &header, &opt.output);
+    else
+      printf ("Error in total number of particles\n");
+    free (P);
+
+
+    for (j = 1; j < opt.ntrees; j++)
+    {
+//      ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
+//      ctrlp = &opt.catalog[j].strctProps[ihscp->dummyi];
+      ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+      ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
+
+      m = 0;
+      numpart = strct_to_get[j][ctrlp->ID];
+      P = (Particle *) malloc (numpart * sizeof(Particle));
+
+      // Tag IHSC as 2
+      for (n = 0; n < ihscp->NumPart; n++, m++)
+      {
+        Particle_copy (&ihscp->Part[n], &P[m]);
+        P[m].Type = 2;
+      }
+
+      // Tag Satellites as 3
+      for (n = 0; n < ihscp->NumSubs; n++)
+      {
+        strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
+        for (l = 0; l < strct1->NumPart; l++, m++)
+        {
+          Particle_copy (&strct1->Part[l], &P[m]);
+          P[m].Type = 3;
+        }
+      }
+
+      // Tag Central as 1
+      for (n = 0; n < ctrlp->NumPart; n++, m++)
+      {
+        Particle_copy (&ctrlp->Part[l], &P[m]);
+        P[m].Type = 1;
+      }
+
+
+      if (m == numpart)
+        gadget_write_snapshot (P, m, &header, &opt.output);
+      else
+        printf ("Error in total number of particles\n");
+      free (P);
+
+
+      ihsc = ihscp;
+      ctrl = ctrlp;
+    }
+  }
+
+
   //
   // Free catalogues
   //
   for (i = 0; i < opt.nsnap; i++)
     Catalog_free (&opt.catalog[i]);
-
+  for (i = 0; i < opt.nsnap; i++)
+    free (strct_to_get[i]);
+  free (strct_to_get);
   free (opt.catalog);
   free (opt.tree);
   free (opt.simulation);

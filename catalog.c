@@ -111,7 +111,6 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
   int bob;
   int tmp;
 
-
   for (i = 1; i <= ctlg->nstruct; i++)
     if (ctlg->strctProps[i].HostID == -1)
     {
