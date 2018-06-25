@@ -80,6 +80,8 @@ int main (int argc, char ** argv)
     {
       strct1 = &opt.catalog[i].strctProps[j];
       strct1->dummyd = 0.0;
+      strct1->dummyi = 0;
+      strct1->dummy  = 0;   
     }
   }
 
@@ -226,11 +228,12 @@ int main (int argc, char ** argv)
   int       ** strct_to_get;
   Particle   * P;
   gheader      header;
+  Structure    tmpstrct;
 
   strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
   for (i = 0; i < opt.nsnap; i++)
   {
-    strct_to_get[i] = (int *) malloc (opt.catalog[i].nstruct+1);
+    strct_to_get[i] = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
       strct_to_get[i][j] = 0;
   }
@@ -256,8 +259,11 @@ int main (int argc, char ** argv)
     for (n = 0; n < ihsc->NumSubs; n++)
     {
       strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
-      strct_to_get[0][strct1->ID] = 3;
-      numpart += strct1->NumPart;
+      if (strct1->ID != ctrl->ID)
+      {
+        strct_to_get[0][strct1->ID] = 3;
+        numpart += strct1->NumPart;
+      }
     }
 
     numpart += ctrl->NumPart;
@@ -265,6 +271,8 @@ int main (int argc, char ** argv)
 
     for (j = 1; j < opt.ntrees; j++)
     {
+      numpart = 0;
+
 //      ihscp = &opt.catalog[j].strctProps[ihsc->MatchIDs[0]];
 //      ctrlp = &opt.catalog[j].strctProps[ihscp->dummyi];
       ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
@@ -276,8 +284,11 @@ int main (int argc, char ** argv)
       for (n = 0; n < ihscp->NumSubs; n++)
       {
         strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
-        strct_to_get[j][strct1->ID] = 3;
-        numpart += strct1->NumPart;
+        if (strct1->ID != ctrlp->ID)
+        {
+          strct_to_get[j][strct1->ID] = 3;
+          numpart += strct1->NumPart;
+        }
       }
 
       numpart += ctrlp->NumPart;
@@ -299,7 +310,8 @@ int main (int argc, char ** argv)
   {
     m = 0;
     numpart = strct_to_get[0][sorted[i].ID];
-    P = (Particle *) malloc (numpart * sizeof(Particle));
+    tmpstrct.Part = (Particle *) malloc (numpart * sizeof(Particle));
+    tmpstrct.NumPart = numpart;
 
     ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
     ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
@@ -307,36 +319,45 @@ int main (int argc, char ** argv)
     // Tag IHSC as 2
     for (n = 0; n < ihsc->NumPart; n++, m++)
     {
-      Particle_copy (&ihsc->Part[n], &P[m]);
-      P[m].Type = 2;
+      Particle_copy (&ihsc->Part[n], &tmpstrct.Part[m]);
+      tmpstrct.Part[m].Type = 2;
     }
 
     // Tag Satellites as 3
     for (n = 0; n < ihsc->NumSubs; n++)
     {
       strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
-      for (l = 0; l < strct1->NumPart; l++, m++)
+      if (strct1->ID != ctrl->ID)
       {
-        Particle_copy (&strct1->Part[l], &P[m]);
-        P[m].Type = 3;
+        for (l = 0; l < strct1->NumPart; l++, m++)
+        {
+          Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+          tmpstrct.Part[m].Type = 3;
+        }
       }
     }
 
     // Tag Central as 1
     for (n = 0; n < ctrl->NumPart; n++, m++)
     {
-      Particle_copy (&ctrl->Part[l], &P[m]);
-      P[m].Type = 1;
+      Particle_copy (&ctrl->Part[n], &tmpstrct.Part[m]);
+      tmpstrct.Part[m].Type = 1;
     }
+    
+    tmpstrct.Pos[0] = ctrl->Pos[0];
+    tmpstrct.Pos[1] = ctrl->Pos[1];
+    tmpstrct.Pos[2] = ctrl->Pos[2];
+    printf ("boxsize %e\n", opt.simulation[0].Lbox);
+    Structure_correct_periodicity (&tmpstrct, &opt.simulation[0]);
 
     if (m == numpart)
     {
       sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, 0);
-      gadget_write_snapshot (P, m, &header, &opt.output);
+      gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
     }
     else
       printf ("Error in total number of particles\n");
-    free (P);
+    free (tmpstrct.Part);
 
 
     for (j = 1; j < opt.ntrees; j++)
@@ -348,42 +369,62 @@ int main (int argc, char ** argv)
 
       m = 0;
       numpart = strct_to_get[j][ctrlp->ID];
-      P = (Particle *) malloc (numpart * sizeof(Particle));
+      tmpstrct.Part = (Particle *) malloc (numpart * sizeof(Particle));
+      tmpstrct.NumPart = numpart;
 
       // Tag IHSC as 2
       for (n = 0; n < ihscp->NumPart; n++, m++)
       {
-        Particle_copy (&ihscp->Part[n], &P[m]);
-        P[m].Type = 2;
+        Particle_copy (&ihscp->Part[n], &tmpstrct.Part[m]);
+        tmpstrct.Part[m].Type = 2;
       }
 
       // Tag Satellites as 3
       for (n = 0; n < ihscp->NumSubs; n++)
       {
         strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
-        for (l = 0; l < strct1->NumPart; l++, m++)
+        if (strct1->ID != ctrlp->ID)
         {
-          Particle_copy (&strct1->Part[l], &P[m]);
-          P[m].Type = 3;
+          if (strct1->Central == 0)
+          {
+            for (l = 0; l < strct1->NumPart; l++, m++)
+            {
+              Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+              tmpstrct.Part[m].Type = 3;
+            }
+          }
+          else
+          {
+            for (l = 0; l < strct1->NumPart; l++, m++)
+            {
+              Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+              tmpstrct.Part[m].Type = 4;
+            }
+          }
         }
       }
 
       // Tag Central as 1
       for (n = 0; n < ctrlp->NumPart; n++, m++)
       {
-        Particle_copy (&ctrlp->Part[l], &P[m]);
-        P[m].Type = 1;
+        Particle_copy (&ctrlp->Part[n], &tmpstrct.Part[m]);
+        tmpstrct.Part[m].Type = 1;
       }
-
+    
+      tmpstrct.Pos[0] = ctrlp->Pos[0];
+      tmpstrct.Pos[1] = ctrlp->Pos[1];
+      tmpstrct.Pos[2] = ctrlp->Pos[2]; 
+      printf ("boxsize %e\n", opt.simulation[j].Lbox);
+      Structure_correct_periodicity (&tmpstrct, &opt.simulation[j]);
 
       if (m == numpart)
       {
         sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, j);
-        gadget_write_snapshot (P, m, &header, &opt.output);
+        gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
       }
       else
         printf ("Error in total number of particles\n");
-      free (P);
+      free (tmpstrct.Part);
 
 
       ihsc = ihscp;
