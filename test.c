@@ -71,6 +71,9 @@ int main (int argc, char ** argv)
   // opt.catalos[n] in opt.catalog[n+1] and so on
   //
 
+//  opt.nsnap = 3;
+//  opt.ntrees = opt.nsnap-1;
+
   for (i = 0; i < opt.nsnap; i++)
   {
     Simulation_init                 (&opt.simulation[i]);
@@ -428,8 +431,8 @@ int main (int argc, char ** argv)
           ihsc = ihscp;
           ctrl = ctrlp;
         }
+        k++;
       }
-      k++;
     }
 
     // Load Particles
@@ -568,8 +571,8 @@ int main (int argc, char ** argv)
           ihsc = ihscp;
           ctrl = ctrlp;
         }
+       k++;
       }
-      k++;
     }
 
     for (i = 0; i < opt.nsnap; i++)
