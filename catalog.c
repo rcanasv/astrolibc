@@ -123,7 +123,8 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
 
   for (i = 1; i <= ctlg->nstruct; i++)
   {
-    if (ctlg->strctProps[i].HostID != -1)
+    if (ctlg->strctProps[i].HostID != -1 && \
+        ctlg->strctProps[i].HostID != ctlg->strctProps[i].ID)
     {
       bob = i;
       while (ctlg->strctProps[bob].HostID != -1)

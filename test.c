@@ -76,7 +76,7 @@ int main (int argc, char ** argv)
 
   for (i = 0; i < opt.nsnap; i++)
   {
-    Simulation_init                 (&opt.simulation[i]);
+    //Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
     //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
