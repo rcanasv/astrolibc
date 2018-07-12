@@ -25,6 +25,14 @@ void Simulation_init (Simulation * sim)
     ramses_init (sim);
   }
   else
+  if ((!strcmp(sim->archive.format, "ramses_star")) ||  \
+      (!strcmp(sim->archive.format, "RAMSES_STAR")) ||  \
+      (!strcmp(sim->archive.format, "Ramses_Star")))
+  {
+    sim->format = RAMSES_STAR;
+    ramses_init (sim);
+  }
+  else
   if ((!strcmp(sim->archive.format, "galfile")) ||  \
       (!strcmp(sim->archive.format, "Galfile")) ||  \
       (!strcmp(sim->archive.format, "GALFILE")))

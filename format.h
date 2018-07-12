@@ -22,6 +22,7 @@
 //
 #define  GADGET      10
 #define  RAMSES      20
+#define  RAMSES_STAR 21
 #define  GALFILE     30
 #define  EAGLE       40
 #define  ILLUSTRIS   50
