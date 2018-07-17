@@ -138,7 +138,7 @@ int main (int argc, char ** argv)
       {
         strct2 = &opt.catalog[i].strctProps[strct1->HostID];
         strct3 = &opt.catalog[i].strctProps[strct2->dummyi];
-        strct3->TotMass += strct1->TotMass;
+        strct3->dummyd += strct1->TotMass;
       }
     }
   }

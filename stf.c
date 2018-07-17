@@ -453,9 +453,13 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
       for (i = 0; i < nparts; i++)
       {
         fgets(buffer, NAME_LENGTH, f);
-        sscanf(buffer, "%d  %d  %d  %d  ",                   \
+        /*
+        sscanf(buffer, "%d  %d  %d  %d  ",
                        &extended[i].oIndex, &extended[i].IdStruct, \
                        &extended[i].IdHost, &extended[i].IdIGM);
+         */                       
+        sscanf(buffer, "%d  %d  ",
+                       &extended[i].oIndex, &extended[i].IdStruct);
       }
       *(xtndd) = extended;
     }
