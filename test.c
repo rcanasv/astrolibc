@@ -47,16 +47,21 @@ int main (int argc, char ** argv)
   Options       opt;
   Structure   * strct;
 
-
   test_options (argc, argv, &opt);
   test_params  (&opt);
 
+  printf ("Simulation init\n");
   Simulation_init         (&opt.simulation);
+  printf ("Catalog init\n");
   Catalog_init            (&opt.catalog);
+  printf ("Catalog load \n");
   Catalog_load_properties (&opt.catalog);
 
   strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
+  printf ("Nstruct  %d\n", opt.catalog.nstruct);
+
   Lbox    = opt.simulation.Lbox;
+  printf ("Lbox     %g\n", Lbox);
 
   for (i = 0; i < ndim; i++)
     ndiv[i] = 1;
@@ -91,7 +96,7 @@ int main (int argc, char ** argv)
   }
 
   // To determine region of Particle / Structure
-  for (i = n; n <= opt.catalog.nstruct; n++)
+  for (n = 1; n <= opt.catalog.nstruct; n++)
   {
     strct = &opt.catalog.strctProps[n];
     if (strct->Type == 7)
@@ -109,9 +114,10 @@ int main (int argc, char ** argv)
     }
   }
 
-  for (l = 0; l <= nregions; l++)
+  for (l = 0; l < nregions; l++)
   {
     k = regionstrctid[l];
+    printf ("Strct  %d  Id  %d\n", l, k);
     strct_to_get[k] = 1;
     for (i = 1; i <= opt.catalog.nstruct; i++)
       if (opt.catalog.strctProps[i].HostID == k)
@@ -124,7 +130,9 @@ int main (int argc, char ** argv)
     if (strct_to_get[i] == 1)
       k += opt.catalog.strctProps[i].NumPart;
 
-  Particle * P = (Particle *) malloc (k * sizeof(Particle));
+  int numpart = k;
+  printf ("NumPart  %d\n", numpart);
+  Particle * P = (Particle *) malloc (numpart * sizeof(Particle));
 
   for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
   {
@@ -140,22 +148,23 @@ int main (int argc, char ** argv)
   header.flag_sfr       = 0;
   header.flag_feedback  = 0;
   header.flag_cooling   = 0;
-  header.BoxSize        = opt.simulation.Lbox;
   header.Omega0         = opt.simulation.cosmology.OmegaM;
   header.OmegaLambda    = opt.simulation.cosmology.OmegaL;
   header.HubbleParam    = opt.simulation.cosmology.HubbleParam;
+  header.BoxSize        = opt.simulation.Lbox / header.time * header.HubbleParam;
   double sqrta = sqrt(header.time);
-  for (i = 0; i < k; i++)
+  for (i = 0; i < numpart; i++)
   {
-    P[i].Pos[0] *= header.HubbleParam;
-    P[i].Pos[1] *= header.HubbleParam;
-    P[i].Pos[2] *= header.HubbleParam;
+    P[i].Pos[0] *= header.HubbleParam / header.time;
+    P[i].Pos[1] *= header.HubbleParam / header.time;
+    P[i].Pos[2] *= header.HubbleParam / header.time;
     P[i].Vel[0] /= sqrta;
     P[i].Vel[1] /= sqrta;
     P[i].Vel[2] /= sqrta;
     P[i].Mass   *= header.HubbleParam;
+    P[i].Type    = 4;
   }
-  gadget_write_snapshot (P, k, &header, &opt.output);
+  gadget_write_snapshot (P, numpart, &header, &opt.output);
 
   free (P);
   free (strct_to_get);
