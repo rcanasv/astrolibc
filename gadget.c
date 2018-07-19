@@ -43,16 +43,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
     ref_mass[k]           = 0;
     id_ref[k]             = 0;
   }
-  header->time           = 1;
-  header->redshift       = 0;
-  header->flag_sfr       = 0;
-  header->flag_feedback  = 0;
-  header->flag_cooling   = 0;
-  header->num_files      = 1;
-  header->BoxSize        = 142045.45454545456;
-  header->Omega0         = 1;
-  header->OmegaLambda    = 0;
-  header->HubbleParam    = 1;
+  header->num_files       = 1;
 
 
   //! Count Particles by type
