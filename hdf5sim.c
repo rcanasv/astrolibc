@@ -137,7 +137,7 @@ void hdf5_sim_init (Simulation * snapshot)
 
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
   hdf5_get_attribute (id_group, header.Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
-  hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->cosmology.HubbleParam, sizeof(snapshot->cosmology.HubbleParam));
+  hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->h,                     sizeof(snapshot->cosmology.HubbleParam));
   hdf5_get_attribute (id_group, header.OmegaM,        &snapshot->cosmology.OmegaM,      sizeof(snapshot->cosmology.OmegaM));
   hdf5_get_attribute (id_group, header.OmegaB,        &snapshot->cosmology.OmegaB,      sizeof(snapshot->cosmology.OmegaB));
   hdf5_get_attribute (id_group, header.OmegaL,        &snapshot->cosmology.OmegaL,      sizeof(snapshot->cosmology.OmegaL));
@@ -146,9 +146,12 @@ void hdf5_sim_init (Simulation * snapshot)
   hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile,         sizeof(snapshot->NpartThisFile[0]));
   hdf5_get_attribute (id_group, header.NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
   hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
-  snapshot->Lbox = snapshot->Lbox * 1000.0 / (1.0 + snapshot->z) / snapshot->cosmology.HubbleParam;
+  snapshot->cosmology.HubbleParam = snapshot->h * 100.0;
+  snapshot->Lbox = snapshot->Lbox * 1000.0 / (1.0 + snapshot->z) / snapshot->h;
+  snapshot->a = snapshot->Time;
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
+
 
   //
   // Adjust Units
@@ -277,8 +280,8 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // Convert to human readable units
   //
-  double a = 1.0 / (1.0 + snapshot->z);
-  double h = snapshot->cosmology.HubbleParam;
+  double a = snapshot->a;
+  double h = snapshot->h;
 
   for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {

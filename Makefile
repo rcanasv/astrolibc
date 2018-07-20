@@ -24,6 +24,12 @@ HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/l
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
 endif
 
+ifeq ($(MACHINE),hyades)
+HDF5_INCL   = -I/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/include
+HDF5_LIB    = -L/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib /home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib/libhdf5_hl.a /home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib/libhdf5.a
+HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib
+endif
+
 
 INC         = $(HDF5_INCL)
 LIB         = $(HDF5_LIB)

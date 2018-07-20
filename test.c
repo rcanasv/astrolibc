@@ -95,6 +95,16 @@ int main (int argc, char ** argv)
     regionstrctid[l] = 0;
   }
 
+  if (opt.simulation.format == EAGLE)
+  {
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      strct =  &opt.catalog.strctProps[i];
+      strct->Pos[0] *= 1000.0;
+      strct->Pos[1] *= 1000.0;
+      strct->Pos[2] *= 1000.0;
+    }
+  }
   // To determine region of Particle / Structure
   for (n = 1; n <= opt.catalog.nstruct; n++)
   {
@@ -150,8 +160,8 @@ int main (int argc, char ** argv)
   header.flag_cooling   = 0;
   header.Omega0         = opt.simulation.cosmology.OmegaM;
   header.OmegaLambda    = opt.simulation.cosmology.OmegaL;
-  header.HubbleParam    = opt.simulation.cosmology.HubbleParam;
-  header.BoxSize        = opt.simulation.Lbox / header.time * header.HubbleParam;
+  header.HubbleParam    = opt.simulation.h;
+  header.BoxSize        = opt.simulation.Lbox / header.time * opt.simulation.h;
   double sqrta = sqrt(header.time);
   for (i = 0; i < numpart; i++)
   {

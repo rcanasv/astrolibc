@@ -46,6 +46,7 @@ void ramses_init (Simulation * ramses)
   ramses->unit_v = ramses->unit_v / 100000.0;                                          // in km / s
 
   ramses->unit_l = ramses->unit_l / 3.08e+21;                                          // in kpc
+  ramses->h = ramses->cosmology.HubbleParam / 100.0;
 
   // Box is now in kpc
   printf ("Lbox    %lf\n", ramses->Lbox);
@@ -109,6 +110,9 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
 
   // Box is now in kpc
   ramses->Lbox *= ramses->unit_l;
+
+  // H0 -> h
+  ramses->h = ramses->cosmology.HubbleParam / 100.0;
 
   //
   //  Read Particle file to get Simulation info
