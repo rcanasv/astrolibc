@@ -10,6 +10,7 @@
 
 
 #include "base.h"
+#include "format.h"
 #include "typedef.h"
 
 

@@ -75,20 +75,8 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
       header->mass[k] = ref_mass[k];
     else
       header->mass[k] = 0;
-//     printf("%i\n", k);
-//     printf("      Npart  %i\n", header->npart[k]);
-//     printf("      Mass   %g\n", header->mass[k]);
   }
 
-//   offset = 0;
-//   for(k = 0; k < 6; k++)
-//   {
-//     if(header->npart[k] > 0)
-//       for(i = 0; i < header->npart[k]; i++)
-// 	ID[offset + i] = ids[k][i];
-//
-//     offset += header->npart[k];
-//   }
 
   //! START WRITING
   fflush(stdout);
@@ -99,7 +87,8 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   fwrite(header, sizeof(gheader), 1, snap_file);
   fwrite(&dummy,  sizeof(dummy),   1, snap_file);
 
-   /*
+  
+/*
    for(k = 0; k < 6; k++)
      printf("\tType %i Particles \t%i\n", k, header->npart[k]);
    for(k = 0; k < 6; k++)
@@ -117,7 +106,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
    printf("\tOmegaL              \t%g\n", header->OmegaLambda);
    printf("\tHubbleParam         \t%g\n", header->HubbleParam);
    printf("\tFill bytes          \t%s\n", header->fill);
-   */
+*/   
 
   //!------ Pos
   dummy = 3 * sizeof(float) * NPartTot;

@@ -49,10 +49,7 @@ void ramses_init (Simulation * ramses)
   ramses->h = ramses->cosmology.HubbleParam / 100.0;
 
   // Box is now in kpc
-  printf ("Lbox    %lf\n", ramses->Lbox);
-  printf ("unit_l  %lf\n", ramses->unit_l);
   ramses->Lbox *= ramses->unit_l;
-  printf ("Lbox    %lf\n", ramses->Lbox);
 }
 
 
@@ -117,7 +114,8 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   //
   //  Read Particle file to get Simulation info
   //
-  sprintf (fname, "%s/part_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
+  if (ramses->format == RAMSES)       sprintf (fname, "%s/part_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
+  if (ramses->format == RAMSES_STAR)  sprintf (fname, "%s/star_%s.out%05d", ramses->archive.name, ramses->archive.prefix, filenum+1);
   f = fopen(fname,"r");
   if ((f = fopen (fname, "r")) == NULL)
   {
@@ -129,11 +127,20 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   RMSSSKIP  fread(&ramses->ncpu,     sizeof(int),    1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->ndim,     sizeof(int),    1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->npart,    sizeof(int),    1, f);  RMSSSKIP
-  RMSSSKIP  fread(&ramses->seed[0],  sizeof(int),    4, f);  RMSSSKIP
+
+  if (ramses->format == RAMSES)
+  {
+    RMSSSKIP  fread(&ramses->seed[0],  sizeof(int),    4, f);  RMSSSKIP
+  }
+
   RMSSSKIP  fread(&ramses->nstarTot, sizeof(int),    1, f);  RMSSSKIP
-  RMSSSKIP  fread(&ramses->mstarTot, sizeof(double), 1, f);  RMSSSKIP
-  RMSSSKIP  fread(&ramses->mstarLst, sizeof(double), 1, f);  RMSSSKIP
-  RMSSSKIP  fread(&ramses->nsink,    sizeof(int),    1, f);  RMSSSKIP
+
+  if (ramses->format == RAMSES)
+  {
+    RMSSSKIP  fread(&ramses->mstarTot, sizeof(double), 1, f);  RMSSSKIP
+    RMSSSKIP  fread(&ramses->mstarLst, sizeof(double), 1, f);  RMSSSKIP
+    RMSSSKIP  fread(&ramses->nsink,    sizeof(int),    1, f);  RMSSSKIP
+  }
 
 /*
    printf ("NumProcs        %d\n", ramses->ncpu);

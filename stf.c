@@ -377,11 +377,11 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
         strct->iPart = 1;
     }
   }
-
+printf ("HERE!\n");
   //
   //  Load particles to structures
   //
-  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.prefix);
   if ((f = fopen(fname,"r")) != NULL)
   {
     fclose (f);
@@ -419,7 +419,8 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
   }
   else
   {
-    ;
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
   }
   free (files_to_read);
   return;
@@ -453,13 +454,12 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
       for (i = 0; i < nparts; i++)
       {
         fgets(buffer, NAME_LENGTH, f);
-        /*
-        sscanf(buffer, "%d  %d  %d  %d  ",
-                       &extended[i].oIndex, &extended[i].IdStruct, \
-                       &extended[i].IdHost, &extended[i].IdIGM);
-         */                       
-        sscanf(buffer, "%d  %d  ",
-                       &extended[i].oIndex, &extended[i].IdStruct);
+        
+       // sscanf(buffer, "%d  %d  %d  %d  ",
+       //                &extended[i].oIndex, &extended[i].IdStruct, \
+       //                &extended[i].IdHost, &extended[i].IdIGM);
+                               
+        sscanf(buffer, "%d  %d  ", &extended[i].oIndex, &extended[i].IdStruct);
       }
       *(xtndd) = extended;
     }
