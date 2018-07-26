@@ -131,95 +131,246 @@ int main (int argc, char ** argv)
   //
   // Write snapshots for visualization
   //
+  int          numpart;
   int       ** strct_to_get;
   Particle   * P;
   gheader      header;
   Structure    tmpstrct;
   Structure  * ctrl;
   Structure  * ctrlp;
-  Structure  * sat;
-  Structure  * satd;
+  Structure  * ihsc;
+  Structure  * ihscp;
 
-  for (i = opt.catalog[0].nstruct; i >=1; i--)
+
+
+  if (opt.iExtract && opt.iTrack)
   {
-    ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
-    if (sorted[i].ID == ID)
-      for (j = 1; j < opt.nsnap; j++)
+    strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
+    for (i = 0; i < opt.nsnap; i++)
+    {
+      strct_to_get[i] = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
+      for (j = 1; j <= opt.catalog[i].nstruct; j++)
+        strct_to_get[i][j] = 0;
+    }
+    //
+    // Tag galaxies to be extracted.
+    // For visualization purposes label is used
+    // also as type of particles
+    //
+    //   1 - central
+    //   2 - ihsc
+    //   3 - rest
+    //
+    for (i = opt.catalog[0].nstruct, k = 0; i >=1; i--)
+    {
+      ctrl      = &opt.catalog[0].strctProps[sorted[i].ID];
+      ihsc      = &opt.catalog[0].strctProps[ctrl->HostID];
+
+      fihsc = ihsc->TotMass/ctrl->dummyd;
+      mstot = ctrl->dummyd;
+
+      if (sorted[i].ID == ID)
       {
-        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
-        ctrlp->dummyi = ctrl->ID;
-        ctrl = ctrlp;
+        numpart = 0;
+        strct_to_get[0][ihsc->ID] = 1;
+        numpart += ihsc->NumPart;
+
+        for (n = 0; n < ihsc->NumSubs; n++)
+        {
+          strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
+          if (strct1->ID != ctrl->ID)
+          {
+            strct_to_get[0][strct1->ID] = 1;
+            numpart += strct1->NumPart;
+          }
+        }
+
+        numpart += ctrl->NumPart;
+        strct_to_get[0][ctrl->ID] = numpart;
+        
+        for (j = 1; j < opt.nsnap; j++)
+        {
+          numpart = 0;
+
+          ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+          ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
+
+          strct_to_get[j][ihscp->ID] = 1;
+          numpart += ihscp->NumPart;
+          for (n = 0; n < ihscp->NumSubs; n++)
+          {
+            strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
+            if (strct1->ID != ctrlp->ID)
+            {
+              strct_to_get[j][strct1->ID] = 1;
+              numpart += strct1->NumPart;
+            }
+          }
+
+          numpart += ctrlp->NumPart;
+          strct_to_get[j][ctrlp->ID] = numpart;
+
+          ihsc = ihscp;
+          ctrl = ctrlp;
+        }
+        k++;
       }
-  }
-
-  //
-  // Struct to get array
-  //
-  strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
-  for (i = 0; i < opt.nsnap; i++)
-  {
-    strct_to_get[i] = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
-    for (j = 1; j <= opt.catalog[i].nstruct; j++)
-      strct_to_get[i][j] = 0;
-  }
-
-  //
-  // Tag structures to get
-  //
-  for (i = 0, j = opt.nsnap - 1; i < ctrl->NumSubs; i++)
-  {
-    sat = &opt.catalog[j].strctProps[ctrl->SubIDs[i]];
-    strct_to_get[j][sat->ID] = 1;
-    do
-    {
-      j--;
-      satd = &opt.catalog[j].strctProps[sat->dummy];
-      strct_to_get[j][satd->ID] = 1;
-      sat = satd;
     }
-    while (j >= 0);
-  }
 
-  //
-  // Load Particles
-  //
-  for (i = 0; i < opt.nsnap; i++)
-    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
+    // Load Particles
+    for (i = 0; i < opt.nsnap; i++)
+      Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
 
-  //
-  //  Write gadget_files
-  //
-  for (i = 0, j = opt.nsnap - 1; i < ctrl->NumSubs; i++)
-  {
-    sat = &opt.catalog[j].strctProps[ctrl->SubIDs[i]];
-    Structure_correct_periodicity (sat, &opt.simulation[j]);
-    sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, ctrl->SubIDs[i], j);
-    gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
-    do
+    // Write Gadget Snapshots
+    for (k = 0, i = opt.catalog[0].nstruct; i >=1; i--)
     {
-      j--;
-      satd = &opt.catalog[j].strctProps[sat->dummy];
-      Structure_correct_periodicity (satd, &opt.simulation[j]);
-      sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, ctrl->SubIDs[i], j);
-      gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
-      sat = satd;
+      ctrl      = &opt.catalog[0].strctProps[sorted[i].ID];
+      ihsc      = &opt.catalog[0].strctProps[ctrl->HostID];
+
+      if (sorted[i].ID == ID)
+      {
+        m = 0;
+        numpart = strct_to_get[0][sorted[i].ID];
+        tmpstrct.Part = (Particle *) malloc (numpart * sizeof(Particle));
+        tmpstrct.NumPart = numpart;
+
+        ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
+        ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
+
+        // Tag IHSC as 2
+        for (n = 0; n < ihsc->NumPart; n++, m++)
+        {
+          Particle_copy (&ihsc->Part[n], &tmpstrct.Part[m]);
+          //tmpstrct.Part[m].Type = 2;
+          tmpstrct.Part[m].Type = 1;
+        }
+
+        // Tag Satellites as 3
+        for (n = 0; n < ihsc->NumSubs; n++)
+        {
+          strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
+          if (strct1->ID != ctrl->ID)
+          {
+            for (l = 0; l < strct1->NumPart; l++, m++)
+            {
+              Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+              tmpstrct.Part[m].Type = 1;
+            }
+          }
+        }
+
+        // Tag Central as 1
+        for (n = 0; n < ctrl->NumPart; n++, m++)
+        {
+          Particle_copy (&ctrl->Part[n], &tmpstrct.Part[m]);
+          tmpstrct.Part[m].Type = 1;
+        }
+
+        tmpstrct.Pos[0] = ctrl->Pos[0];
+        tmpstrct.Pos[1] = ctrl->Pos[1];
+        tmpstrct.Pos[2] = ctrl->Pos[2];
+        printf ("boxsize %e\n", opt.simulation[0].Lbox);
+        Structure_correct_periodicity (&tmpstrct, &opt.simulation[0]);
+
+        if (m == numpart)
+        {
+          sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, 0);
+          gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
+        }
+        else
+          printf ("Error in total number of particles\n");
+        free (tmpstrct.Part);
+
+        for (j = 1; j < opt.nsnap; j++)
+        {
+          ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+          ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
+
+          m = 0;
+          numpart = strct_to_get[j][ctrlp->ID];
+          tmpstrct.Part = (Particle *) malloc (numpart * sizeof(Particle));
+          tmpstrct.NumPart = numpart;
+
+          // Tag IHSC as 2
+          for (n = 0; n < ihscp->NumPart; n++, m++)
+          {
+            Particle_copy (&ihscp->Part[n], &tmpstrct.Part[m]);
+            tmpstrct.Part[m].Type = 1;
+          }
+
+          // Tag Satellites as 3
+          for (n = 0; n < ihscp->NumSubs; n++)
+          {
+            strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
+            if (strct1->ID != ctrlp->ID)
+            {
+              if (strct1->Central == 0)
+              {
+                for (l = 0; l < strct1->NumPart; l++, m++)
+                {
+                  Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+                  tmpstrct.Part[m].Type = 1;
+                }
+              }
+              else
+              {
+                for (l = 0; l < strct1->NumPart; l++, m++)
+                {
+                  Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
+                  tmpstrct.Part[m].Type = 1;
+                }
+              }
+            }
+          }
+
+          // Tag Central as 1
+          for (n = 0; n < ctrlp->NumPart; n++, m++)
+          {
+            Particle_copy (&ctrlp->Part[n], &tmpstrct.Part[m]);
+            tmpstrct.Part[m].Type = 1;
+          }
+
+          tmpstrct.Pos[0] = ctrlp->Pos[0];
+          tmpstrct.Pos[1] = ctrlp->Pos[1];
+          tmpstrct.Pos[2] = ctrlp->Pos[2];
+          printf ("boxsize %e\n", opt.simulation[j].Lbox);
+          Structure_correct_periodicity (&tmpstrct, &opt.simulation[j]);
+
+          if (m == numpart)
+          {
+            sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, j);
+            gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
+          }
+          else
+            printf ("Error in total number of particles\n");
+          free (tmpstrct.Part);
+
+          ihsc = ihscp;
+          ctrl = ctrlp;
+        }
+       k++;
+      }
     }
-    while (j >= 0);
+
+    for (i = 0; i < opt.nsnap; i++)
+      free (strct_to_get[i]);
+    free (strct_to_get);
   }
+  // --------------------------------------------------- //
 
 
+  // --------------------------------------------------- //
   //
   // Free catalogues
   //
-  for (i = 0; i < opt.nsnap; i++)
-    free (strct_to_get[i]);
-  free (strct_to_get);
   for (i = 0; i < opt.nsnap; i++)
     Catalog_free (&opt.catalog[i]);
   free (opt.catalog);
   free (opt.simulation);
   if (opt.iTrack)
     free (opt.tree);
+  // --------------------------------------------------- //
+
 
   return (0);
 }

@@ -246,6 +246,8 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
     P[i].Vel[2] *= ramses->unit_v;
 
     P[i].Mass   *= ramses->unit_m;
+
+    P[i].Type    = 1;
   }
 }
 
