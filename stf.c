@@ -377,7 +377,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
         strct->iPart = 1;
     }
   }
-printf ("HERE!\n");
+  
   //
   //  Load particles to structures
   //

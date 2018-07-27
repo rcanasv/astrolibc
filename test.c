@@ -72,7 +72,7 @@ int main (int argc, char ** argv)
     Catalog_fill_isolated           (&opt.catalog[i]);
 
     if (opt.iTrack)
-      if (i < (opt.nsnap - 1))
+      if (i < opt.ntrees)
         stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
 
@@ -175,30 +175,36 @@ int main (int argc, char ** argv)
   strct_to_get[0][ctrl->ID] = 1;
   for (i = 1; i < opt.nsnap; i++)
   {
-    ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
-    strct_to_get[i][ctrlp->ID] = 1;
-    ctrl = ctrlp;
+    if (ctrl->NumMatch)
+    {
+      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+      strct_to_get[i][ctrlp->ID] = 1;
+      ctrl = ctrlp;
+    }
+    else
+      break;
   }
 
-  ctrl = &opt.catalog[0].strctProps[ID];
-  for (i = 0; i < ctrl->NumSubs; i++)
+  strct1 = &opt.catalog[0].strctProps[ID];
+  for (i = 0; i < strct1->NumSubs; i++)
   {
-    ctrl = &opt.catalog[0].strctProps[ID];
-    sat = &opt.catalog[0].strctProps[ctrl->SubIDs[i]];
-    strct_to_get[0][ctrl->ID] = 1;
-    sat->Pos[0] = ctrl->Pos[0];
-    sat->Pos[1] = ctrl->Pos[1];
-    sat->Pos[2] = ctrl->Pos[2];
+    sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+    printf("sat id %d\n", sat->ID);
+    strct_to_get[0][sat->ID] = 1;
+    sat->Pos[0] = strct1->Pos[0];
+    sat->Pos[1] = strct1->Pos[1];
+    sat->Pos[2] = strct1->Pos[2];
+    ctrl = strct1;
     for (j = 1; j < opt.nsnap; j++)
     {
       if (sat->NumMatch)
       {
-        ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
-        strct_to_get[i][satp->ID] = 1;
-        satp->Pos[0] = ctrl->Pos[0];
-        satp->Pos[1] = ctrl->Pos[1];
-        satp->Pos[2] = ctrl->Pos[2];
+        strct_to_get[j][satp->ID] = 1;
+        satp->Pos[0] = ctrlp->Pos[0];
+        satp->Pos[1] = ctrlp->Pos[1];
+        satp->Pos[2] = ctrlp->Pos[2];
         sat = satp;
         ctrl = ctrlp;
       }
@@ -223,16 +229,18 @@ int main (int argc, char ** argv)
   for (i = 1; i < opt.nsnap; i++)
   {
     ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
-    Structure_correct_periodicity (ctrl, &opt.simulation[i]);
+    Structure_correct_periodicity (ctrlp, &opt.simulation[i]);
     sprintf (opt.output.name, "%s_central.gdt_%03d",opt.output.prefix, i);
     gadget_write_snapshot (ctrlp->Part, ctrlp->NumPart, &header, &opt.output);
     ctrl = ctrlp;
   }
 
+printf ("HERE\n");
   ctrl = &opt.catalog[0].strctProps[ID];
   for (i = 0; i < ctrl->NumSubs; i++)
   {
     sat = &opt.catalog[0].strctProps[ctrl->SubIDs[i]];
+    printf ("sat  %03d ID  %06d  NumPart %09d\n", i, sat->ID, sat->NumPart);
     Structure_correct_periodicity (sat, &opt.simulation[0]);
     sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, 0);
     gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
@@ -241,8 +249,9 @@ int main (int argc, char ** argv)
       if (sat->NumMatch)
       {
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
-        Structure_correct_periodicity (sat, &opt.simulation[j]);
+        Structure_correct_periodicity (satp, &opt.simulation[j]);
         sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, j);
+        printf ("satp %03d ID  %06d  NumPart %09d\n", i, satp->ID, satp->NumPart);
         gadget_write_snapshot (satp->Part, satp->NumPart, &header, &opt.output);
         sat = satp;
       }

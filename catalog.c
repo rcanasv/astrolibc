@@ -112,27 +112,32 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
   int tmp;
 
   for (i = 1; i <= ctlg->nstruct; i++)
-    if (ctlg->strctProps[i].HostID == -1)
+  {
+    if (bob = ctlg->strctProps[i].NumSubs)
     {
-      bob = ctlg->strctProps[i].NumSubs;
       ctlg->strctProps[i].SubIDs = (int *) malloc (bob * sizeof(int));
-      ctlg->strctProps[i].dummy = 0;
+      ctlg->strctProps[i].iSubs = 1;
       for (j = 0; j < bob; j++)
         ctlg->strctProps[i].SubIDs[j] = 0;
     }
-
+    ctlg->strctProps[i].dummy = 0;
+  }
+  //
+  // HostIDs
+  //
   for (i = 1; i <= ctlg->nstruct; i++)
   {
     if (ctlg->strctProps[i].HostID != -1 && \
         ctlg->strctProps[i].HostID != ctlg->strctProps[i].ID)
     {
       bob = i;
-      while (ctlg->strctProps[bob].HostID != -1)
+      do
       {
         bob = ctlg->strctProps[bob].DirectHostID;
+        tmp = ctlg->strctProps[bob].dummy++;
+        ctlg->strctProps[bob].SubIDs[tmp] = i;
       }
-      tmp = ctlg->strctProps[bob].dummy++;
-      ctlg->strctProps[bob].SubIDs[tmp] = i;
+      while (ctlg->strctProps[bob].HostID != -1);
     }
   }
 }
