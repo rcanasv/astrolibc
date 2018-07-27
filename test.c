@@ -138,18 +138,23 @@ int main (int argc, char ** argv)
   Structure  * ctrl;
   Structure  * ctrlp;
   Structure  * sat;
+  Structure  * satp;
   Structure  * satd;
 
-  for (i = opt.catalog[0].nstruct; i >=1; i--)
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
   {
-    ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
-    if (sorted[i].ID == ID)
-      for (j = 1; j < opt.nsnap; j++)
+    strct1 = &opt.catalog[0].strctProps[i];
+    for (j = 1; j < opt.nsnap; j++)
+    {
+      if (strct1->NumMatch)
       {
-        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
-        ctrlp->dummyi = ctrl->ID;
-        ctrl = ctrlp;
+        strct2 = &opt.catalog[j].strctProps[strct1->MatchIDs[0]];
+        strct2->dummy = strct1->ID;
+        strct1 = strct2;
       }
+      else
+        break;
+    }
   }
 
   //
@@ -166,18 +171,40 @@ int main (int argc, char ** argv)
   //
   // Tag structures to get
   //
-  for (i = 0, j = opt.nsnap - 1; i < ctrl->NumSubs; i++)
+  ctrl = &opt.catalog[0].strctProps[ID];
+  strct_to_get[0][ctrl->ID] = 1;
+  for (i = 1; i < opt.nsnap; i++)
   {
-    sat = &opt.catalog[j].strctProps[ctrl->SubIDs[i]];
-    strct_to_get[j][sat->ID] = 1;
-    do
+    ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+    strct_to_get[i][ctrlp->ID] = 1;
+    ctrl = ctrlp;
+  }
+
+  ctrl = &opt.catalog[0].strctProps[ID];
+  for (i = 0; i < ctrl->NumSubs; i++)
+  {
+    ctrl = &opt.catalog[0].strctProps[ID];
+    sat = &opt.catalog[0].strctProps[ctrl->SubIDs[i]];
+    strct_to_get[0][ctrl->ID] = 1;
+    sat->Pos[0] = ctrl->Pos[0];
+    sat->Pos[1] = ctrl->Pos[1];
+    sat->Pos[2] = ctrl->Pos[2];
+    for (j = 1; j < opt.nsnap; j++)
     {
-      j--;
-      satd = &opt.catalog[j].strctProps[sat->dummy];
-      strct_to_get[j][satd->ID] = 1;
-      sat = satd;
+      if (sat->NumMatch)
+      {
+        ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+        strct_to_get[i][satp->ID] = 1;
+        satp->Pos[0] = ctrl->Pos[0];
+        satp->Pos[1] = ctrl->Pos[1];
+        satp->Pos[2] = ctrl->Pos[2];
+        sat = satp;
+        ctrl = ctrlp;
+      }
+      else
+        break;
     }
-    while (j >= 0);
   }
 
   //
@@ -189,22 +216,39 @@ int main (int argc, char ** argv)
   //
   //  Write gadget_files
   //
-  for (i = 0, j = opt.nsnap - 1; i < ctrl->NumSubs; i++)
+  ctrl = &opt.catalog[0].strctProps[ID];
+  Structure_correct_periodicity (ctrl, &opt.simulation[0]);
+  sprintf (opt.output.name, "%s_central.gdt_%03d",opt.output.prefix, 0);
+  gadget_write_snapshot (ctrl->Part, ctrl->NumPart, &header, &opt.output);
+  for (i = 1; i < opt.nsnap; i++)
   {
-    sat = &opt.catalog[j].strctProps[ctrl->SubIDs[i]];
-    Structure_correct_periodicity (sat, &opt.simulation[j]);
-    sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, ctrl->SubIDs[i], j);
+    ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+    Structure_correct_periodicity (ctrl, &opt.simulation[i]);
+    sprintf (opt.output.name, "%s_central.gdt_%03d",opt.output.prefix, i);
+    gadget_write_snapshot (ctrlp->Part, ctrlp->NumPart, &header, &opt.output);
+    ctrl = ctrlp;
+  }
+
+  ctrl = &opt.catalog[0].strctProps[ID];
+  for (i = 0; i < ctrl->NumSubs; i++)
+  {
+    sat = &opt.catalog[0].strctProps[ctrl->SubIDs[i]];
+    Structure_correct_periodicity (sat, &opt.simulation[0]);
+    sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, 0);
     gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
-    do
+    for (j = 1; j < opt.nsnap; j++)
     {
-      j--;
-      satd = &opt.catalog[j].strctProps[sat->dummy];
-      Structure_correct_periodicity (satd, &opt.simulation[j]);
-      sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, ctrl->SubIDs[i], j);
-      gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
-      sat = satd;
+      if (sat->NumMatch)
+      {
+        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+        Structure_correct_periodicity (sat, &opt.simulation[j]);
+        sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, j);
+        gadget_write_snapshot (satp->Part, satp->NumPart, &header, &opt.output);
+        sat = satp;
+      }
+      else
+        break;
     }
-    while (j >= 0);
   }
 
 
