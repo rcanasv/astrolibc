@@ -127,84 +127,146 @@ int main (int argc, char ** argv)
   int ID = sorted[opt.catalog[0].nstruct].ID;
   printf ("%d\n", ID);
 
-
+  // --------------------------------------------------- //
   //
   // Write snapshots for visualization
   //
+  int       ** strct_to_get;
+  Particle   * P;
+  gheader      header;
+  Structure    tmpstrct;
   Structure  * ctrl;
   Structure  * ctrlp;
   Structure  * sat;
   Structure  * satp;
+  Structure  * satd;
 
-  FILE * f1;
-  char   buffer1  [NAME_LENGTH];
-  double R;
+  for (i = 1; i <= opt.catalog[0].nstruct; i++)
+  {
+    strct1 = &opt.catalog[0].strctProps[i];
+    for (j = 1; j < opt.nsnap; j++)
+    {
+      if (strct1->NumMatch)
+      {
+        strct2 = &opt.catalog[j].strctProps[strct1->MatchIDs[0]];
+        strct2->dummy = strct1->ID;
+        strct1 = strct2;
+      }
+      else
+        break;
+    }
+  }
+
+  //
+  // Struct to get array
+  //
+  strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    strct_to_get[i] = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      strct_to_get[i][j] = 0;
+  }
+
+  //
+  // Tag structures to get
+  //
+  ctrl = &opt.catalog[0].strctProps[ID];
+  strct_to_get[0][ctrl->ID] = 1;
+  for (i = 1; i < opt.nsnap; i++)
+  {
+    if (ctrl->NumMatch)
+    {
+      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+      strct_to_get[i][ctrlp->ID] = 1;
+      ctrl = ctrlp;
+    }
+    else
+      break;
+  }
 
   strct1 = &opt.catalog[0].strctProps[ID];
   for (i = 0; i < strct1->NumSubs; i++)
   {
-    sprintf (buffer1,  "%s.sat_%03d", opt.output.prefix, i);
-    f1  = fopen (buffer1,  "w");
-
-    R = 0;
     sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+    printf("sat id %d\n", sat->ID);
+    strct_to_get[0][sat->ID] = 1;
     sat->Pos[0] = strct1->Pos[0];
     sat->Pos[1] = strct1->Pos[1];
     sat->Pos[2] = strct1->Pos[2];
-
-    R = sqrt(sat->Pos[0]*sat->Pos[0] + \
-             sat->Pos[1]*sat->Pos[1] + \
-             sat->Pos[2]*sat->Pos[2]);
-
-    fprintf (f1, "%d  ", sat->ID);
-    fprintf (f1, "%e  ", R);
-    fprintf (f1, "%e  ", sat->TotMass);
-    fprintf (f1, "%e  ", sat->RHalfMass);
-    fprintf (f1, "\n");
-
     ctrl = strct1;
-
     for (j = 1; j < opt.nsnap; j++)
     {
       if (sat->NumMatch)
       {
-        R = 0;
         ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
-
+        strct_to_get[j][satp->ID] = 1;
         satp->Pos[0] = ctrlp->Pos[0];
         satp->Pos[1] = ctrlp->Pos[1];
         satp->Pos[2] = ctrlp->Pos[2];
-
-        R = sqrt(satp->Pos[0]*satp->Pos[0] + \
-                 satp->Pos[1]*satp->Pos[1] + \
-                 satp->Pos[2]*satp->Pos[2]);
-
-        fprintf (f1, "%d  ", satp->ID);
-        fprintf (f1, "%e  ", R);
-        fprintf (f1, "%e  ", satp->TotMass);
-        fprintf (f1, "%e  ", satp->RHalfMass);
-        fprintf (f1, "\n");
-
         sat = satp;
         ctrl = ctrlp;
       }
       else
-      {
-        fprintf (f1, "%d  ", 0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "\n");
-      }
+        break;
     }
-    fclose (f1);
+  }
+
+  //
+  // Load Particles
+  //
+  for (i = 0; i < opt.nsnap; i++)
+    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
+
+  //
+  //  Write gadget_files
+  //
+  ctrl = &opt.catalog[0].strctProps[ID];
+  Structure_correct_periodicity (ctrl, &opt.simulation[0]);
+  sprintf (opt.output.name, "%s_central.gdt_%03d",opt.output.prefix, 0);
+  gadget_write_snapshot (ctrl->Part, ctrl->NumPart, &header, &opt.output);
+  for (i = 1; i < opt.nsnap; i++)
+  {
+    ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+    Structure_correct_periodicity (ctrlp, &opt.simulation[i]);
+    sprintf (opt.output.name, "%s_central.gdt_%03d",opt.output.prefix, i);
+    gadget_write_snapshot (ctrlp->Part, ctrlp->NumPart, &header, &opt.output);
+    ctrl = ctrlp;
+  }
+
+printf ("HERE\n");
+  ctrl = &opt.catalog[0].strctProps[ID];
+  for (i = 0; i < ctrl->NumSubs; i++)
+  {
+    sat = &opt.catalog[0].strctProps[ctrl->SubIDs[i]];
+    printf ("sat  %03d ID  %06d  NumPart %09d\n", i, sat->ID, sat->NumPart);
+    Structure_correct_periodicity (sat, &opt.simulation[0]);
+    sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, 0);
+    gadget_write_snapshot (sat->Part, sat->NumPart, &header, &opt.output);
+    for (j = 1; j < opt.nsnap; j++)
+    {
+      if (sat->NumMatch)
+      {
+        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+        Structure_correct_periodicity (satp, &opt.simulation[j]);
+        sprintf (opt.output.name, "%s_sat_%02d.gdt_%03d",opt.output.prefix, i, j);
+        printf ("satp %03d ID  %06d  NumPart %09d\n", i, satp->ID, satp->NumPart);
+        gadget_write_snapshot (satp->Part, satp->NumPart, &header, &opt.output);
+        sat = satp;
+      }
+      else
+        break;
+    }
   }
 
 
   //
   // Free catalogues
   //
+  for (i = 0; i < opt.nsnap; i++)
+    free (strct_to_get[i]);
+  free (strct_to_get);
   for (i = 0; i < opt.nsnap; i++)
     Catalog_free (&opt.catalog[i]);
   free (opt.catalog);
