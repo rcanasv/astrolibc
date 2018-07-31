@@ -148,9 +148,9 @@ int main (int argc, char ** argv)
 
     R = 0;
     sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
-    sat->Pos[0] = strct1->Pos[0];
-    sat->Pos[1] = strct1->Pos[1];
-    sat->Pos[2] = strct1->Pos[2];
+    sat->Pos[0] -= strct1->Pos[0];
+    sat->Pos[1] -= strct1->Pos[1];
+    sat->Pos[2] -= strct1->Pos[2];
 
     R = sqrt(sat->Pos[0]*sat->Pos[0] + \
              sat->Pos[1]*sat->Pos[1] + \
@@ -172,9 +172,9 @@ int main (int argc, char ** argv)
         ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
 
-        satp->Pos[0] = ctrlp->Pos[0];
-        satp->Pos[1] = ctrlp->Pos[1];
-        satp->Pos[2] = ctrlp->Pos[2];
+        satp->Pos[0] -= ctrlp->Pos[0];
+        satp->Pos[1] -= ctrlp->Pos[1];
+        satp->Pos[2] -= ctrlp->Pos[2];
 
         R = sqrt(satp->Pos[0]*satp->Pos[0] + \
                  satp->Pos[1]*satp->Pos[1] + \
