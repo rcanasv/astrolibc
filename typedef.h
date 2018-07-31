@@ -81,6 +81,9 @@ typedef struct Structure
   double     SFR100;
   double     R20;
   double     R90;
+  int        mbpID;
+  double     mbpPos[3];
+  double     mbpVel[3];
 
   // Isolation
   char       Isolated;

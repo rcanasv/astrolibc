@@ -91,20 +91,53 @@ void stf_read_properties (Catalog * stf)
               %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
               %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
               %lf  %lf",                                                                          \
-              &(stf->strctProps[j+offst].ID), &dummyi, &(stf->strctProps[j+offst].DirectHostID),  \
-              &(stf->strctProps[j+offst].HostID), &(stf->strctProps[j+offst].NumSubs),            \
-              &(stf->strctProps[j+offst].Type), &(stf->strctProps[j+offst].NumPart), &dummyd,     \
-              &(stf->strctProps[j+offst].Pos[0]), &(stf->strctProps[j+offst].Pos[1]),             \
-              &(stf->strctProps[j+offst].Pos[2]), &dummyd, &dummyd, &dummyd,                      \
-              &(stf->strctProps[j+offst].Vel[0]), &(stf->strctProps[j+offst].Vel[1]),             \
-              &(stf->strctProps[j+offst].Vel[2]), &dummyd, &dummyd, &dummyd,                      \
-              &(stf->strctProps[j+offst].TotMass), &dummyd, &dummyd, &dummyd, &dummyd,            \
-              &(stf->strctProps[j+offst].Efrac), &dummyd, &(stf->strctProps[j+offst].Rsize),      \
-              &dummyd, &dummyd, &dummyd, &(stf->strctProps[j+offst].RHalfMass),                   \
-              &(stf->strctProps[j+offst].Rvmax), &(stf->strctProps[j+offst].Vmax),                \
-              &(stf->strctProps[j+offst].Vdisp), &dummyd, &dummyd, &dummyd, &dummyd, &dummyd,     \
-              &dummyd, &dummyd, &dummyd, &dummyd, &(stf->strctProps[j+offst].Lambda),             \
-              &(stf->strctProps[j+offst].L[0]), &(stf->strctProps[j+offst].L[1]),                 \
+              &(stf->strctProps[j+offst].ID),            \
+              &(stf->strctProps[j+offst].mbpID),         \
+              &(stf->strctProps[j+offst].DirectHostID),  \
+              &(stf->strctProps[j+offst].HostID),        \
+              &(stf->strctProps[j+offst].NumSubs),       \
+              &(stf->strctProps[j+offst].Type),          \
+              &(stf->strctProps[j+offst].NumPart),       \
+              &dummyd,                                   \
+              &(stf->strctProps[j+offst].Pos[0]),        \
+              &(stf->strctProps[j+offst].Pos[1]),        \
+              &(stf->strctProps[j+offst].Pos[2]),        \
+              &(stf->strctProps[j+offst].mpbPos[0]),     \
+              &(stf->strctProps[j+offst].mbpPos[1]),     \
+              &(stf->strctProps[j+offst].mbpPos[2]),     \
+              &(stf->strctProps[j+offst].Vel[0]),        \
+              &(stf->strctProps[j+offst].Vel[1]),        \
+              &(stf->strctProps[j+offst].Vel[2]),        \
+              &(stf->strctProps[j+offst].mbpVel[0]),     \
+              &(stf->strctProps[j+offst].mbpVel[1]),     \
+              &(stf->strctProps[j+offst].mbpVel[2]),     \
+              &(stf->strctProps[j+offst].TotMass),       \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &(stf->strctProps[j+offst].Efrac),         \
+              &dummyd,                                   \
+              &(stf->strctProps[j+offst].Rsize),         \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &(stf->strctProps[j+offst].RHalfMass),     \
+              &(stf->strctProps[j+offst].Rvmax),         \
+              &(stf->strctProps[j+offst].Vmax),          \
+              &(stf->strctProps[j+offst].Vdisp),         \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &dummyd,                                   \
+              &(stf->strctProps[j+offst].Lambda),        \
+              &(stf->strctProps[j+offst].L[0]),          \
+              &(stf->strctProps[j+offst].L[1]),          \
               &(stf->strctProps[j+offst].L[2])                                                    \
             );
     }
@@ -377,7 +410,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
         strct->iPart = 1;
     }
   }
-  
+
   //
   //  Load particles to structures
   //
@@ -454,11 +487,11 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
       for (i = 0; i < nparts; i++)
       {
         fgets(buffer, NAME_LENGTH, f);
-        
+
        // sscanf(buffer, "%d  %d  %d  %d  ",
        //                &extended[i].oIndex, &extended[i].IdStruct, \
        //                &extended[i].IdHost, &extended[i].IdIGM);
-                               
+
         sscanf(buffer, "%d  %d  ", &extended[i].oIndex, &extended[i].IdStruct);
       }
       *(xtndd) = extended;

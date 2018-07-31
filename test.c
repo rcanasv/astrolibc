@@ -138,7 +138,7 @@ int main (int argc, char ** argv)
 
   FILE * f1;
   char   buffer1  [NAME_LENGTH];
-  double R;
+  double R, Rmbp;
 
   strct1 = &opt.catalog[0].strctProps[ID];
   for (i = 0; i < strct1->NumSubs; i++)
@@ -146,20 +146,32 @@ int main (int argc, char ** argv)
     sprintf (buffer1,  "%s.sat_%03d", opt.output.prefix, i);
     f1  = fopen (buffer1,  "w");
 
-    R = 0;
+    R    = 0;
+    Rmbp = 0;
+
     sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
-    sat->Pos[0] = strct1->Pos[0];
-    sat->Pos[1] = strct1->Pos[1];
-    sat->Pos[2] = strct1->Pos[2];
+
+    sat->Pos[0] -= strct1->Pos[0];
+    sat->Pos[1] -= strct1->Pos[1];
+    sat->Pos[2] -= strct1->Pos[2];
+
+    sat->mbpPos[0] = strct1->mbpPos[0];
+    sat->mbpPos[1] = strct1->mbpPos[1];
+    sat->mbpPos[2] = strct1->mbpPos[2];
 
     R = sqrt(sat->Pos[0]*sat->Pos[0] + \
              sat->Pos[1]*sat->Pos[1] + \
              sat->Pos[2]*sat->Pos[2]);
 
+   R = sqrt(sat->Pos[0]*sat->Pos[0] + \
+            sat->Pos[1]*sat->Pos[1] + \
+            sat->Pos[2]*sat->Pos[2]);
+
     fprintf (f1, "%d  ", sat->ID);
     fprintf (f1, "%e  ", R);
     fprintf (f1, "%e  ", sat->TotMass);
     fprintf (f1, "%e  ", sat->RHalfMass);
+    fprintf (f1, "%e  ", Rmbp);
     fprintf (f1, "\n");
 
     ctrl = strct1;
@@ -168,13 +180,15 @@ int main (int argc, char ** argv)
     {
       if (sat->NumMatch)
       {
-        R = 0;
+        R    = 0;
+        Rmbp = 0;
+
         ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
 
-        satp->Pos[0] = ctrlp->Pos[0];
-        satp->Pos[1] = ctrlp->Pos[1];
-        satp->Pos[2] = ctrlp->Pos[2];
+        satp->Pos[0] -= ctrlp->Pos[0];
+        satp->Pos[1] -= ctrlp->Pos[1];
+        satp->Pos[2] -= ctrlp->Pos[2];
 
         R = sqrt(satp->Pos[0]*satp->Pos[0] + \
                  satp->Pos[1]*satp->Pos[1] + \
