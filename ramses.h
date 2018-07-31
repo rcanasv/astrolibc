@@ -18,7 +18,7 @@
 
 
 void  ramses_load_particles                (Simulation * ramses, int filenum, Particle ** part);
-void  ramses_structure_calculate_star_age  (Simulation * ramses, Structure * strct);
+void  ramses_structure_calculate_star_age  (Simulation * ramses, Catalog * ctlg, int * strct_to_get);
 void  ramses_catalog_calculate_star_age    (Simulation * ramses, Catalog * ctlg);
 void  ramses_init                          (Simulation * ramses);
 

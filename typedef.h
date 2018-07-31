@@ -163,6 +163,7 @@ typedef struct Simulation
   double     AgeUniv;
   double     Lbox;
   double     Time;
+  double     LookBackTime;
 
   // For RAMSES files
   double     unit_l;

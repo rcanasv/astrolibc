@@ -129,16 +129,67 @@ int main (int argc, char ** argv)
 
 
   //
-  // Write snapshots for visualization
+  // Tag structures to get
   //
   Structure  * ctrl;
   Structure  * ctrlp;
   Structure  * sat;
   Structure  * satp;
+  int       ** strct_to_get;
 
+  strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    strct_to_get[i] = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      strct_to_get[i][j] = 0;
+  }
+
+  ctrl = &opt.catalog[0].strctProps[ID];
+  strct_to_get[0][ctrl->ID] = 1;
+  for (i = 1; i < opt.nsnap; i++)
+  {
+    if (ctrl->NumMatch)
+    {
+      strct_to_get[i][ctrlp->ID] = 1;
+      ctrl = ctrlp;
+    }
+    else
+      break;
+  }
+
+  strct1 = &opt.catalog[0].strctProps[ID];
+  for (i = 0; i < strct1->NumSubs; i++)
+  {
+    sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+    strct_to_get[0][sat->ID] = 1;
+    ctrl = strct1;
+    for (j = 1; j < opt.nsnap; j++)
+    {
+      if (sat->NumMatch)
+      {
+        strct_to_get[j][satp->ID] = 1;
+        sat = satp;
+        ctrl = ctrlp;
+      }
+      else
+        break;
+    }
+  }
+
+  if (opt.simulation[0].format == RAMSES || \
+      opt.simulation[0].format == RAMSES_STAR)
+    for (i = 0; i < opt.nsnap; i++)
+      ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
+
+
+  //
+  // Write snapshots for visualization
+  //
   FILE * f1;
   char   buffer1  [NAME_LENGTH];
   double R, Rmbp;
+  double Pos[3];
 
   strct1 = &opt.catalog[0].strctProps[ID];
   for (i = 0; i < strct1->NumSubs; i++)
@@ -151,27 +202,30 @@ int main (int argc, char ** argv)
 
     sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
 
-    sat->Pos[0] -= strct1->Pos[0];
-    sat->Pos[1] -= strct1->Pos[1];
-    sat->Pos[2] -= strct1->Pos[2];
+    Pos[0] = sat->Pos[0] - strct1->Pos[0];
+    Pos[1] = sat->Pos[1] - strct1->Pos[1];
+    Pos[2] = sat->Pos[2] - strct1->Pos[2];
 
-    sat->mbpPos[0] = strct1->mbpPos[0];
-    sat->mbpPos[1] = strct1->mbpPos[1];
-    sat->mbpPos[2] = strct1->mbpPos[2];
+    R = sqrt(Pos[0]*Pos[0] + \
+             Pos[1]*Pos[1] + \
+             Pos[2]*Pos[2]);
 
-    R = sqrt(sat->Pos[0]*sat->Pos[0] + \
-             sat->Pos[1]*sat->Pos[1] + \
-             sat->Pos[2]*sat->Pos[2]);
+    Pos[0] = sat->mbpPos[0] + strct1->mbpPos[0];
+    Pos[1] = sat->mbpPos[1] + strct1->mbpPos[1];
+    Pos[2] = sat->mbpPos[2] + strct1->mbpPos[2];
 
-   R = sqrt(sat->Pos[0]*sat->Pos[0] + \
-            sat->Pos[1]*sat->Pos[1] + \
-            sat->Pos[2]*sat->Pos[2]);
 
+    Rmbp = sqrt(Pos[0]*Pos[0] + \
+                Pos[1]*Pos[1] + \
+                Pos[2]*Pos[2]);
+
+    fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
     fprintf (f1, "%d  ", sat->ID);
     fprintf (f1, "%e  ", R);
     fprintf (f1, "%e  ", sat->TotMass);
     fprintf (f1, "%e  ", sat->RHalfMass);
     fprintf (f1, "%e  ", Rmbp);
+    fprintf (f1, "%d  ", sat->NumPart);
     fprintf (f1, "\n");
 
     ctrl = strct1;
@@ -186,18 +240,30 @@ int main (int argc, char ** argv)
         ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
         satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
 
-        satp->Pos[0] -= ctrlp->Pos[0];
-        satp->Pos[1] -= ctrlp->Pos[1];
-        satp->Pos[2] -= ctrlp->Pos[2];
+        Pos[0] = satp->Pos[0] - ctrlp->Pos[0];
+        Pos[1] = satp->Pos[1] - ctrlp->Pos[1];
+        Pos[2] = satp->Pos[2] - ctrlp->Pos[2];
 
-        R = sqrt(satp->Pos[0]*satp->Pos[0] + \
-                 satp->Pos[1]*satp->Pos[1] + \
-                 satp->Pos[2]*satp->Pos[2]);
+        R = sqrt(Pos[0]*Pos[0] + \
+                 Pos[1]*Pos[1] + \
+                 Pos[2]*Pos[2]);
 
+        Pos[0] = sat->mbpPos[0] + ctrlp->mbpPos[0];
+        Pos[1] = sat->mbpPos[1] + ctrlp->mbpPos[1];
+        Pos[2] = sat->mbpPos[2] + ctrlp->mbpPos[2];
+
+
+        Rmbp = sqrt(Pos[0]*Pos[0] + \
+                    Pos[1]*Pos[1] + \
+                    Pos[2]*Pos[2]);
+
+        fprintf (f1, "%e  ", opt.simulation[j].LookBackTime);
         fprintf (f1, "%d  ", satp->ID);
         fprintf (f1, "%e  ", R);
         fprintf (f1, "%e  ", satp->TotMass);
         fprintf (f1, "%e  ", satp->RHalfMass);
+        fprintf (f1, "%e  ", Rmbp);
+        fprintf (f1, "%d  ", satp->NumPart);
         fprintf (f1, "\n");
 
         sat = satp;

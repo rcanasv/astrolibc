@@ -102,7 +102,7 @@ void stf_read_properties (Catalog * stf)
               &(stf->strctProps[j+offst].Pos[0]),        \
               &(stf->strctProps[j+offst].Pos[1]),        \
               &(stf->strctProps[j+offst].Pos[2]),        \
-              &(stf->strctProps[j+offst].mpbPos[0]),     \
+              &(stf->strctProps[j+offst].mbpPos[0]),     \
               &(stf->strctProps[j+offst].mbpPos[1]),     \
               &(stf->strctProps[j+offst].mbpPos[2]),     \
               &(stf->strctProps[j+offst].Vel[0]),        \

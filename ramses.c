@@ -366,16 +366,8 @@ double dadt (double axp_t, double Omega0, double OmegaL, double OmegaK)
 
 
 
-void  ramses_structure_calculate_star_age (Simulation * ramses, Structure * strct)
+void  ramses_structure_calculate_star_age (Simulation * ramses, Catalog * ctlg, int * strct_to_get)
 {
-  ;
-}
-
-
-
-void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
-{
-
   int      i, j, k;
 
   double * axp_frw;
@@ -397,28 +389,87 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
   Structure * strct;
 
   //
-  //  Read Info file to get Simulation info
+  //  Fill frw arrays
   //
-  sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
-  if ((f = fopen (fname, "r")) == NULL)
+  time_tot = friedman(ramses->cosmology.OmegaM, ramses->cosmology.OmegaL, 0.0, 1e-6, 1e-3, &axp_frw, &hexp_frw, &tau_frw, &t_frw, n_frw);
+
+  // Find neighbouring conformal time
+  i = 1;
+  while (tau_frw[i] > ramses->Time  && i < n_frw)
+    i = i+1;
+
+  // Interpolate time
+  time_simu = t_frw[i]   * (ramses->Time - tau_frw[i-1]) / (tau_frw[i]   - tau_frw[i-1]) + \
+              t_frw[i-1] * (ramses->Time - tau_frw[i])   / (tau_frw[i-1] - tau_frw[i]);
+
+
+  ramses->LookBackTime = (time_tot + time_simu) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9);
+  printf ("Time simu      %lf\n", (time_tot + time_simu) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
+  printf ("Hubble time    %lf\n", time_tot / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
+  printf ("i               %d\n", i);
+  printf ("time            %e\n", ramses->Time);
+  printf ("time_tot        %e\n", time_tot);
+  printf ("time_simu       %e\n", time_simu);
+  printf ("t_tot + t_simu  %e\n", time_tot + time_simu);
+
+
+  for (i = 1; i <= ctlg->nstruct; i++)
   {
-    printf ("Couldn't open file %s\n", fname);
-    exit (0);
+    if (strct_to_get[i] && ctlg->strctProps[i].iPart)
+    {
+      strct = &ctlg->strctProps[i];
+      for (j = 0; j < strct->NumPart; j++)
+      {
+        if (strct->Part[j].Age != 0)
+        {
+          k = 1;
+          while (tau_frw[k] > strct->Part[j].Age  && k < n_frw)
+            k++;
+
+          t = t_frw[k]   * (strct->Part[j].Age - tau_frw[k-1]) / (tau_frw[k]   - tau_frw[k-1]) + \
+              t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
+
+          // Age in years
+          strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600.0);
+        }
+      }
+    }
+    else
+    {
+      printf ("Somethin weird happened. Particle array for Structure has not been initialized\n");
+      exit (0);
+    }
   }
-  for (i = 0; i < 7; i++)
-    fgets (buffer, 100, f);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %s ", dummys, dummys, dummys);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fgets (buffer, 100, f);   sscanf (buffer, "%s %s %lf", dummys, dummys, &dummyd);
-  fclose (f);
+
+  free (axp_frw);
+  free (hexp_frw);
+  free (tau_frw);
+  free (t_frw);
+}
+
+
+
+void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
+{
+  int      i, j, k;
+
+  double * axp_frw;
+  double * hexp_frw;
+  double * tau_frw;
+  double * t_frw;
+  int      n_frw = 1000;
+  double   t;
+
+  double   time_tot;
+  double   time_simu;
+
+  FILE   * f;
+  char     fname  [NAME_LENGTH];
+  char     dummys [NAME_LENGTH];
+  char     buffer [NAME_LENGTH];
+  double   dummyd;
+
+  Structure * strct;
 
   //
   //  Fill frw arrays
@@ -435,7 +486,7 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
               t_frw[i-1] * (ramses->Time - tau_frw[i])   / (tau_frw[i-1] - tau_frw[i]);
 
 
-
+  ramses->LookBackTime = (time_tot + time_simu) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9);
   printf ("Time simu    %lf\n", (time_tot + time_simu) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
   printf ("Hubble time  %lf\n", time_tot / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600*1e9));
   printf ("i               %d\n", i);
