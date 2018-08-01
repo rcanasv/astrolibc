@@ -243,3 +243,49 @@ int Structure_dummyd_compare (const void * a, const void * b)
   if (strct1->dummyd < strct2->dummyd)
     return -1;
 }
+
+void  Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
+{
+  int     i;
+  double  mttot;
+  double  fmass;
+
+  for (i = 1; i <= sim->nstruct; i++)
+  {
+    if (strct_to_get[i])
+    {
+      mtot  = 0.0;
+      fmass = 0.0;
+
+      strct = &ctlg->strctProps[i];
+      if (!strct->iPart)
+      {
+        printf ("Particles have not been loaded...Exiting\n");
+        exit (0);
+      }
+
+      Structure_correct_periodicity       (strct, sim);
+      Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+
+      // Sort Particles by radius
+      qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+      // Recalculate Total Mass
+      for (k = 0; k < strct->NumPart; k++)
+        mtot += strct->Part[k].Mass;
+      fmass = fraction * mtot;
+      mtot = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        totmass += strct->Part[k].Mass;
+        if (totmass >= fmass)
+        {
+          strct->Rx = strct->Part[k].Radius;
+          break;
+        }
+      }
+    }
+  }
+}

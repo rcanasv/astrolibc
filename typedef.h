@@ -79,6 +79,7 @@ typedef struct Structure
   double     SFR20;
   double     SFR50;
   double     SFR100;
+  double     Rx;
   double     R20;
   double     R90;
   int        mbpID;

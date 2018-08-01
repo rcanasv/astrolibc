@@ -188,6 +188,10 @@ int main (int argc, char ** argv)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
   }
 
+
+
+
+
   //
   // Write snapshots for visualization
   //
