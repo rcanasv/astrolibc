@@ -151,6 +151,7 @@ int main (int argc, char ** argv)
   {
     if (ctrl->NumMatch)
     {
+      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
       strct_to_get[i][ctrlp->ID] = 1;
       ctrl = ctrlp;
     }
@@ -168,6 +169,8 @@ int main (int argc, char ** argv)
     {
       if (sat->NumMatch)
       {
+        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
         strct_to_get[j][satp->ID] = 1;
         sat = satp;
         ctrl = ctrlp;
@@ -177,11 +180,13 @@ int main (int argc, char ** argv)
     }
   }
 
-  if (opt.simulation[0].format == RAMSES || \
-      opt.simulation[0].format == RAMSES_STAR)
-    for (i = 0; i < opt.nsnap; i++)
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
+    if (opt.simulation[0].format == RAMSES || \
+        opt.simulation[0].format == RAMSES_STAR)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
-
+  }
 
   //
   // Write snapshots for visualization
@@ -248,9 +253,9 @@ int main (int argc, char ** argv)
                  Pos[1]*Pos[1] + \
                  Pos[2]*Pos[2]);
 
-        Pos[0] = sat->mbpPos[0] + ctrlp->mbpPos[0];
-        Pos[1] = sat->mbpPos[1] + ctrlp->mbpPos[1];
-        Pos[2] = sat->mbpPos[2] + ctrlp->mbpPos[2];
+        Pos[0] = satp->mbpPos[0] + ctrlp->mbpPos[0];
+        Pos[1] = satp->mbpPos[1] + ctrlp->mbpPos[1];
+        Pos[2] = satp->mbpPos[2] + ctrlp->mbpPos[2];
 
 
         Rmbp = sqrt(Pos[0]*Pos[0] + \

@@ -415,29 +415,32 @@ void  ramses_structure_calculate_star_age (Simulation * ramses, Catalog * ctlg, 
 
   for (i = 1; i <= ctlg->nstruct; i++)
   {
-    if (strct_to_get[i] && ctlg->strctProps[i].iPart)
+    if (strct_to_get[i])
     {
-      strct = &ctlg->strctProps[i];
-      for (j = 0; j < strct->NumPart; j++)
+      if (ctlg->strctProps[i].iPart)
       {
-        if (strct->Part[j].Age != 0)
+        strct = &ctlg->strctProps[i];
+        for (j = 0; j < strct->NumPart; j++)
         {
-          k = 1;
-          while (tau_frw[k] > strct->Part[j].Age  && k < n_frw)
-            k++;
-
-          t = t_frw[k]   * (strct->Part[j].Age - tau_frw[k-1]) / (tau_frw[k]   - tau_frw[k-1]) + \
-              t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
-
-          // Age in years
-          strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600.0);
+          if (strct->Part[j].Age != 0)
+          {
+            k = 1;
+            while (tau_frw[k] > strct->Part[j].Age  && k < n_frw)
+              k++;
+  
+            t = t_frw[k]   * (strct->Part[j].Age - tau_frw[k-1]) / (tau_frw[k]   - tau_frw[k-1]) + \
+                t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
+  
+           // Age in years
+            strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600.0);
+          }
         }
       }
-    }
-    else
-    {
-      printf ("Somethin weird happened. Particle array for Structure has not been initialized\n");
-      exit (0);
+      else
+      {
+        printf ("Somethin weird happened. Particle array for Structure has not been initialized\n");
+        exit (0);
+      }
     }
   }
 
