@@ -49,19 +49,9 @@ int main (int argc, char ** argv)
   Structure   * strct2;
   Structure   * strct3;
   Structure   * sorted;
-  double        fihsc;
-  double        mstot;
-  double        mass_min;
-  double        mass_max;
-  double        frac_min;
-  double        frac_max;
-  int           top;
 
   test_options (argc, argv, &opt);
   test_params  (&opt);
-
-//  opt.nsnap = 3;
-//  opt.ntrees = opt.nsnap-1;
 
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -70,12 +60,10 @@ int main (int argc, char ** argv)
     Catalog_load_properties         (&opt.catalog[i]);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
-
-    if (opt.iTrack)
-      if (i < opt.ntrees)
-        stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
+    if (i < opt.ntrees)
+      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
-
+ printf("HERE\n");
 
   // --------------------------------------------------- //
   //
@@ -189,7 +177,7 @@ int main (int argc, char ** argv)
   }
 
 
-
+printf("HERE\n");
 
 
   //

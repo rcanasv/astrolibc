@@ -652,7 +652,7 @@ void stf_catalog_fill_isolated (Catalog * stf)
     strct1 = &stf->strctProps[i];
     strct2 = &stf->strctProps[strct1->HostID];
 
-    if (strct1->Type > 7)
+    if (strct1->Type > 7 && strct1->HostID > 0)
       if (strct1->ID == strct2->dummyi)
         strct1->Central = 1;
   }
