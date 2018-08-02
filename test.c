@@ -63,7 +63,6 @@ int main (int argc, char ** argv)
     if (i < opt.ntrees)
       stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
- printf("HERE\n");
 
   // --------------------------------------------------- //
   //
@@ -171,14 +170,11 @@ int main (int argc, char ** argv)
   for (i = 0; i < opt.nsnap; i++)
   {
     Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
+    Structure_calculate_fmass_radius  (&opt.catalog[i], &opt.simulation[i], strct_to_get[i], 0.5);
     if (opt.simulation[0].format == RAMSES || \
         opt.simulation[0].format == RAMSES_STAR)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
   }
-
-
-printf("HERE\n");
-
 
   //
   // Write snapshots for visualization
@@ -187,6 +183,53 @@ printf("HERE\n");
   char   buffer1  [NAME_LENGTH];
   double R, Rmbp;
   double Pos[3];
+
+  ctrl = &opt.catalog[0].strctProps[ID];
+
+  sprintf (buffer1,  "%s.ctrl", opt.output.prefix);
+  f1   = fopen (buffer1,  "w");
+  R    = 0;
+  Rmbp = 0;
+  fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
+  fprintf (f1, "%d  ", ctrl->ID);
+  fprintf (f1, "%e  ", R);
+  fprintf (f1, "%e  ", ctrl->TotMass);
+  fprintf (f1, "%e  ", ctrl->RHalfMass);
+  fprintf (f1, "%e  ", Rmbp);
+  fprintf (f1, "%d  ", ctrl->NumPart);
+  fprintf (f1, "%e  ", ctrl->Rx);
+  fprintf (f1, "\n");
+  for (i = 1; i < opt.nsnap; i++)
+  {
+    if (ctrl->NumMatch)
+    {
+      ctrlp = &opt.catalog[i].strctProps[ctrlp->MatchIDs[0]];
+      fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
+      fprintf (f1, "%d  ", ctrlp->ID);
+      fprintf (f1, "%e  ", R);
+      fprintf (f1, "%e  ", ctrlp->TotMass);
+      fprintf (f1, "%e  ", ctrlp->RHalfMass);
+      fprintf (f1, "%e  ", Rmbp);
+      fprintf (f1, "%d  ", ctrlp->NumPart);
+      fprintf (f1, "%e  ", ctrlp->Rx);
+      fprintf (f1, "\n");
+      ctrl = ctrlp;
+    }
+    else
+    {
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "%d  ", 0);
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "%d  ", 0);
+      fprintf (f1, "%e  ", 0.0);
+      fprintf (f1, "\n");
+    }
+  }
+  fclose (f1);
+
 
   strct1 = &opt.catalog[0].strctProps[ID];
   for (i = 0; i < strct1->NumSubs; i++)
@@ -216,7 +259,7 @@ printf("HERE\n");
                 Pos[1]*Pos[1] + \
                 Pos[2]*Pos[2]);
 
-    Structure_calculate_fmass_radius (&opt.catalog[0], &opt.simulation[0], strct_to_get[0], 0.5);
+//    Structure_calculate_fmass_radius (&opt.catalog[0], &opt.simulation[0], strct_to_get[0], 0.5);
 
     fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
     fprintf (f1, "%d  ", sat->ID);
@@ -257,7 +300,7 @@ printf("HERE\n");
                     Pos[1]*Pos[1] + \
                     Pos[2]*Pos[2]);
 
-        Structure_calculate_fmass_radius (&opt.catalog[j], &opt.simulation[j], strct_to_get[j], 0.5);
+  //      Structure_calculate_fmass_radius (&opt.catalog[j], &opt.simulation[j], strct_to_get[j], 0.5);
 
         fprintf (f1, "%e  ", opt.simulation[j].LookBackTime);
         fprintf (f1, "%d  ", satp->ID);
