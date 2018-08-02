@@ -228,6 +228,8 @@ int main (int argc, char ** argv)
                 Pos[1]*Pos[1] + \
                 Pos[2]*Pos[2]);
 
+    Structure_calculate_fmass_radius (&opt.catalog[0], &opt.simulation[0], strct_to_get[0], 0.5);
+
     fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
     fprintf (f1, "%d  ", sat->ID);
     fprintf (f1, "%e  ", R);
@@ -235,6 +237,7 @@ int main (int argc, char ** argv)
     fprintf (f1, "%e  ", sat->RHalfMass);
     fprintf (f1, "%e  ", Rmbp);
     fprintf (f1, "%d  ", sat->NumPart);
+    fprintf (f1, "%e  ", sat->Rx);
     fprintf (f1, "\n");
 
     ctrl = strct1;
@@ -266,6 +269,8 @@ int main (int argc, char ** argv)
                     Pos[1]*Pos[1] + \
                     Pos[2]*Pos[2]);
 
+        Structure_calculate_fmass_radius (&opt.catalog[j], &opt.simulation[j], strct_to_get[j], 0.5);
+
         fprintf (f1, "%e  ", opt.simulation[j].LookBackTime);
         fprintf (f1, "%d  ", satp->ID);
         fprintf (f1, "%e  ", R);
@@ -273,6 +278,7 @@ int main (int argc, char ** argv)
         fprintf (f1, "%e  ", satp->RHalfMass);
         fprintf (f1, "%e  ", Rmbp);
         fprintf (f1, "%d  ", satp->NumPart);
+        fprintf (f1, "%e  ", satp->Rx);
         fprintf (f1, "\n");
 
         sat = satp;
@@ -280,9 +286,13 @@ int main (int argc, char ** argv)
       }
       else
       {
+        fprintf (f1, "%e  ", 0.0);
         fprintf (f1, "%d  ", 0);
         fprintf (f1, "%e  ", 0.0);
         fprintf (f1, "%e  ", 0.0);
+        fprintf (f1, "%e  ", 0.0);
+        fprintf (f1, "%e  ", 0.0);
+        fprintf (f1, "%d  ", 0);
         fprintf (f1, "%e  ", 0.0);
         fprintf (f1, "\n");
       }

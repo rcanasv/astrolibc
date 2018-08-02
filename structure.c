@@ -11,26 +11,30 @@
 
 void Structure_correct_periodicity (Structure * strct, Simulation * sim)
 {
-  int     i, j, k;
-  double  Lbox;
-  double  hbox;
-
-  Lbox = sim->Lbox;
-  hbox = Lbox / 2.0;
-
-  for (i = 0; i < strct->NumPart; i++)
+  if (strct->flg_CorrectedPeriodicity)
   {
-    strct->Part[i].Pos[0] -= strct->Pos[0];
-    strct->Part[i].Pos[1] -= strct->Pos[1];
-    strct->Part[i].Pos[2] -= strct->Pos[2];
+    int     i, j, k;
+    double  Lbox;
+    double  hbox;
 
-    while (strct->Part[i].Pos[0] >  hbox)   strct->Part[i].Pos[0] -= Lbox;
-    while (strct->Part[i].Pos[1] >  hbox)   strct->Part[i].Pos[1] -= Lbox;
-    while (strct->Part[i].Pos[2] >  hbox)   strct->Part[i].Pos[2] -= Lbox;
+    Lbox = sim->Lbox;
+    hbox = Lbox / 2.0;
 
-    while (strct->Part[i].Pos[0] < -hbox)   strct->Part[i].Pos[0] += Lbox;
-    while (strct->Part[i].Pos[1] < -hbox)   strct->Part[i].Pos[1] += Lbox;
-    while (strct->Part[i].Pos[2] < -hbox)   strct->Part[i].Pos[2] += Lbox;
+    for (i = 0; i < strct->NumPart; i++)
+    {
+      strct->Part[i].Pos[0] -= strct->Pos[0];
+      strct->Part[i].Pos[1] -= strct->Pos[1];
+      strct->Part[i].Pos[2] -= strct->Pos[2];
+
+      while (strct->Part[i].Pos[0] >  hbox)   strct->Part[i].Pos[0] -= Lbox;
+      while (strct->Part[i].Pos[1] >  hbox)   strct->Part[i].Pos[1] -= Lbox;
+      while (strct->Part[i].Pos[2] >  hbox)   strct->Part[i].Pos[2] -= Lbox;
+
+      while (strct->Part[i].Pos[0] < -hbox)   strct->Part[i].Pos[0] += Lbox;
+      while (strct->Part[i].Pos[1] < -hbox)   strct->Part[i].Pos[1] += Lbox;
+      while (strct->Part[i].Pos[2] < -hbox)   strct->Part[i].Pos[2] += Lbox;
+    }
+    strct->flg_CorrectedPeriodicity = 1;
   }
 }
 
@@ -62,51 +66,55 @@ void Structure_calculate_centre_of_mass (Structure * strct)
 
 void Structure_shift_to_centre_of_mass (Structure * strct)
 {
-  int     i;
-  double  cmpos [3];
-  double  cmvel [3];
-  double  totmass;
-
-  cmpos[0]  = 0.0;
-  cmpos[1]  = 0.0;
-  cmpos[2]  = 0.0;
-
-  cmvel[0]  = 0.0;
-  cmvel[1]  = 0.0;
-  cmvel[2]  = 0.0;
-
-  totmass   = 0.0;
-
-  for (i = 0; i < strct->NumPart; i++)
+  if (!strct->flg_ShiftedCM)
   {
-    cmpos[0]  += strct->Part[i].Pos[0] * strct->Part[i].Mass;
-    cmpos[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
-    cmpos[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
+    int     i;
+    double  cmpos [3];
+    double  cmvel [3];
+    double  totmass;
 
-    cmvel[0]  += strct->Part[i].Pos[0] * strct->Part[i].Mass;
-    cmvel[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
-    cmvel[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
+    cmpos[0]  = 0.0;
+    cmpos[1]  = 0.0;
+    cmpos[2]  = 0.0;
 
-    totmass   += strct->Part[i].Mass;
-  }
+    cmvel[0]  = 0.0;
+    cmvel[1]  = 0.0;
+    cmvel[2]  = 0.0;
 
-  cmpos[0] /= totmass;
-  cmpos[1] /= totmass;
-  cmpos[2] /= totmass;
+    totmass   = 0.0;
 
-  cmvel[0] /= totmass;
-  cmvel[1] /= totmass;
-  cmvel[2] /= totmass;
+    for (i = 0; i < strct->NumPart; i++)
+    {
+      cmpos[0]  += strct->Part[i].Pos[0] * strct->Part[i].Mass;
+      cmpos[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
+      cmpos[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
 
-  for (i = 0; i < strct->NumPart; i++)
-  {
-    strct->Part[i].Pos[0] -= cmpos[0];
-    strct->Part[i].Pos[1] -= cmpos[1];
-    strct->Part[i].Pos[2] -= cmpos[2];
+      cmvel[0]  += strct->Part[i].Pos[0] * strct->Part[i].Mass;
+      cmvel[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
+      cmvel[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
 
-    strct->Part[i].Vel[0] -= cmvel[0];
-    strct->Part[i].Vel[1] -= cmvel[1];
-    strct->Part[i].Vel[2] -= cmvel[2];
+      totmass   += strct->Part[i].Mass;
+    }
+
+    cmpos[0] /= totmass;
+    cmpos[1] /= totmass;
+    cmpos[2] /= totmass;
+
+    cmvel[0] /= totmass;
+    cmvel[1] /= totmass;
+    cmvel[2] /= totmass;
+
+    for (i = 0; i < strct->NumPart; i++)
+    {
+      strct->Part[i].Pos[0] -= cmpos[0];
+      strct->Part[i].Pos[1] -= cmpos[1];
+      strct->Part[i].Pos[2] -= cmpos[2];
+
+      strct->Part[i].Vel[0] -= cmvel[0];
+      strct->Part[i].Vel[1] -= cmvel[1];
+      strct->Part[i].Vel[2] -= cmvel[2];
+    }
+    strct->flg_ShiftedCM = 1;
   }
 }
 
@@ -200,12 +208,25 @@ void Structure_calculate_surface_density (Structure * strct, double * rotation, 
 }
 
 
+void Structure_sort_by_radius (Structure * strct)
+{
+  if (!strct->flg_SortedByRadius)
+  {
+    qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+    strct->flg_SortedByRadius = 1;
+  }
+}
+
 
 void Structure_get_particle_radius (Structure * strct)
 {
   int i;
-  for (i = 0; i < strct->NumPart; i++)
-    Particle_get_radius (&strct->Part[i]);
+  if (!strct->flg_PartRadius)
+  {
+    for (i = 0; i < strct->NumPart; i++)
+      Particle_get_radius (&strct->Part[i]);
+    strct->flg_PartRadius = 1;
+  }
 }
 
 
@@ -214,6 +235,53 @@ void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * 
 {
   if (ctlg->format == STF)
     stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
+}
+
+
+
+void  Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
+{
+  int     i, j, k;
+  double  mtot;
+  double  fmass;
+  Structure * strct;
+
+  for (i = 1; i <= ctlg->nstruct; i++)
+  {
+    if (strct_to_get[i])
+    {
+      mtot  = 0.0;
+      fmass = 0.0;
+
+      strct = &ctlg->strctProps[i];
+      if (!strct->iPart)
+      {
+        printf ("Particles have not been loaded...Exiting\n");
+        exit (0);
+      }
+
+      Structure_correct_periodicity       (strct, sim);
+      Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+      Structure_sort_by_radius            (strct);
+
+      // Recalculate Total Mass
+      for (k = 0; k < strct->NumPart; k++)
+        mtot += strct->Part[k].Mass;
+      fmass = fraction * mtot;
+      mtot = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        mtot += strct->Part[k].Mass;
+        if (mtot >= fmass)
+        {
+          strct->Rx = strct->Part[k].Radius;
+          break;
+        }
+      }
+    }
+  }
 }
 
 
@@ -242,50 +310,4 @@ int Structure_dummyd_compare (const void * a, const void * b)
     return  0;
   if (strct1->dummyd < strct2->dummyd)
     return -1;
-}
-
-void  Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
-{
-  int     i;
-  double  mttot;
-  double  fmass;
-
-  for (i = 1; i <= sim->nstruct; i++)
-  {
-    if (strct_to_get[i])
-    {
-      mtot  = 0.0;
-      fmass = 0.0;
-
-      strct = &ctlg->strctProps[i];
-      if (!strct->iPart)
-      {
-        printf ("Particles have not been loaded...Exiting\n");
-        exit (0);
-      }
-
-      Structure_correct_periodicity       (strct, sim);
-      Structure_shift_to_centre_of_mass   (strct);
-      Structure_get_particle_radius       (strct);
-
-      // Sort Particles by radius
-      qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
-
-      // Recalculate Total Mass
-      for (k = 0; k < strct->NumPart; k++)
-        mtot += strct->Part[k].Mass;
-      fmass = fraction * mtot;
-      mtot = 0;
-
-      for (k = 0; k < strct->NumPart; k++)
-      {
-        totmass += strct->Part[k].Mass;
-        if (totmass >= fmass)
-        {
-          strct->Rx = strct->Part[k].Radius;
-          break;
-        }
-      }
-    }
-  }
 }

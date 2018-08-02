@@ -56,10 +56,16 @@ void stf_read_properties (Catalog * stf)
 
   for (i = 1; i <= stf->nstruct; i++)
   {
+    // Pointers
     stf->strctProps[i].SubIDs     = NULL;
     stf->strctProps[i].MatchIDs   = NULL;
     stf->strctProps[i].MatchMrrts = NULL;
-    stf->strctProps[i].Part       = NULL;
+    stf->strctProps[i].Part        = NULL;
+    // Flags
+    stf->strctProps[i].flg_PartRadius           = 0;
+    stf->strctProps[i].flg_SortedByRadius       = 0;
+    stf->strctProps[i].flg_CorrectedPeriodicity = 0;
+    stf->strctProps[i].flg_ShiftedCM            = 0;
   }
 
   //

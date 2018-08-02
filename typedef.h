@@ -126,6 +126,12 @@ typedef struct Structure
   int        dummy;
   int        dummyi;
   double     dummyd;
+
+  // Flags
+  char flg_PartRadius;
+  char flg_SortedByRadius;
+  char flg_CorrectedPeriodicity;
+  char flg_ShiftedCM;
 } Structure;
 
 

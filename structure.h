@@ -18,6 +18,8 @@
 
 void  Structure_correct_periodicity       (Structure * strct, Simulation * sim);
 
+void  Structure_sort_by_radius            (Structure * strct);
+
 void  Structure_calculate_centre_of_mass  (Structure * strct);
 void  Structure_calculate_surface_density (Structure * strct, double * rotation, double ledge, double redge, int nbins, double ** bins, double ** Sigma);
 void  Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction);
