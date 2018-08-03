@@ -203,8 +203,8 @@ int main (int argc, char ** argv)
   {
     if (ctrl->NumMatch)
     {
-      ctrlp = &opt.catalog[i].strctProps[ctrlp->MatchIDs[0]];
-      fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
+      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+      fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
       fprintf (f1, "%d  ", ctrlp->ID);
       fprintf (f1, "%e  ", R);
       fprintf (f1, "%e  ", ctrlp->TotMass);
