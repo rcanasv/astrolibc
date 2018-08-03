@@ -111,9 +111,10 @@ int main (int argc, char ** argv)
   memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
-  int ID = sorted[opt.catalog[0].nstruct].ID;
-  printf ("%d\n", ID);
-
+  int ID[3];
+  ID[0] = 166744;
+  ID[1] = 166746;
+  ID[2] = 166749;
 
   //
   // Tag structures to get
@@ -132,38 +133,41 @@ int main (int argc, char ** argv)
       strct_to_get[i][j] = 0;
   }
 
-  ctrl = &opt.catalog[0].strctProps[ID];
-  strct_to_get[0][ctrl->ID] = 1;
-  for (i = 1; i < opt.nsnap; i++)
+  for (k = 0; k < 3; k++)
   {
-    if (ctrl->NumMatch)
+    ctrl = &opt.catalog[0].strctProps[ID[k]];
+    strct_to_get[0][ctrl->ID] = 1;
+    for (i = 1; i < opt.nsnap; i++)
     {
-      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
-      strct_to_get[i][ctrlp->ID] = 1;
-      ctrl = ctrlp;
-    }
-    else
-      break;
-  }
-
-  strct1 = &opt.catalog[0].strctProps[ID];
-  for (i = 0; i < strct1->NumSubs; i++)
-  {
-    sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
-    strct_to_get[0][sat->ID] = 1;
-    ctrl = strct1;
-    for (j = 1; j < opt.nsnap; j++)
-    {
-      if (sat->NumMatch)
+      if (ctrl->NumMatch)
       {
-        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
-        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
-        strct_to_get[j][satp->ID] = 1;
-        sat = satp;
+        ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
+        strct_to_get[i][ctrlp->ID] = 1;
         ctrl = ctrlp;
       }
       else
         break;
+    }
+
+    strct1 = &opt.catalog[0].strctProps[ID[k]];
+    for (i = 0; i < strct1->NumSubs; i++)
+    {
+      sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+      strct_to_get[0][sat->ID] = 1;
+      ctrl = strct1;
+      for (j = 1; j < opt.nsnap; j++)
+      {
+        if (sat->NumMatch)
+        {
+          ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+          satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+          strct_to_get[j][satp->ID] = 1;
+          sat = satp;
+          ctrl = ctrlp;
+        }
+        else
+          break;
+      }
     }
   }
 
@@ -179,158 +183,146 @@ int main (int argc, char ** argv)
   //
   // Write snapshots for visualization
   //
-  FILE * f1;
-  char   buffer1  [NAME_LENGTH];
-  double R, Rmbp;
-  double Pos[3];
+  FILE    * f1;
+  FILE    * f2;
+  char      buffer1  [NAME_LENGTH];
+  char      buffer2  [NAME_LENGTH];
+  double    R, Rmbp;
+  double    Pos[3];
+  double  * rbin;
+  double  * rho;
 
-  ctrl = &opt.catalog[0].strctProps[ID];
-
-  sprintf (buffer1,  "%s.ctrl", opt.output.prefix);
-  f1   = fopen (buffer1,  "w");
-  R    = 0;
-  Rmbp = 0;
-  fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
-  fprintf (f1, "%d  ", ctrl->ID);
-  fprintf (f1, "%e  ", R);
-  fprintf (f1, "%e  ", ctrl->TotMass);
-  fprintf (f1, "%e  ", ctrl->RHalfMass);
-  fprintf (f1, "%e  ", Rmbp);
-  fprintf (f1, "%d  ", ctrl->NumPart);
-  fprintf (f1, "%e  ", ctrl->Rx);
-  fprintf (f1, "\n");
-  for (i = 1; i < opt.nsnap; i++)
+  for (k = 0; k < 3; k++)
   {
-    if (ctrl->NumMatch)
-    {
-      ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
-      fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
-      fprintf (f1, "%d  ", ctrlp->ID);
-      fprintf (f1, "%e  ", R);
-      fprintf (f1, "%e  ", ctrlp->TotMass);
-      fprintf (f1, "%e  ", ctrlp->RHalfMass);
-      fprintf (f1, "%e  ", Rmbp);
-      fprintf (f1, "%d  ", ctrlp->NumPart);
-      fprintf (f1, "%e  ", ctrlp->Rx);
-      fprintf (f1, "\n");
-      ctrl = ctrlp;
-    }
-    else
-    {
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "%d  ", 0);
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "%d  ", 0);
-      fprintf (f1, "%e  ", 0.0);
-      fprintf (f1, "\n");
-    }
-  }
-  fclose (f1);
+    ctrl = &opt.catalog[0].strctProps[ID[k]];
 
+    sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], 0);
+    f2   = fopen (buffer1,  "w");
+    Structure_calculate_spherical_density (ctrl, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+    fclose (f2);
 
-  strct1 = &opt.catalog[0].strctProps[ID];
-  for (i = 0; i < strct1->NumSubs; i++)
-  {
-    sprintf (buffer1,  "%s.sat_%03d", opt.output.prefix, i);
-    f1  = fopen (buffer1,  "w");
-
+    sprintf (buffer1,  "%s-%d.ctrl", opt.output.prefix, ID[k]);
+    f1   = fopen (buffer1,  "w");
     R    = 0;
     Rmbp = 0;
-
-    sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
-
-    Pos[0] = sat->Pos[0] - strct1->Pos[0];
-    Pos[1] = sat->Pos[1] - strct1->Pos[1];
-    Pos[2] = sat->Pos[2] - strct1->Pos[2];
-
-    R = sqrt(Pos[0]*Pos[0] + \
-             Pos[1]*Pos[1] + \
-             Pos[2]*Pos[2]);
-
-    Pos[0] = sat->mbpPos[0] + strct1->mbpPos[0];
-    Pos[1] = sat->mbpPos[1] + strct1->mbpPos[1];
-    Pos[2] = sat->mbpPos[2] + strct1->mbpPos[2];
-
-
-    Rmbp = sqrt(Pos[0]*Pos[0] + \
-                Pos[1]*Pos[1] + \
-                Pos[2]*Pos[2]);
-
-//    Structure_calculate_fmass_radius (&opt.catalog[0], &opt.simulation[0], strct_to_get[0], 0.5);
-
     fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
-    fprintf (f1, "%d  ", sat->ID);
+    fprintf (f1, "%d  ", ctrl->ID);
     fprintf (f1, "%e  ", R);
-    fprintf (f1, "%e  ", sat->TotMass);
-    fprintf (f1, "%e  ", sat->RHalfMass);
+    fprintf (f1, "%e  ", ctrl->TotMass);
+    fprintf (f1, "%e  ", ctrl->RHalfMass);
     fprintf (f1, "%e  ", Rmbp);
-    fprintf (f1, "%d  ", sat->NumPart);
-    fprintf (f1, "%e  ", sat->Rx);
+    fprintf (f1, "%d  ", ctrl->NumPart);
+    fprintf (f1, "%e  ", ctrl->Rx);
     fprintf (f1, "\n");
-
-    ctrl = strct1;
-
-    for (j = 1; j < opt.nsnap; j++)
+    for (i = 1; i < opt.nsnap; i++)
     {
-      if (sat->NumMatch)
+      if (ctrl->NumMatch)
       {
-        R    = 0;
-        Rmbp = 0;
+        ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
 
-        ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
-        satp = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+        sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], i);
+        f2   = fopen (buffer1,  "w");
+        Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+        fclose (f2);
 
-        Pos[0] = satp->Pos[0] - ctrlp->Pos[0];
-        Pos[1] = satp->Pos[1] - ctrlp->Pos[1];
-        Pos[2] = satp->Pos[2] - ctrlp->Pos[2];
-
-        R = sqrt(Pos[0]*Pos[0] + \
-                 Pos[1]*Pos[1] + \
-                 Pos[2]*Pos[2]);
-
-        Pos[0] = satp->mbpPos[0] + ctrlp->mbpPos[0];
-        Pos[1] = satp->mbpPos[1] + ctrlp->mbpPos[1];
-        Pos[2] = satp->mbpPos[2] + ctrlp->mbpPos[2];
-
-
-        Rmbp = sqrt(Pos[0]*Pos[0] + \
-                    Pos[1]*Pos[1] + \
-                    Pos[2]*Pos[2]);
-
-  //      Structure_calculate_fmass_radius (&opt.catalog[j], &opt.simulation[j], strct_to_get[j], 0.5);
-
-        fprintf (f1, "%e  ", opt.simulation[j].LookBackTime);
-        fprintf (f1, "%d  ", satp->ID);
+        fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
+        fprintf (f1, "%d  ", ctrlp->ID);
         fprintf (f1, "%e  ", R);
-        fprintf (f1, "%e  ", satp->TotMass);
-        fprintf (f1, "%e  ", satp->RHalfMass);
+        fprintf (f1, "%e  ", ctrlp->TotMass);
+        fprintf (f1, "%e  ", ctrlp->RHalfMass);
         fprintf (f1, "%e  ", Rmbp);
-        fprintf (f1, "%d  ", satp->NumPart);
-        fprintf (f1, "%e  ", satp->Rx);
+        fprintf (f1, "%d  ", ctrlp->NumPart);
+        fprintf (f1, "%e  ", ctrlp->Rx);
         fprintf (f1, "\n");
-
-        sat = satp;
         ctrl = ctrlp;
-      }
-      else
-      {
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%d  ", 0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "%d  ", 0);
-        fprintf (f1, "%e  ", 0.0);
-        fprintf (f1, "\n");
       }
     }
     fclose (f1);
-  }
 
+
+    strct1 = &opt.catalog[0].strctProps[ID[k]];
+    for (i = 0; i < strct1->NumSubs; i++)
+    {
+      sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, 0);
+      f2   = fopen (buffer1,  "w");
+      Structure_calculate_spherical_density (strct1, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+      fclose (f2);
+
+      sprintf (buffer1,  "%s-%d.sat_%03d", opt.output.prefix, ID[k], i);
+      f1   = fopen (buffer1,  "w");
+      R    = 0;
+      Rmbp = 0;
+      sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+      Pos[0] = sat->Pos[0] - strct1->Pos[0];
+      Pos[1] = sat->Pos[1] - strct1->Pos[1];
+      Pos[2] = sat->Pos[2] - strct1->Pos[2];
+      R = sqrt(Pos[0]*Pos[0] + Pos[1]*Pos[1] + Pos[2]*Pos[2]);
+      Pos[0] = sat->mbpPos[0] + strct1->mbpPos[0];
+      Pos[1] = sat->mbpPos[1] + strct1->mbpPos[1];
+      Pos[2] = sat->mbpPos[2] + strct1->mbpPos[2];
+      Rmbp = sqrt(Pos[0]*Pos[0] + Pos[1]*Pos[1] + Pos[2]*Pos[2]);
+
+      fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
+      fprintf (f1, "%d  ", sat->ID);
+      fprintf (f1, "%e  ", R);
+      fprintf (f1, "%e  ", sat->TotMass);
+      fprintf (f1, "%e  ", sat->RHalfMass);
+      fprintf (f1, "%e  ", Rmbp);
+      fprintf (f1, "%d  ", sat->NumPart);
+      fprintf (f1, "%e  ", sat->Rx);
+      fprintf (f1, "\n");
+
+      ctrl = strct1;
+
+      for (j = 1; j < opt.nsnap; j++)
+      {
+        if (sat->NumMatch)
+        {
+          R    = 0;
+          Rmbp = 0;
+
+          ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+          satp  = &opt.catalog[j].strctProps[sat->MatchIDs[0]];
+
+          sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, j);
+          f2   = fopen (buffer1,  "w");
+          Structure_calculate_spherical_density (strct1, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+          fclose (f2);
+
+          Pos[0] = satp->Pos[0] - ctrlp->Pos[0];
+          Pos[1] = satp->Pos[1] - ctrlp->Pos[1];
+          Pos[2] = satp->Pos[2] - ctrlp->Pos[2];
+
+          R = sqrt(Pos[0]*Pos[0] + \
+                   Pos[1]*Pos[1] + \
+                   Pos[2]*Pos[2]);
+
+          Pos[0] = satp->mbpPos[0] + ctrlp->mbpPos[0];
+          Pos[1] = satp->mbpPos[1] + ctrlp->mbpPos[1];
+          Pos[2] = satp->mbpPos[2] + ctrlp->mbpPos[2];
+
+
+          Rmbp = sqrt(Pos[0]*Pos[0] + \
+                      Pos[1]*Pos[1] + \
+                      Pos[2]*Pos[2]);
+
+          fprintf (f1, "%e  ", opt.simulation[j].LookBackTime);
+          fprintf (f1, "%d  ", satp->ID);
+          fprintf (f1, "%e  ", R);
+          fprintf (f1, "%e  ", satp->TotMass);
+          fprintf (f1, "%e  ", satp->RHalfMass);
+          fprintf (f1, "%e  ", Rmbp);
+          fprintf (f1, "%d  ", satp->NumPart);
+          fprintf (f1, "%e  ", satp->Rx);
+          fprintf (f1, "\n");
+
+          sat = satp;
+          ctrl = ctrlp;
+        }
+      }
+      fclose (f1);
+    }
+  }
 
   //
   // Free catalogues

@@ -39,7 +39,6 @@ void Structure_correct_periodicity (Structure * strct, Simulation * sim)
 }
 
 
-
 void Structure_calculate_centre_of_mass (Structure * strct)
 {
   int i;
@@ -61,7 +60,6 @@ void Structure_calculate_centre_of_mass (Structure * strct)
   strct->Pos[1] /= strct->TotMass;
   strct->Pos[2] /= strct->TotMass;
 }
-
 
 
 void Structure_shift_to_centre_of_mass (Structure * strct)
@@ -115,6 +113,81 @@ void Structure_shift_to_centre_of_mass (Structure * strct)
       strct->Part[i].Vel[2] -= cmvel[2];
     }
     strct->flg_ShiftedCM = 1;
+  }
+}
+
+
+void Structure_sort_by_radius (Structure * strct)
+{
+  if (!strct->flg_SortedByRadius)
+  {
+    qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+    strct->flg_SortedByRadius = 1;
+  }
+}
+
+
+void Structure_get_particle_radius (Structure * strct)
+{
+  int i;
+  if (!strct->flg_PartRadius)
+  {
+    for (i = 0; i < strct->NumPart; i++)
+      Particle_get_radius (&strct->Part[i]);
+    strct->flg_PartRadius = 1;
+  }
+}
+
+
+void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+{
+  if (ctlg->format == STF)
+    stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
+}
+
+
+void Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
+{
+  int     i, j, k;
+  double  mtot;
+  double  fmass;
+  Structure * strct;
+
+  for (i = 1; i <= ctlg->nstruct; i++)
+  {
+    if (strct_to_get[i])
+    {
+      mtot  = 0.0;
+      fmass = 0.0;
+
+      strct = &ctlg->strctProps[i];
+      if (!strct->iPart)
+      {
+        printf ("Particles have not been loaded...Exiting\n");
+        exit (0);
+      }
+
+      Structure_correct_periodicity       (strct, sim);
+      Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+      Structure_sort_by_radius            (strct);
+
+      // Recalculate Total Mass
+      for (k = 0; k < strct->NumPart; k++)
+        mtot += strct->Part[k].Mass;
+      fmass = fraction * mtot;
+      mtot = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        mtot += strct->Part[k].Mass;
+        if (mtot >= fmass)
+        {
+          strct->Rx = strct->Part[k].Radius;
+          break;
+        }
+      }
+    }
   }
 }
 
@@ -193,7 +266,7 @@ void Structure_calculate_surface_density (Structure * strct, double * rotation, 
 
   for (i = 0; i < nbins; i++)
    surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1] - radius[i]*radius[i]));
-//   surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
+   //surface_density[i] /= (acos(-1) * (radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
 
   for (i = 0; i < strct->NumPart; i++)
     strct->Part[i].Pos[2] = tmppos[i];
@@ -208,79 +281,74 @@ void Structure_calculate_surface_density (Structure * strct, double * rotation, 
 }
 
 
-void Structure_sort_by_radius (Structure * strct)
+void Structure_calculate_spherical_density (Structure * strct, double ledge, double redge, int nbins, double deltar, double ** bins, double ** Rho)
 {
-  if (!strct->flg_SortedByRadius)
+  //
+  // This function assumes bins of same size
+  //
+  int      i, j, k;
+  float  * tmppos;
+  int      bob;
+
+  double * density = *(Rho);
+  double * radius = *(bins);
+
+  // Radii array
+  if (radius == NULL)
   {
-    qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
-    strct->flg_SortedByRadius = 1;
-  }
-}
+    radius  = (double *) malloc ((nbins + 1) * sizeof(double));
 
-
-void Structure_get_particle_radius (Structure * strct)
-{
-  int i;
-  if (!strct->flg_PartRadius)
-  {
-    for (i = 0; i < strct->NumPart; i++)
-      Particle_get_radius (&strct->Part[i]);
-    strct->flg_PartRadius = 1;
-  }
-}
-
-
-
-void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
-{
-  if (ctlg->format == STF)
-    stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
-}
-
-
-
-void  Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
-{
-  int     i, j, k;
-  double  mtot;
-  double  fmass;
-  Structure * strct;
-
-  for (i = 1; i <= ctlg->nstruct; i++)
-  {
-    if (strct_to_get[i])
+    if (deltar == 0)
     {
-      mtot  = 0.0;
-      fmass = 0.0;
-
-      strct = &ctlg->strctProps[i];
-      if (!strct->iPart)
+      // Particles are assumed to be sorted by radius
+      if (ledge == 0 && redge == 0)
       {
-        printf ("Particles have not been loaded...Exiting\n");
-        exit (0);
+        ledge = 0;
+        redge = strct->Part[strct->NumPart-1].Radius;
       }
 
-      Structure_correct_periodicity       (strct, sim);
-      Structure_shift_to_centre_of_mass   (strct);
-      Structure_get_particle_radius       (strct);
-      Structure_sort_by_radius            (strct);
+      if (ledge == 0)
+        deltar = redge / (double) nbins;
+      else
+        deltar = (redge - ledge) / (double) nbins;
 
-      // Recalculate Total Mass
-      for (k = 0; k < strct->NumPart; k++)
-        mtot += strct->Part[k].Mass;
-      fmass = fraction * mtot;
-      mtot = 0;
-
-      for (k = 0; k < strct->NumPart; k++)
-      {
-        mtot += strct->Part[k].Mass;
-        if (mtot >= fmass)
-        {
-          strct->Rx = strct->Part[k].Radius;
-          break;
-        }
-      }
+      for (i = 0; i <= nbins; i++)
+        radius[i] = i * deltar;
     }
+    else
+    {
+      ledge = 0;
+      redge = nbins * deltar;
+      for (i = 0; i <= nbins; i++)
+        radius[i] = i * deltar;
+    }
+  }
+  else
+  {
+    deltar = radius[1] - radius[0];
+  }
+
+  // Surface density
+  if  (density == NULL)
+    density = (double *) malloc (nbins * sizeof(double));
+  for (i = 0; i < nbins; i++)
+    density[i] = 0;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    bob = (int) (strct->Part[i].Radius / deltar);
+    if ((bob < nbins) && (bob >= 0))
+      density[bob] += strct->Part[i].Mass;
+  }
+
+  for (i = 0; i < nbins; i++)
+   density[i] /= (4*acos(-1)/3.0*(radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
+
+  // Free memory
+  if (*(Rho) == NULL || *(bins) == NULL)
+  {
+    *(Rho)  = density;
+    *(bins) = radius;
   }
 }
 
