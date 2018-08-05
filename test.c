@@ -112,9 +112,9 @@ int main (int argc, char ** argv)
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
   int ID[3];
-  ID[0] = 166744;
-  ID[1] = 166746;
-  ID[2] = 166749;
+  ID[0] = 166575;
+  ID[1] = 166577;
+  ID[2] = 166580;
 
   //
   // Tag structures to get
@@ -191,6 +191,7 @@ int main (int argc, char ** argv)
   double    Pos[3];
   double  * rbin;
   double  * rho;
+  int       nbins = 200;
 
   for (k = 0; k < 3; k++)
   {
@@ -198,7 +199,8 @@ int main (int argc, char ** argv)
 
     sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], 0);
     f2   = fopen (buffer1,  "w");
-    Structure_calculate_spherical_density (ctrl, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+    Structure_calculate_spherical_density (ctrl, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+    for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
     fclose (f2);
 
     sprintf (buffer1,  "%s-%d.ctrl", opt.output.prefix, ID[k]);
@@ -222,7 +224,8 @@ int main (int argc, char ** argv)
 
         sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], i);
         f2   = fopen (buffer1,  "w");
-        Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+        Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+        for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
         fclose (f2);
 
         fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
@@ -243,16 +246,19 @@ int main (int argc, char ** argv)
     strct1 = &opt.catalog[0].strctProps[ID[k]];
     for (i = 0; i < strct1->NumSubs; i++)
     {
+      sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+
       sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, 0);
       f2   = fopen (buffer1,  "w");
-      Structure_calculate_spherical_density (strct1, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+      Structure_calculate_spherical_density (sat, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+      for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
       fclose (f2);
 
       sprintf (buffer1,  "%s-%d.sat_%03d", opt.output.prefix, ID[k], i);
       f1   = fopen (buffer1,  "w");
       R    = 0;
       Rmbp = 0;
-      sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
+
       Pos[0] = sat->Pos[0] - strct1->Pos[0];
       Pos[1] = sat->Pos[1] - strct1->Pos[1];
       Pos[2] = sat->Pos[2] - strct1->Pos[2];
@@ -286,7 +292,8 @@ int main (int argc, char ** argv)
 
           sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, j);
           f2   = fopen (buffer1,  "w");
-          Structure_calculate_spherical_density (strct1, 0.0, 0.0, 200, 0.5, &rbin, &rho);
+          Structure_calculate_spherical_density (satp, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+          for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
           fclose (f2);
 
           Pos[0] = satp->Pos[0] - ctrlp->Pos[0];
