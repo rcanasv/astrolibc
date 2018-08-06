@@ -133,6 +133,7 @@ int main (int argc, char ** argv)
       strct_to_get[i][j] = 0;
   }
 
+/*
   for (k = 0; k < 3; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
@@ -170,6 +171,7 @@ int main (int argc, char ** argv)
       }
     }
   }
+*/
 
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -243,7 +245,7 @@ int main (int argc, char ** argv)
     }
     fclose (f1);
 
-
+    /*
     strct1 = &opt.catalog[0].strctProps[ID[k]];
     for (i = 0; i < strct1->NumSubs; i++)
     {
@@ -330,6 +332,7 @@ int main (int argc, char ** argv)
       }
       fclose (f1);
     }
+    */
   }
 
   //

@@ -597,17 +597,21 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
 }
 
 
-void halomaker_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+void halomaker_structure_get_particle_properties (Catalog * hmkr, Simulation * sim, int * strct_to_get)
 {
   int i;
+  Structure * strct;
 
   if (sim->format == GALFILE)
   {
-    for (i = 0; i < ctlg->nstruct; i++)
+    for (i = 0; i < hmkr->nstruct; i++)
       if (strct_to_get[i])
       {
         strct = &hmkr->strctProps[i];
         halomaker_read_galfile (&sim->archive, i, strct);
       }
   }
+  /*
+  Else would need to open ramses file and look for IDs....
+  */
 }

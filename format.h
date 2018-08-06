@@ -20,13 +20,14 @@
 //
 // Simulation + Others
 //
-#define  GADGET      10
-#define  RAMSES      20
-#define  RAMSES_STAR 21
-#define  GALFILE     30
-#define  EAGLE       40
-#define  ILLUSTRIS   50
-#define  GIZMO       60
+#define  GADGET      30
+#define  RAMSES      40
+#define  RAMSES_STAR 41
+#define  GALFILE     50
+#define  HDF5        60
+#define  EAGLE       61
+#define  ILLUSTRIS   62
+#define  GIZMO       63
 
 
 #endif    /*  FORMAT_H */
