@@ -338,11 +338,12 @@ void Structure_calculate_spherical_density (Structure * strct, double ledge, dou
   {
     bob = (int) (strct->Part[i].Radius / deltar);
     if ((bob < nbins) && (bob >= 0))
-      density[bob] += strct->Part[i].Mass;
+      density[bob] += 1;
+      //density[bob] += strct->Part[i].Mass;
   }
 
-  for (i = 0; i < nbins; i++)
-   density[i] /= (4*acos(-1)/3.0*(radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
+//  for (i = 0; i < nbins; i++)
+//  density[i] /= (4*acos(-1)/3.0*(radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
 
   // Free memory
   if (*(Rho) == NULL || *(bins) == NULL)
