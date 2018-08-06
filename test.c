@@ -189,17 +189,18 @@ int main (int argc, char ** argv)
   char      buffer2  [NAME_LENGTH];
   double    R, Rmbp;
   double    Pos[3];
-  double  * rbin;
-  double  * rho;
+  double  * rbin = NULL;
+  double  * rho = NULL;
   int       nbins = 200;
+  double    deltar = 0.5;
 
-  for (k = 0; k < 3; k++)
+  for (k = 0; k < 1; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
 
     sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], 0);
     f2   = fopen (buffer1,  "w");
-    Structure_calculate_spherical_density (ctrl, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+    Structure_calculate_spherical_density (ctrl, 0.0, 0.0, nbins, deltar, &rbin, &rho);
     for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
     fclose (f2);
 
@@ -224,7 +225,7 @@ int main (int argc, char ** argv)
 
         sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], i);
         f2   = fopen (buffer1,  "w");
-        Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+        Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, nbins, deltar, &rbin, &rho);
         for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
         fclose (f2);
 
@@ -245,12 +246,13 @@ int main (int argc, char ** argv)
 
     strct1 = &opt.catalog[0].strctProps[ID[k]];
     for (i = 0; i < strct1->NumSubs; i++)
+    if (i==9)
     {
       sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
 
       sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, 0);
       f2   = fopen (buffer1,  "w");
-      Structure_calculate_spherical_density (sat, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+      Structure_calculate_spherical_density (sat, 0.0, 0.0, nbins, deltar, &rbin, &rho);
       for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
       fclose (f2);
 
@@ -292,7 +294,7 @@ int main (int argc, char ** argv)
 
           sprintf (buffer1,  "%s-%d.sat_%03d.rho_%03d", opt.output.prefix, ID[k], i, j);
           f2   = fopen (buffer1,  "w");
-          Structure_calculate_spherical_density (satp, 0.0, 0.0, nbins, 0.5, &rbin, &rho);
+          Structure_calculate_spherical_density (satp, 0.0, 0.0, nbins, deltar, &rbin, &rho);
           for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
           fclose (f2);
 

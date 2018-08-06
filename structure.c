@@ -11,7 +11,7 @@
 
 void Structure_correct_periodicity (Structure * strct, Simulation * sim)
 {
-  if (strct->flg_CorrectedPeriodicity)
+  if (!strct->flg_CorrectedPeriodicity)
   {
     int     i, j, k;
     double  Lbox;
@@ -168,7 +168,7 @@ void Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int 
       }
 
       Structure_correct_periodicity       (strct, sim);
-      Structure_shift_to_centre_of_mass   (strct);
+      //Structure_shift_to_centre_of_mass   (strct);
       Structure_get_particle_radius       (strct);
       Structure_sort_by_radius            (strct);
 
@@ -336,14 +336,16 @@ void Structure_calculate_spherical_density (Structure * strct, double ledge, dou
 
   for (i = 0; i < strct->NumPart; i++)
   {
+    //printf("%e  %e  %e  %e  %e\n", strct->Part[i].Radius, strct->Part[i].Pos[0],\
+    strct->Part[i].Pos[1], strct->Part[i].Pos[2], strct->Part[i].Mass);
     bob = (int) (strct->Part[i].Radius / deltar);
     if ((bob < nbins) && (bob >= 0))
-      density[bob] += 1;
-      //density[bob] += strct->Part[i].Mass;
+      //density[bob] += 1;
+      density[bob] += strct->Part[i].Mass;
   }
 
-//  for (i = 0; i < nbins; i++)
-//  density[i] /= (4*acos(-1)/3.0*(radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
+  for (i = 0; i < nbins; i++)
+    density[i] /= (4*acos(-1)/3.0*(radius[i+1]*radius[i+1]*radius[i+1] - radius[i]*radius[i]*radius[i]));
 
   // Free memory
   if (*(Rho) == NULL || *(bins) == NULL)
