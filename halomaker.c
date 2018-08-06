@@ -351,8 +351,6 @@ void halomaker_read_particles (Catalog * hmkr)
 
 
 // ---  Read Galfile --- //
-
-
 void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
 {
   int        dummy;
@@ -387,7 +385,7 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   HMKR_SKIP  fread (&gal_ang,    sizeof(double), 3, f);  HMKR_SKIP
   HMKR_SKIP  fread (&nlist,      sizeof(int),    1, f);  HMKR_SKIP
 
-/*
+  /*
   printf ("\n");
   printf ("my_number   %d \n", gal_number);
   printf ("Level       %d \n", gal_level);
@@ -397,12 +395,18 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   printf ("Ang Mom     %8.5f \t %8.5f \t %8.5f \n", gal_ang[0], gal_ang[1], gal_ang[2]);
   printf ("Nlist       %d \n", nlist);
   printf ("\n");
-*/
+  */
 
   //
   // Data is stored in double
   //
-  strct->NumPart = nlist;
+  if (strct->NumPart != nlist)
+  {
+    printf ("Error number of particles doesn't match\n");
+    printf ("Exiting\n");
+    exit (0);
+  }
+
   if (!(strct->Part = malloc (nlist * sizeof(Particle))))
   {
     printf ("Cannot allocate memory for particle information\n");
@@ -557,12 +561,12 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
     P[i].Pos[0] *= 1000;
     P[i].Pos[1] *= 1000;
     P[i].Pos[2] *= 1000;
-
+    /*
     // Move galaxy to box  0 - Lbox
     P[i].Pos[0] += strct->Pos[0];
     P[i].Pos[1] += strct->Pos[1];
     P[i].Pos[2] += strct->Pos[2];
-
+    */
     // converts to Msun
     P[i].Mass   *= 1e+11;
   }
@@ -589,5 +593,21 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
     // Would need to load all files and then distribute particles
     // according to their id to the corresponding structure
     ;
+  }
+}
+
+
+void halomaker_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+{
+  int i;
+
+  if (sim->format == GALFILE)
+  {
+    for (i = 0; i < ctlg->nstruct; i++)
+      if (strct_to_get[i])
+      {
+        strct = &hmkr->strctProps[i];
+        halomaker_read_galfile (&sim->archive, i, strct);
+      }
   }
 }

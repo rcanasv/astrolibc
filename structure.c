@@ -87,9 +87,9 @@ void Structure_shift_to_centre_of_mass (Structure * strct)
       cmpos[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
       cmpos[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
 
-      cmvel[0]  += strct->Part[i].Pos[0] * strct->Part[i].Mass;
-      cmvel[1]  += strct->Part[i].Pos[1] * strct->Part[i].Mass;
-      cmvel[2]  += strct->Part[i].Pos[2] * strct->Part[i].Mass;
+      cmvel[0]  += strct->Part[i].Vel[0] * strct->Part[i].Mass;
+      cmvel[1]  += strct->Part[i].Vel[1] * strct->Part[i].Mass;
+      cmvel[2]  += strct->Part[i].Vel[2] * strct->Part[i].Mass;
 
       totmass   += strct->Part[i].Mass;
     }
@@ -141,8 +141,8 @@ void Structure_get_particle_radius (Structure * strct)
 
 void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
 {
-  if (ctlg->format == STF)
-    stf_structure_get_particle_properties (ctlg, sim, strct_to_get);
+  if (ctlg->format == STF)        stf_structure_get_particle_properties       (ctlg, sim, strct_to_get);
+  if (ctlg->format == HALOMAKER)  halomaker_structure_get_particle_properties (ctlg, sim, strct_to_get);
 }
 
 
