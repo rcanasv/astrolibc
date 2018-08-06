@@ -192,9 +192,9 @@ int main (int argc, char ** argv)
   double  * rbin = NULL;
   double  * rho = NULL;
   int       nbins = 200;
-  double    deltar = 0.5;
+  double    deltar = 1.0;
 
-  for (k = 0; k < 1; k++)
+  for (k = 0; k < 3; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
 
@@ -246,7 +246,6 @@ int main (int argc, char ** argv)
 
     strct1 = &opt.catalog[0].strctProps[ID[k]];
     for (i = 0; i < strct1->NumSubs; i++)
-    if (i==9)
     {
       sat = &opt.catalog[0].strctProps[strct1->SubIDs[i]];
 
