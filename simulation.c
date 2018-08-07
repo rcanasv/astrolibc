@@ -38,6 +38,7 @@ void Simulation_init (Simulation * sim)
       (!strcmp(sim->archive.format, "GALFILE")))
   {
     sim->format = GALFILE;
+    ramses_init (sim);
   }
   else
   if ((!strcmp(sim->archive.format, "eagle")) ||  \

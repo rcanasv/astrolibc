@@ -58,27 +58,31 @@ int main (int argc, char ** argv)
     Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-    Catalog_fill_SubIDS             (&opt.catalog[i]);
+/*    Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
     if (i < opt.ntrees)
-      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
+      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);*/
   }
 
   // --------------------------------------------------- //
   //
   // Tag central galaxy and add stellar mass
   //
+
   for (i = 0; i < opt.nsnap; i++)
   {
-    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    //for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    for (j = 1; j <= 60; j++)
     {
       strct1 = &opt.catalog[i].strctProps[j];
+      printf("%d  %d\n",i, strct1->NumPart);
       strct1->dummyd = 0.0;
       strct1->dummyi = 0;
       strct1->dummy  = 0;
     }
   }
-
+exit(0);
+  /*
   for (i = 0; i < opt.nsnap; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -110,11 +114,14 @@ int main (int argc, char ** argv)
   sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
   memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
+  */
 
-  int ID[3];
-  ID[0] = 166575;
-  ID[1] = 166577;
-  ID[2] = 166580;
+
+  int ID[4];
+  ID[0] = 114508;//166744;
+  ID[1] = 29;//166746;
+  ID[2] = 114422;//166749;
+  ID[3] = 6;//178118;
 
   //
   // Tag structures to get
@@ -133,8 +140,8 @@ int main (int argc, char ** argv)
       strct_to_get[i][j] = 0;
   }
 
-/*
-  for (k = 0; k < 3; k++)
+
+  for (k = 0; k < 4; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
     strct_to_get[0][ctrl->ID] = 1;
@@ -149,7 +156,7 @@ int main (int argc, char ** argv)
       else
         break;
     }
-
+    /*
     strct1 = &opt.catalog[0].strctProps[ID[k]];
     for (i = 0; i < strct1->NumSubs; i++)
     {
@@ -170,15 +177,17 @@ int main (int argc, char ** argv)
           break;
       }
     }
+    */
   }
-*/
+
 
   for (i = 0; i < opt.nsnap; i++)
   {
     Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
     Structure_calculate_fmass_radius  (&opt.catalog[i], &opt.simulation[i], strct_to_get[i], 0.5);
-    if (opt.simulation[0].format == RAMSES || \
-        opt.simulation[0].format == RAMSES_STAR)
+    if (opt.simulation[i].format == RAMSES      || \
+        opt.simulation[i].format == RAMSES_STAR || \
+        opt.simulation[i].format == GALFILE)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
   }
 
@@ -196,7 +205,7 @@ int main (int argc, char ** argv)
   int       nbins = 200;
   double    deltar = 1.0;
 
-  for (k = 0; k < 3; k++)
+  for (k = 0; k < 4; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
 

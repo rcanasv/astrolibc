@@ -24,7 +24,7 @@
 
 void  halomaker_read_properties  (Catalog * hmkr);
 void  halomaker_read_particles   (Catalog * hmkr);
-void  halomaker_read_galfile     (Archive * arx, int num, Structure * gal);
+void  halomaker_read_galfile     (Simulation * sim, Structure * strct);
 
 void  halomaker_structure_get_particle_properties (Catalog * hmkr, Simulation * sim, int * strct_to_get);
 

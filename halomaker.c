@@ -351,7 +351,7 @@ void halomaker_read_particles (Catalog * hmkr)
 
 
 // ---  Read Galfile --- //
-void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
+void halomaker_read_galfile (Simulation * sim, Structure * strct)
 {
   int        dummy;
   double     dummyd;
@@ -370,7 +370,7 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
   int        nlist;
 
 
-  sprintf (fname, "%s/gal_stars_%07d", arx->path, num);
+  sprintf (fname, "%s/gal_stars_%07d", sim->archive.name, strct->ID);
   if ((f = fopen (fname, "r")) == NULL)
   {
     printf ("Can't open file named   %s \n", fname);
@@ -561,12 +561,12 @@ void halomaker_read_galfile (Archive * arx, int num, Structure * strct)
     P[i].Pos[0] *= 1000;
     P[i].Pos[1] *= 1000;
     P[i].Pos[2] *= 1000;
-    /*
+    
     // Move galaxy to box  0 - Lbox
     P[i].Pos[0] += strct->Pos[0];
     P[i].Pos[1] += strct->Pos[1];
     P[i].Pos[2] += strct->Pos[2];
-    */
+    
     // converts to Msun
     P[i].Mass   *= 1e+11;
   }
@@ -585,7 +585,7 @@ void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim
     for (i = 1; i <= hmkr->nstruct; i++)
     {
       strct = &hmkr->strctProps[i];
-      halomaker_read_galfile (&sim->archive, i, strct);
+      halomaker_read_galfile (sim, strct);
     }
   }
   else
@@ -601,14 +601,13 @@ void halomaker_structure_get_particle_properties (Catalog * hmkr, Simulation * s
 {
   int i;
   Structure * strct;
-
   if (sim->format == GALFILE)
   {
     for (i = 0; i < hmkr->nstruct; i++)
       if (strct_to_get[i])
       {
         strct = &hmkr->strctProps[i];
-        halomaker_read_galfile (&sim->archive, i, strct);
+        halomaker_read_galfile (sim, strct);
       }
   }
   /*
