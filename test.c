@@ -58,10 +58,10 @@ int main (int argc, char ** argv)
     Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-/*    Catalog_fill_SubIDS             (&opt.catalog[i]);
+    Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
     if (i < opt.ntrees)
-      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);*/
+      stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
 
   // --------------------------------------------------- //
@@ -69,20 +69,18 @@ int main (int argc, char ** argv)
   // Tag central galaxy and add stellar mass
   //
 
+  /*
   for (i = 0; i < opt.nsnap; i++)
   {
-    //for (j = 1; j <= opt.catalog[i].nstruct; j++)
-    for (j = 1; j <= 60; j++)
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
     {
       strct1 = &opt.catalog[i].strctProps[j];
-      printf("%d  %d\n",i, strct1->NumPart);
       strct1->dummyd = 0.0;
       strct1->dummyi = 0;
       strct1->dummy  = 0;
     }
   }
-exit(0);
-  /*
+  
   for (i = 0; i < opt.nsnap; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -204,6 +202,7 @@ exit(0);
   double  * rho = NULL;
   int       nbins = 200;
   double    deltar = 1.0;
+  gheader      header;
 
   for (k = 0; k < 4; k++)
   {
@@ -214,6 +213,9 @@ exit(0);
     Structure_calculate_spherical_density (ctrl, 0.0, 0.0, nbins, deltar, &rbin, &rho);
     for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
     fclose (f2);
+
+    sprintf (opt.output.name,  "%s-%d.ctrl.gdt_%03d", opt.output.prefix, ID[k], 0);
+    gadget_write_snapshot (ctrl->Part, ctrl->NumPart, &header, &opt.output);
 
     sprintf (buffer1,  "%s-%d.ctrl", opt.output.prefix, ID[k]);
     f1   = fopen (buffer1,  "w");
@@ -239,6 +241,10 @@ exit(0);
         Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, nbins, deltar, &rbin, &rho);
         for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
         fclose (f2);
+
+        sprintf (opt.output.name,  "%s-%d.ctrl.gdt_%03d", opt.output.prefix, ID[k], i);
+        gadget_write_snapshot (ctrlp->Part, ctrlp->NumPart, &header, &opt.output);
+
 
         fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
         fprintf (f1, "%d  ", ctrlp->ID);
