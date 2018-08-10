@@ -80,7 +80,7 @@ int main (int argc, char ** argv)
       strct1->dummy  = 0;
     }
   }
-  
+
   for (i = 0; i < opt.nsnap; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -114,13 +114,16 @@ int main (int argc, char ** argv)
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
   */
 
-
   int ID[4];
-  ID[0] = 114508;//166744;
-  ID[1] = 29;//166746;
-  ID[2] = 114422;//166749;
-  ID[3] = 6;//178118;
+  ID[0] = 114508; //166744;
+  ID[1] = 29;     //166746;
+  ID[2] = 114422; //166749;
+  ID[3] = 6;      //178118;
 
+//  ID[0] = 166744; //114508;
+//  ID[1] = 166746; //29;
+//  ID[2] = 166749; //114422;
+//  ID[3] = 178118; //6;
   //
   // Tag structures to get
   //
@@ -202,7 +205,7 @@ int main (int argc, char ** argv)
   double  * rho = NULL;
   int       nbins = 200;
   double    deltar = 1.0;
-  gheader      header;
+  gheader   header;
 
   for (k = 0; k < 4; k++)
   {
