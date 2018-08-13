@@ -60,7 +60,7 @@ void stf_read_properties (Catalog * stf)
     stf->strctProps[i].SubIDs     = NULL;
     stf->strctProps[i].MatchIDs   = NULL;
     stf->strctProps[i].MatchMrrts = NULL;
-    stf->strctProps[i].Part        = NULL;
+    stf->strctProps[i].Part       = NULL;
     // Flags
     stf->strctProps[i].flg_PartRadius           = 0;
     stf->strctProps[i].flg_SortedByRadius       = 0;
@@ -144,7 +144,7 @@ void stf_read_properties (Catalog * stf)
               &(stf->strctProps[j+offst].Lambda),        \
               &(stf->strctProps[j+offst].L[0]),          \
               &(stf->strctProps[j+offst].L[1]),          \
-              &(stf->strctProps[j+offst].L[2])                                                    \
+              &(stf->strctProps[j+offst].L[2])           \
             );
     }
     offst += mystructs;
@@ -247,6 +247,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   int i, j, k;
   FILE * f;
 
+  int tmpstrct;
   int tmpid;
   int nmatch;
 
@@ -264,27 +265,37 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
-
-  int    * MatchIDs;
-  double * MatchMrrts;
+  sscanf (buffer, "%d  %d", &tmpid, &tmpstrct);
+  if (tmpstrct != stf->nstruct)
+  {
+    printf("Treefrog nstruct doesnt match catalog!\n");
+    printf("Exiting\n");
+    exit(0);
+  }
 
   for (i = 1; i <= stf->nstruct; i++)
   {
     fgets (buffer, LONG_LENGTH, f);
     sscanf (buffer, "%d  %d", &tmpid, &nmatch);
-
+    if (tmpid != i)
+    {
+      printf("Something weird is happening treefrog id and catalog doesn't match\n");
+      printf("Exiting\n");
+      exit(0);
+    }
     stf->strctProps[i].NumMatch = nmatch;
 
     if (nmatch > 0)
     {
       stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
-      stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
+//      stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
       stf->strctProps[i].iMatch     = 1;
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
-        sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
-                                  &stf->strctProps[i].MatchMrrts[j]);
+        sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
+  //      sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
+  //                                &stf->strctProps[i].MatchMrrts[j]);
       }
     }
   }

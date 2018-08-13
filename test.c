@@ -58,12 +58,13 @@ int main (int argc, char ** argv)
     Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-    Catalog_fill_SubIDS             (&opt.catalog[i]);
-    Catalog_fill_isolated           (&opt.catalog[i]);
+    printf("%d catalog loaded\n", i);
+    //Catalog_fill_SubIDS             (&opt.catalog[i]);
+    //Catalog_fill_isolated           (&opt.catalog[i]);
     if (i < opt.ntrees)
       stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
-
+printf("HERE\n");
   // --------------------------------------------------- //
   //
   // Tag central galaxy and add stellar mass
@@ -117,13 +118,13 @@ int main (int argc, char ** argv)
   int ID[4];
   ID[0] = 114508; //166744;
   ID[1] = 29;     //166746;
-  ID[2] = 114422; //166749;
-  ID[3] = 6;      //178118;
+  ID[3] = 114422; //166749;
+  ID[2] = 6;      //178118;
 
-//  ID[0] = 166744; //114508;
-//  ID[1] = 166746; //29;
-//  ID[2] = 166749; //114422;
-//  ID[3] = 178118; //6;
+  //ID[0] = 166744; //114508;
+  //ID[1] = 166746; //29;
+  //ID[2] = 166749; //114422;
+  //ID[3] = 178118; //6;
   //
   // Tag structures to get
   //
@@ -141,10 +142,13 @@ int main (int argc, char ** argv)
       strct_to_get[i][j] = 0;
   }
 
+printf("HERE\n");
 
   for (k = 0; k < 4; k++)
   {
+printf("---\n");
     ctrl = &opt.catalog[0].strctProps[ID[k]];
+printf("%d  %d\n", ctrl->ID, ctrl->NumMatch);
     strct_to_get[0][ctrl->ID] = 1;
     for (i = 1; i < opt.nsnap; i++)
     {
@@ -152,6 +156,7 @@ int main (int argc, char ** argv)
       {
         ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
         strct_to_get[i][ctrlp->ID] = 1;
+printf("%d  %d\n", ctrlp->ID, ctrlp->NumMatch);
         ctrl = ctrlp;
       }
       else
@@ -181,17 +186,19 @@ int main (int argc, char ** argv)
     */
   }
 
+printf("HERE\n");
 
   for (i = 0; i < opt.nsnap; i++)
   {
     Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
-    Structure_calculate_fmass_radius  (&opt.catalog[i], &opt.simulation[i], strct_to_get[i], 0.5);
+   /* Structure_calculate_fmass_radius  (&opt.catalog[i], &opt.simulation[i], strct_to_get[i], 0.5);
     if (opt.simulation[i].format == RAMSES      || \
         opt.simulation[i].format == RAMSES_STAR || \
         opt.simulation[i].format == GALFILE)
-      ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);
+      ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct_to_get[i]);*/
   }
 
+printf("HERE\n");
   //
   // Write snapshots for visualization
   //
@@ -210,16 +217,17 @@ int main (int argc, char ** argv)
   for (k = 0; k < 4; k++)
   {
     ctrl = &opt.catalog[0].strctProps[ID[k]];
-
+    /*
     sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], 0);
     f2   = fopen (buffer1,  "w");
     Structure_calculate_spherical_density (ctrl, 0.0, 0.0, nbins, deltar, &rbin, &rho);
     for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
     fclose (f2);
-
+    */
     sprintf (opt.output.name,  "%s-%d.ctrl.gdt_%03d", opt.output.prefix, ID[k], 0);
+    for (j = 0; j< ctrl->NumPart; j++) ctrl->Part[j].Type = 1;
     gadget_write_snapshot (ctrl->Part, ctrl->NumPart, &header, &opt.output);
-
+    /*
     sprintf (buffer1,  "%s-%d.ctrl", opt.output.prefix, ID[k]);
     f1   = fopen (buffer1,  "w");
     R    = 0;
@@ -233,22 +241,24 @@ int main (int argc, char ** argv)
     fprintf (f1, "%d  ", ctrl->NumPart);
     fprintf (f1, "%e  ", ctrl->Rx);
     fprintf (f1, "\n");
+    */
     for (i = 1; i < opt.nsnap; i++)
     {
       if (ctrl->NumMatch)
       {
         ctrlp = &opt.catalog[i].strctProps[ctrl->MatchIDs[0]];
-
+        /*
         sprintf (buffer1,  "%s-%d.ctrl.rho_%03d", opt.output.prefix, ID[k], i);
         f2   = fopen (buffer1,  "w");
         Structure_calculate_spherical_density (ctrlp, 0.0, 0.0, nbins, deltar, &rbin, &rho);
         for (l = 0; l < nbins; l++) fprintf (f2, "%e  %e\n", rbin[l+1], rho[l]);
         fclose (f2);
-
+        */
         sprintf (opt.output.name,  "%s-%d.ctrl.gdt_%03d", opt.output.prefix, ID[k], i);
+        for (j = 0; j< ctrlp->NumPart; j++) ctrlp->Part[j].Type = 1;
         gadget_write_snapshot (ctrlp->Part, ctrlp->NumPart, &header, &opt.output);
 
-
+        /*
         fprintf (f1, "%e  ", opt.simulation[i].LookBackTime);
         fprintf (f1, "%d  ", ctrlp->ID);
         fprintf (f1, "%e  ", R);
@@ -258,10 +268,11 @@ int main (int argc, char ** argv)
         fprintf (f1, "%d  ", ctrlp->NumPart);
         fprintf (f1, "%e  ", ctrlp->Rx);
         fprintf (f1, "\n");
+        */
         ctrl = ctrlp;
       }
     }
-    fclose (f1);
+   // fclose (f1);
 
     /*
     strct1 = &opt.catalog[0].strctProps[ID[k]];
