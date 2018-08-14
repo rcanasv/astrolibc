@@ -39,8 +39,8 @@ FLAGS       = -lm $(HDF5_FLAGS)
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
 		gcc analyze_galaxy_catalog.c -lm -o bin/analyze_galaxy_catalog
 
-ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c -o bin/ctlgMatch $(FLAGS)
+ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
+		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/ctlgMatch $(FLAGS)
 
 convert: convert.c archive.c catalog.c stf.c halomaker.c
 		gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert

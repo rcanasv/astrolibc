@@ -31,24 +31,11 @@ int main (int argc, char ** argv)
   //
   for (i = 0; i < opt.numCatalogs; i++)
   {
-    printf ("simulation init  %d\n", i);
-
     Simulation_init (&opt.simulation[i]);
-
-    printf ("Catalog init   %d\n", i);
-
     Catalog_init (&opt.catalog[i]);
-
-    printf ("Catalog load   %d\n", i);
-
     Catalog_load (&opt.catalog[i]);
-
-    printf ("Loading particle properties   %d\n", i);
-
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
   }
-
-  printf ("Tagging isolated galaxies\n");
 
   //
   //  Tag isolated galaxies in VELOCIraptor
@@ -194,6 +181,63 @@ int main (int argc, char ** argv)
   ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[0]);
   ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[1]);
 
+  double Rlim = 30.0;
+
+  //
+  //  Calculate R20, R50, R90
+  //
+  double m20;
+  double m50;
+  double m90;
+  double mass;
+
+  for (i = 0; i < opt.numCatalogs; i++)
+  {
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    {
+      strct = &opt.catalog[i].strctProps[j];
+      if (strct->Type > 7)
+      {
+        Structure_correct_periodicity       (strct, &opt.simulation[0]);
+        //Structure_shift_to_centre_of_mass   (strct);
+        Structure_get_particle_radius       (strct);
+
+        // Sort by radius
+        qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
+
+        // Calculate half mass radius
+        strct->RHalfMass = 0.0;
+        strct->R20       = 0.0;
+        strct->R90       = 0.0;
+        strct->Rsize     = 0.0;
+        strct->dummyd    = 0.0;
+        mass             = 0.0;
+
+        for (k = 0; k < strct->NumPart; k++)
+          if (strct->Part[k].Radius < Rlim)
+          strct->dummyd += strct->Part[k].Mass;
+
+        m20  = strct->dummyd * 0.20;
+        m50  = strct->dummyd * 0.50;
+        m90  = strct->dummyd * 0.90;
+
+        for (k = 0; k < strct->NumPart; k++)
+        {
+          if (strct->Part[k].Radius < Rlim)
+          {
+            mass += strct->Part[k].Mass;
+
+            if (mass < m20)  strct->R20       = strct->Part[k].Radius;
+            if (mass < m50)  strct->RHalfMass = strct->Part[k].Radius;
+            if (mass < m90)  strct->R90       = strct->Part[k].Radius;
+            strct->Rsize = strct->Part[k].Radius;
+          }
+        }
+      }
+    }
+  }
+
+
   for (i = 0; i < opt.numCatalogs; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -206,7 +250,7 @@ int main (int argc, char ** argv)
         strct->SFR100 = 0;
         for (k = 0; k < strct->NumPart; k++)
         {
-          if (strct->Part[k].Age > 0.0)
+          if ((strct->Part[k].Age > 0.0) && (strct->Part[k].Radius < Rlim))
           {
             if (strct->Part[k].Age <  20e6)   strct->SFR20  += strct->Part[k].Mass;
             if (strct->Part[k].Age <  50e6)   strct->SFR50  += strct->Part[k].Mass;
@@ -219,57 +263,6 @@ int main (int argc, char ** argv)
         strct->SFR20  /=  20e6;
         strct->SFR50  /=  50e6;
         strct->SFR100 /= 100e6;
-      }
-    }
-  }
-
-
-
-  //
-  //  Calculate R20, R50, R90
-  //
-  double m20;
-  double m50;
-  double m90;
-
-  for (i = 0; i < opt.numCatalogs; i++)
-  {
-    for (j = 1; j <= opt.catalog[i].nstruct; j++)
-    {
-      strct = &opt.catalog[i].strctProps[j];
-      if (strct->Type > 7)
-      {
-        Structure_correct_periodicity       (strct, &opt.simulation[0]);
-        Structure_shift_to_centre_of_mass   (strct);
-        Structure_get_particle_radius       (strct);
-
-        // Sort by radius
-        qsort (strct->Part, strct->NumPart, sizeof(Particle), Particle_rad_compare);
-
-        // Calculate half mass radius
-        strct->RHalfMass = 0.0;
-        strct->R20       = 0.0;
-        strct->R90       = 0.0;
-        strct->Rsize     = 0.0;
-        strct->TotMass   = 0.0;
-        strct->dummyd    = 0.0;
-
-        for (k = 0; k < strct->NumPart; k++)
-          strct->TotMass += strct->Part[k].Mass;
-
-        m20  = strct->TotMass * 0.20;
-        m50  = strct->TotMass * 0.50;
-        m90  = strct->TotMass * 0.90;
-
-        for (k = 0; k < strct->NumPart; k++)
-        {
-          strct->dummyd += strct->Part[k].Mass;
-
-          if (strct->dummyd < m20)  strct->R20       = strct->Part[k].Radius;
-          if (strct->dummyd < m50)  strct->RHalfMass = strct->Part[k].Radius;
-          if (strct->dummyd < m90)  strct->R90       = strct->Part[k].Radius;
-        }
-        strct->Rsize = strct->Part[strct->NumPart-1].Radius;
       }
     }
   }
@@ -312,12 +305,16 @@ int main (int argc, char ** argv)
         fprintf (f, "%e    ", strct2->SFR50);
         fprintf (f, "%e    ", strct1->SFR100);
         fprintf (f, "%e    ", strct2->SFR100);
+        fprintf (f, "%e    ", strct1->dummyd);
+        fprintf (f, "%e    ", strct2->dummyd);
+        /*
         fprintf (f, "%e    ", strct1->Pos[0]);
         fprintf (f, "%e    ", strct2->Pos[0]);
         fprintf (f, "%e    ", strct1->Pos[1]);
         fprintf (f, "%e    ", strct2->Pos[1]);
         fprintf (f, "%e    ", strct1->Pos[2]);
         fprintf (f, "%e    ", strct2->Pos[2]);
+        */
         fprintf (f, "\n");
       }
     }
