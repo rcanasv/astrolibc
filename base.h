@@ -19,6 +19,8 @@
 #include <time.h>
 
 #include <hdf5.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
 
 #define NAME_LENGTH 256
 #define LONG_LENGTH 3000

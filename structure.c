@@ -356,6 +356,105 @@ void Structure_calculate_spherical_density (Structure * strct, double ledge, dou
 }
 
 
+
+void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+{
+  int     i, j, k;
+  double  mtot;
+  double  fmass;
+  int     ndim = 3;
+  double  tensor[ndim * 2];
+  Structure * strct;
+
+  gsl_matrix * disp = gsl_matrix_alloc (ndim);
+  gsl_vector * eval = gsl_vector_alloc (ndim);
+  gsl_matrix * evec = gsl_matrix_alloc (ndim,ndim);
+  gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (ndim);
+
+  for (i = 0; i < ndim * 2; i++)
+      tensor[i] = 0.0;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    tensor[0] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[0];
+    tensor[1] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[1];
+    tensor[2] += strct->Part[i].Mass * strct->Part[i].Pos[2] * strct->Part[i].Pos[2];
+
+    tensor[3] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[1];
+    tensor[4] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[2];
+    tensor[5] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[2];
+  }
+
+  gsl_matrix_set (0, 0, tensor[0]);
+  gsl_matrix_set (1, 1, tensor[1]);
+  gsl_matrix_set (2, 2, tensor[2]);
+  gsl_matrix_set (0, 1, tensor[3]);
+  gsl_matrix_set (1, 0, tensor[3]);
+  gsl_matrix_set (0, 2, tensor[4]);
+  gsl_matrix_set (2, 0, tensor[4]);
+  gsl_matrix_set (1, 2, tensor[5]);
+  gsl_matrix_set (2, 1, tensor[5]);
+
+  gsl_eigen_symmv (disp, eval, evec, w);
+  gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_ASC);
+
+  for (i = 0; i < ndim; i++)
+  {
+    printf ("%g   ", gsl_vector_get(eval, i)):
+    for (j = 0; j < ndim; j++)
+      printf ("%g  ", gsl_matrix_get(evec, i, j));
+    printf ("\n");
+  }
+
+  gsl_eigen_symmv_free (w);
+  gsl_vector_free (eval);
+  gsl_vector_free (evec);
+
+
+
+  for (i = 1; i <= ctlg->nstruct; i++)
+  {
+    if (strct_to_get[i])
+    {
+      mtot  = 0.0;
+      fmass = 0.0;
+
+      strct = &ctlg->strctProps[i];
+      if (!strct->iPart)
+      {
+        printf ("Particles have not been loaded...Exiting\n");
+        exit (0);
+      }
+
+      Structure_correct_periodicity       (strct, sim);
+      //Structure_shift_to_centre_of_mass   (strct);
+      Structure_get_particle_radius       (strct);
+      Structure_sort_by_radius            (strct);
+
+      // Recalculate Total Mass
+      for (k = 0; k < strct->NumPart; k++)
+        mtot += strct->Part[k].Mass;
+      fmass = fraction * mtot;
+      mtot = 0;
+
+      for (k = 0; k < strct->NumPart; k++)
+      {
+        mtot += strct->Part[k].Mass;
+        if (mtot >= fmass)
+        {
+          strct->Rx = strct->Part[k].Radius;
+          break;
+        }
+      }
+    }
+  }
+
+
+
+}
+
+
+
 int Structure_mass_compare (const void * a, const void * b)
 {
   Structure * strct1 = (Structure *) a;
