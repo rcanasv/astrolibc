@@ -35,6 +35,7 @@ int main (int argc, char ** argv)
     Catalog_init (&opt.catalog[i]);
     Catalog_load (&opt.catalog[i]);
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    printf ("nstruct  %d\n", opt.catalog[i].nstruct);
   }
 
   //
@@ -181,7 +182,6 @@ int main (int argc, char ** argv)
   ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[0]);
   ramses_catalog_calculate_star_age (&opt.simulation[0], &opt.catalog[1]);
 
-  double Rlim = 30.0;
 
   //
   //  Calculate R20, R50, R90
@@ -214,7 +214,7 @@ int main (int argc, char ** argv)
         mass             = 0.0;
 
         for (k = 0; k < strct->NumPart; k++)
-          if (strct->Part[k].Radius < Rlim)
+          if (strct->Part[k].Radius < opt.Rlim)
           strct->dummyd += strct->Part[k].Mass;
 
         m20  = strct->dummyd * 0.20;
@@ -223,7 +223,7 @@ int main (int argc, char ** argv)
 
         for (k = 0; k < strct->NumPart; k++)
         {
-          if (strct->Part[k].Radius < Rlim)
+          if (strct->Part[k].Radius < opt.Rlim)
           {
             mass += strct->Part[k].Mass;
 
@@ -250,7 +250,7 @@ int main (int argc, char ** argv)
         strct->SFR100 = 0;
         for (k = 0; k < strct->NumPart; k++)
         {
-          if ((strct->Part[k].Age > 0.0) && (strct->Part[k].Radius < Rlim))
+          if ((strct->Part[k].Age > 0.0) && (strct->Part[k].Radius < opt.Rlim))
           {
             if (strct->Part[k].Age <  20e6)   strct->SFR20  += strct->Part[k].Mass;
             if (strct->Part[k].Age <  50e6)   strct->SFR50  += strct->Part[k].Mass;
@@ -388,7 +388,12 @@ void ctlgMatch_params (Options * opt)
 {
   int   i;
   int   dummy;
-  char  buffer [NAME_LENGTH];
+  char  buffer   [NAME_LENGTH];
+  char  namebuff [NAME_LENGTH];
+  char  prfxbuff [NAME_LENGTH];
+  char  frmtbuff [NAME_LENGTH];
+  char  pathbuff [NAME_LENGTH];
+  int   nflsbuff;
 
   opt->param.file = fopen (opt->param.name, "r");
   if (opt->param.file == NULL)
@@ -402,35 +407,46 @@ void ctlgMatch_params (Options * opt)
   fscanf (opt->param.file, "%d", &opt->numCatalogs);
   opt->catalog    = (Catalog *)    malloc (opt->numCatalogs * sizeof(Catalog));
   opt->simulation = (Simulation *) malloc (opt->numCatalogs * sizeof(Simulation));
+
+
+
+
   for (i = 0; i < opt->numCatalogs; i++)
   {
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog[i].archive, buffer);
-                                             Archive_prefix (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog[i].archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog[i].archive, dummy);
+    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->catalog[i].archive, namebuff);
+    Archive_prefix (&opt->catalog[i].archive, prfxbuff);
+    Archive_format (&opt->catalog[i].archive, frmtbuff);
+    Archive_path   (&opt->catalog[i].archive, pathbuff);
+    Archive_nfiles (&opt->catalog[i].archive, nflsbuff);
 
-
-    fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation[i].archive, buffer);
-                                             Archive_prefix (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation[i].archive, buffer);
-    fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation[i].archive, dummy);
+    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->simulation[i].archive, namebuff);
+    Archive_prefix (&opt->simulation[i].archive, prfxbuff);
+    Archive_format (&opt->simulation[i].archive, frmtbuff);
+    Archive_path   (&opt->simulation[i].archive, pathbuff);
+    Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
   }
 
   // TreeFrog input
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->mtree, buffer);
-                                           Archive_prefix (&opt->mtree, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->mtree, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->mtree, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->mtree, dummy);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->mtree, namebuff);
+  Archive_prefix (&opt->mtree, prfxbuff);
+  Archive_format (&opt->mtree, frmtbuff);
+  Archive_path   (&opt->mtree, pathbuff);
+  Archive_nfiles (&opt->mtree, nflsbuff);
+
 
   // ASCII Output
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
-                                           Archive_prefix (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->output, namebuff);
+  Archive_prefix (&opt->output, prfxbuff);
+  Archive_format (&opt->output, frmtbuff);
+  Archive_path   (&opt->output, pathbuff);
+  Archive_nfiles (&opt->output, nflsbuff);
+
+  if (opt->Rlim == 0)
+    opt->Rlim = 1e10;
 
   fclose (opt->param.file);
 }
@@ -453,15 +469,21 @@ int ctlgMatch_options (int argc, char ** argv, Options * opt)
     {"help",    0, NULL, 'h'},
     {"verbose", 0, NULL, 'v'},
     {"input",   0, NULL, 'i'},
+    {"aperture",0, NULL, 'a'},
     {0,         0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "i:vh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "i:a:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
       case 'i':
       	strcpy (opt->param.name, optarg);
+        flag++;
+        break;
+
+      case 'a':
+        opt->Rlim = atof(optarg);
         flag++;
         break;
 

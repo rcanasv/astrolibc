@@ -288,14 +288,14 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
     if (nmatch > 0)
     {
       stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
-//      stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
+      stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
       stf->strctProps[i].iMatch     = 1;
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
-        sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
-  //      sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
-  //                                &stf->strctProps[i].MatchMrrts[j]);
+//        sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
+        sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
+                                  &stf->strctProps[i].MatchMrrts[j]);
       }
     }
   }

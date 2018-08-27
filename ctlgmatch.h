@@ -27,6 +27,7 @@ typedef struct Options
   int            numCatalogs;
   Catalog     *  catalog;
   Simulation  *  simulation;
+  double         Rlim;         // aperture to compute properties
 } Options;
 
 
