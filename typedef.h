@@ -85,8 +85,8 @@ typedef struct Structure
   int        mbpID;
   double     mbpPos[3];
   double     mbpVel[3];
-  double     sigmaPos[9];
-  double     sigmaVel[9];
+  double     sigmaPosEval[3];
+  double     sigmaVelEval[3];
 
   // Isolation
   char       Isolated;
