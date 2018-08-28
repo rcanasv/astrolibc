@@ -16,6 +16,11 @@ ifeq ($(MACHINE),icrar)
 HDF5_INCL   = -I/opt/gcc/5.4.0/zlib/1.2.11/include  -I/opt/gcc/5.4.0/hdf5/1.8.18/include
 HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5_hl.a /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5.a -L/opt/gcc/5.4.0/zlib/1.2.11/lib
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
+
+GSL_INCL    = -I/opt/gcc/5.4.0/gsl/2.2/include
+GSL_LIB     = -L/opt/gcc/5.4.0/gsl/2.2/lib
+GSL_FLAGS   = -lgsl -lgslcblas
+
 endif
 
 ifeq ($(MACHINE),pulsar)
@@ -31,9 +36,9 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home/rcanas/opt/gcc/6.3.
 endif
 
 
-INC         = $(HDF5_INCL)
-LIB         = $(HDF5_LIB)
-FLAGS       = -lm $(HDF5_FLAGS)
+INC         = $(HDF5_INCL) $(GSL_INCL)
+LIB         = $(HDF5_LIB) $(GSL_LIB)
+FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c

@@ -25,6 +25,7 @@ void  Structure_calculate_surface_density   (Structure * strct, double * rotatio
 void  Structure_calculate_spherical_density (Structure * strct, double ledge, double redge, int nbins, double deltar, double ** bins, double ** Rho);
 void  Structure_calculate_fmass_radius      (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction);
 void  Structure_calculate_disp_tensor_pos   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
+void  Structure_calculate_disp_tensor_vel   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
 
 void  Structure_get_particle_radius       (Structure * strct);
 void  Structure_get_particle_properties   (Catalog * ctlg, Simulation * sim, int * strct_to_get);

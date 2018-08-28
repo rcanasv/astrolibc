@@ -16,10 +16,7 @@
 
 typedef struct Options
 {
-  int            iVerbose;
-  int            iFraction;
-  int            iTrack;
-  int            iExtract;
+  int            ID;
   Archive        param;
   Archive        output;
   Catalog        catalog;
@@ -47,40 +44,45 @@ int main (int argc, char ** argv)
   Catalog_init             (&opt.catalog);
   Catalog_load_properties  (&opt.catalog);
 
-  int ID[1];
-  ID[0] = 114508; //166744;
+  //int ID[1];
+  //ID[0] = 166744;
 
   //
   // Tag structures to get
   //
-  strct_to_get = (int *) malloc ((opt.catalog[i].nstruct+1)*sizeof(int));
+  strct_to_get = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
   for (j = 1; j <= opt.catalog.nstruct; j++)
     strct_to_get[j] = 0;
 
-  strct_to_get[ID[0]] = 1;
+  if (opt.ID == 0)
+    for (j = 1; j <= opt.catalog.nstruct; j++)
+      strct_to_get[j] = 1;
+  else
+    strct_to_get[opt.ID] = 1;
 
-  Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
+
+  Structure_get_particle_properties   (&opt.catalog, &opt.simulation, strct_to_get);
+  Structure_calculate_disp_tensor_pos (&opt.catalog, &opt.simulation, strct_to_get);
+  Structure_calculate_disp_tensor_vel (&opt.catalog, &opt.simulation, strct_to_get);
 
   // Write file
   FILE    * f1;
   char      buffer1  [NAME_LENGTH];
 
-  sprintf (buffer1,  "%s-%d.ctrl", opt.output.prefix, ID[k]);
+  sprintf (buffer1,  "%s.gal_props_paper", opt.output.prefix);
   f1   = fopen (buffer1,  "w");
   for (j = 1; j <= opt.catalog.nstruct; j++)
   {
     if (strct_to_get[j])
     {
-      ctrl = &opt.catalog[0].strctProps[ID[k]];
+      strct = &opt.catalog.strctProps[j];
 
-      fprintf (f1, "%e  ", opt.simulation[0].LookBackTime);
-      fprintf (f1, "%d  ", ctrl->ID);
-      fprintf (f1, "%e  ", R);
-      fprintf (f1, "%e  ", ctrl->TotMass);
-      fprintf (f1, "%e  ", ctrl->RHalfMass);
-      fprintf (f1, "%e  ", Rmbp);
-      fprintf (f1, "%d  ", ctrl->NumPart);
-      fprintf (f1, "%e  ", ctrl->Rx);
+      fprintf (f1, "%d  ", strct->ID);
+      fprintf (f1, "%e  ", strct->Efrac);
+      fprintf (f1, "%e  ", sqrt(strct->sigmaPosEval[1]/strct->sigmaPosEval[0]));
+      fprintf (f1, "%e  ", sqrt(strct->sigmaPosEval[2]/strct->sigmaPosEval[0]));
+      fprintf (f1, "%e  ", sqrt(strct->sigmaVelEval[1]/strct->sigmaVelEval[0]));
+      fprintf (f1, "%e  ", sqrt(strct->sigmaVelEval[2]/strct->sigmaVelEval[0]));
       fprintf (f1, "\n");
     }
   }
@@ -158,15 +160,12 @@ int test_options (int argc, char ** argv, Options * opt)
 
   struct option lopts[] = {
     {"help",      0, NULL, 'h'},
-    {"verbose",   0, NULL, 'v'},
     {"param",     0, NULL, 'p'},
-    {"fraction",  0, NULL, 'f'},
-    {"track",     0, NULL, 't'},
-    {"extract",   0, NULL, 'x'},
+    {"id",        0, NULL, 'i'},
     {0,           0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "p:ftxvh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "p:i:vh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -175,16 +174,8 @@ int test_options (int argc, char ** argv, Options * opt)
         flag++;
         break;
 
-      case 'f':
-      	opt->iFraction = 1;
-      	break;
-
-      case 't':
-      	opt->iTrack = 1;
-      	break;
-
-      case 'x':
-      	opt->iExtract = 1;
+      case 'i':
+      	opt->ID = atoi(optarg);
       	break;
 
       case 'h':
@@ -213,14 +204,15 @@ void test_usage (int opt, char ** argv)
     printf ("                                                                         \n");
     printf ("  Author:            Rodrigo Can\\~as                                    \n");
     printf ("                                                                         \n");
-    printf ("  Last edition:      25 - 06 - 2018                                      \n");
+    printf ("  Last edition:      28 - 08 - 2018                                      \n");
     printf ("                                                                         \n");
     printf ("                                                                         \n");
     printf ("  Usage:             %s [Option] [Parameter [argument]] ...\n",      argv[0]);
     printf ("                                                                         \n");
     printf ("  Parameters:                                                            \n");
     printf ("                                                                         \n");
-    printf ("                     -i    --input    [string]   Name of input file      \n");
+    printf ("                     -i    --input    [integer]   id of struct           \n");
+    printf ("                                                  0 = all structs        \n");
     printf ("                                                                         \n");
     printf ("  Options:                                                               \n");
     printf ("                     -v    --verbose             activate verbose        \n");

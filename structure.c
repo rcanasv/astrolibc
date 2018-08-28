@@ -366,9 +366,9 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
   double  tensor[ndim * 2];
   Structure * strct;
 
-  gsl_matrix * disp = gsl_matrix_alloc (ndim);
+  gsl_matrix * disp = gsl_matrix_alloc (ndim, ndim);
   gsl_vector * eval = gsl_vector_alloc (ndim);
-  gsl_matrix * evec = gsl_matrix_alloc (ndim,ndim);
+  gsl_matrix * evec = gsl_matrix_alloc (ndim, ndim);
   gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (ndim);
 
   for (k = 1; k <= ctlg->nstruct; k++)
@@ -419,20 +419,101 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
 
       for (i = 0; i < ndim; i++)
       {
-        printf ("%e   ", gsl_vector_get(eval, i)):
+        printf ("%e   ", gsl_vector_get(eval, i));
         for (j = 0; j < ndim; j++)
           printf ("%e  ", gsl_matrix_get(evec, i, j));
         printf ("\n");
       }
 
-      strct->sigmaPosEval[0] = eval[0];
-      strct->sigmaPosEval[1] = eval[1];
-      strct->sigmaPosEval[2] = eval[2];
+      strct->sigmaPosEval[0] = gsl_vector_get(eval, 0);
+      strct->sigmaPosEval[1] = gsl_vector_get(eval, 1);
+      strct->sigmaPosEval[2] = gsl_vector_get(eval, 2);
     }
   }
   gsl_eigen_symmv_free (w);
   gsl_vector_free (eval);
-  gsl_vector_free (evec);
+  gsl_matrix_free (evec);
+  gsl_matrix_free (disp);
+}
+
+
+void Structure_calculate_disp_tensor_vel (Catalog * ctlg, Simulation * sim, int * strct_to_get)
+{
+  int     i, j, k;
+  double  mtot;
+  double  fmass;
+  int     ndim = 3;
+  double  tensor[ndim * 2];
+  Structure * strct;
+
+  gsl_matrix * disp = gsl_matrix_alloc (ndim, ndim);
+  gsl_vector * eval = gsl_vector_alloc (ndim);
+  gsl_matrix * evec = gsl_matrix_alloc (ndim, ndim);
+  gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (ndim);
+
+  for (k = 1; k <= ctlg->nstruct; k++)
+  {
+    if (strct_to_get[k])
+    {
+      strct = &ctlg->strctProps[k];
+      for (i = 0; i < ndim * 2; i++)
+          tensor[i] = 0.0;
+
+      for (i = 0; i < strct->NumPart; i++)
+      {
+        tensor[0] += strct->Part[i].Mass * strct->Part[i].Vel[0] * strct->Part[i].Vel[0];
+        tensor[1] += strct->Part[i].Mass * strct->Part[i].Vel[1] * strct->Part[i].Vel[1];
+        tensor[2] += strct->Part[i].Mass * strct->Part[i].Vel[2] * strct->Part[i].Vel[2];
+
+        tensor[3] += strct->Part[i].Mass * strct->Part[i].Vel[0] * strct->Part[i].Vel[1];
+        tensor[4] += strct->Part[i].Mass * strct->Part[i].Vel[0] * strct->Part[i].Vel[2];
+        tensor[5] += strct->Part[i].Mass * strct->Part[i].Vel[1] * strct->Part[i].Vel[2];
+      }
+
+      gsl_matrix_set (disp, 0, 0, tensor[0]);
+      gsl_matrix_set (disp, 1, 1, tensor[1]);
+      gsl_matrix_set (disp, 2, 2, tensor[2]);
+      gsl_matrix_set (disp, 0, 1, tensor[3]);
+      gsl_matrix_set (disp, 1, 0, tensor[3]);
+      gsl_matrix_set (disp, 0, 2, tensor[4]);
+      gsl_matrix_set (disp, 2, 0, tensor[4]);
+      gsl_matrix_set (disp, 1, 2, tensor[5]);
+      gsl_matrix_set (disp, 2, 1, tensor[5]);
+
+      for (i = 0; i < ndim; i++)
+      {
+        for (j = 0; j < ndim; j++)
+          printf ("%e  ", gsl_matrix_get(disp, i, j));
+        printf ("\n");
+      }
+
+      gsl_eigen_symmv (disp, eval, evec, w);
+      gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_DESC);
+
+      for (i = 0; i < ndim; i++)
+      {
+        for (j = 0; j < ndim; j++)
+          printf ("%e  ", gsl_matrix_get(disp, i, j));
+        printf ("\n");
+      }
+
+      for (i = 0; i < ndim; i++)
+      {
+        printf ("%e   ", gsl_vector_get(eval, i));
+        for (j = 0; j < ndim; j++)
+          printf ("%e  ", gsl_matrix_get(evec, i, j));
+        printf ("\n");
+      }
+
+      strct->sigmaVelEval[0] = gsl_vector_get(eval, 0);
+      strct->sigmaVelEval[1] = gsl_vector_get(eval, 1);
+      strct->sigmaVelEval[2] = gsl_vector_get(eval, 2);
+    }
+  }
+  gsl_eigen_symmv_free (w);
+  gsl_vector_free (eval);
+  gsl_matrix_free (evec);
+  gsl_matrix_free (disp);
 }
 
 
