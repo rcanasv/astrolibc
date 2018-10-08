@@ -4,6 +4,10 @@ ifeq ($(MACHINE),horizon)
 HDF5_INCL   = -I//softs/hdf5/1.8.18-gcc4/include
 HDF5_LIB    = -L/softs/hdf5/1.8.18-gcc4/lib  /softs/hdf5/1.8.18-gcc4/lib/libhdf5_hl.a /softs/hdf5/1.8.18-gcc4/lib/libhdf5.a
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/softs/hdf5/1.8.18-gcc4/lib
+
+GSL_INCL    = -I/softs/gsl/2.3/include
+GSL_LIB     = -L/softs/gsl/2.3/lib
+GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
 ifeq ($(MACHINE),raijin)

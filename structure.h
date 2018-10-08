@@ -27,6 +27,15 @@ void  Structure_calculate_fmass_radius      (Catalog * ctlg, Simulation * sim, i
 void  Structure_calculate_disp_tensor_pos   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
 void  Structure_calculate_disp_tensor_vel   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
 
+
+void Structure_rotate_position_x (Structure * strct, double angle);
+void Structure_rotate_position_y (Structure * strct, double angle);
+void Structure_rotate_position_z (Structure * strct, double angle);
+void Structure_rotate_velocity_x (Structure * strct, double angle);
+void Structure_rotate_velocity_y (Structure * strct, double angle);
+void Structure_rotate_velocity_z (Structure * strct, double angle);
+
+
 void  Structure_get_particle_radius       (Structure * strct);
 void  Structure_get_particle_properties   (Catalog * ctlg, Simulation * sim, int * strct_to_get);
 

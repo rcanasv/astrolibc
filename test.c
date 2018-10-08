@@ -73,16 +73,16 @@ int main (int argc, char ** argv)
   f1   = fopen (buffer1,  "w");
   for (j = 1; j <= opt.catalog.nstruct; j++)
   {
-    if (strct_to_get[j])
+    strct = &opt.catalog.strctProps[j];
+    if (strct_to_get[j] && strct->Type > 7)
     {
-      strct = &opt.catalog.strctProps[j];
-
       fprintf (f1, "%d  ", strct->ID);
       fprintf (f1, "%e  ", strct->Efrac);
       fprintf (f1, "%e  ", sqrt(strct->sigmaPosEval[1]/strct->sigmaPosEval[0]));
       fprintf (f1, "%e  ", sqrt(strct->sigmaPosEval[2]/strct->sigmaPosEval[0]));
       fprintf (f1, "%e  ", sqrt(strct->sigmaVelEval[1]/strct->sigmaVelEval[0]));
       fprintf (f1, "%e  ", sqrt(strct->sigmaVelEval[2]/strct->sigmaVelEval[0]));
+      fprintf (f1, "%e  ", strct->TotMass);
       fprintf (f1, "\n");
     }
   }

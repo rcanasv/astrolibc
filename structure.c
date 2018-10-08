@@ -26,6 +26,10 @@ void Structure_correct_periodicity (Structure * strct, Simulation * sim)
       strct->Part[i].Pos[1] -= strct->Pos[1];
       strct->Part[i].Pos[2] -= strct->Pos[2];
 
+      strct->Part[i].Vel[0] -= strct->Vel[0];
+      strct->Part[i].Vel[1] -= strct->Vel[1];
+      strct->Part[i].Vel[2] -= strct->Vel[2];
+
       while (strct->Part[i].Pos[0] >  hbox)   strct->Part[i].Pos[0] -= Lbox;
       while (strct->Part[i].Pos[1] >  hbox)   strct->Part[i].Pos[1] -= Lbox;
       while (strct->Part[i].Pos[2] >  hbox)   strct->Part[i].Pos[2] -= Lbox;
@@ -376,8 +380,12 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
     if (strct_to_get[k])
     {
       strct = &ctlg->strctProps[k];
+      Structure_correct_periodicity       (strct, sim);
+
       for (i = 0; i < ndim * 2; i++)
           tensor[i] = 0.0;
+
+      mtot = 0;
 
       for (i = 0; i < strct->NumPart; i++)
       {
@@ -388,46 +396,160 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
         tensor[3] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[1];
         tensor[4] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[2];
         tensor[5] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[2];
+ 
+        mtot += strct->Part[i].Mass;
       }
 
-      gsl_matrix_set (disp, 0, 0, tensor[0]);
-      gsl_matrix_set (disp, 1, 1, tensor[1]);
-      gsl_matrix_set (disp, 2, 2, tensor[2]);
-      gsl_matrix_set (disp, 0, 1, tensor[3]);
-      gsl_matrix_set (disp, 1, 0, tensor[3]);
-      gsl_matrix_set (disp, 0, 2, tensor[4]);
-      gsl_matrix_set (disp, 2, 0, tensor[4]);
-      gsl_matrix_set (disp, 1, 2, tensor[5]);
-      gsl_matrix_set (disp, 2, 1, tensor[5]);
+      gsl_matrix_set (disp, 0, 0, tensor[0]/mtot);
+      gsl_matrix_set (disp, 1, 1, tensor[1]/mtot);
+      gsl_matrix_set (disp, 2, 2, tensor[2]/mtot);
+      gsl_matrix_set (disp, 0, 1, tensor[3]/mtot);
+      gsl_matrix_set (disp, 1, 0, tensor[3]/mtot);
+      gsl_matrix_set (disp, 0, 2, tensor[4]/mtot);
+      gsl_matrix_set (disp, 2, 0, tensor[4]/mtot);
+      gsl_matrix_set (disp, 1, 2, tensor[5]/mtot);
+      gsl_matrix_set (disp, 2, 1, tensor[5]/mtot);
+
+      /*    
+      for (i = 0; i < ndim; i++)
+      {
+        for (j = 0; j < ndim; j++)
+          printf ("%2.5f  ", gsl_matrix_get(disp, i, j));
+        printf ("\n");
+      }
+      */
+
+      gsl_eigen_symmv (disp, eval, evec, w);
+      gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_DESC);
+
+      /*
+      for (i = 0; i < ndim; i++)
+      {
+        printf ("%2.5f   ", gsl_vector_get(eval, i));
+        for (j = 0; j < ndim; j++)
+          printf ("%2.5f  ", gsl_matrix_get(evec, j, i));
+        printf ("\n");
+      }
+      */
+
+      /* 
+      for (i = 0; i < ndim; i++)
+      {
+        double eval_i  = gsl_vector_get (eval, i);
+        gsl_vector_view evec_i = gsl_matrix_column (evec, i);
+
+        printf ("eigenvalue = %g\n", eval_i);
+        printf ("eigenvector = \n");
+        gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
+      }
+      */
+
+      strct->sigmaPosEval[0] = gsl_vector_get(eval, 0);
+      strct->sigmaPosEval[1] = gsl_vector_get(eval, 1);
+      strct->sigmaPosEval[2] = gsl_vector_get(eval, 2);
+
+//------------------------>
+/*
+      for (i = 0; i < ndim * 2; i++)
+          tensor[i] = 0.0;
+
+      mtot = 0;
+ 
+      double ex, ey, ez;
+      double x, y, z;
+      double angle, angle2, angle3;
+
+      ex = gsl_matrix_get (evec, 0, 0);
+      ey = gsl_matrix_get (evec, 1, 0);
+      ez = gsl_matrix_get (evec, 2, 0);
+
+      angle = -atan(ey/ex);
+      x = ex * cos(angle) - ey * sin(angle);
+      y = ey * cos(angle) + ex * sin(angle);
+      z = ez;
+
+      printf ("%2.5f  %2.5f  %2.5f\n", ex, ey, ez);
+      printf ("%2.5f  %2.5f  %2.5f\n", x, y, z);
+
+      angle2 = atan(z/x);
+      ex = x * cos(angle2) + z * sin(angle2);
+      ez = z * cos(angle2) - x * sin(angle2);
+      ey = y;
+
+      printf ("%2.5f  %2.5f  %2.5f\n\n", ex, ey, ez);
+
+      //----
+      ex = gsl_matrix_get (evec, 0, 1);
+      ey = gsl_matrix_get (evec, 1, 1);
+      ez = gsl_matrix_get (evec, 2, 1);
+
+      x = ex * cos(angle) - ey * sin(angle);
+      y = ey * cos(angle) + ex * sin(angle);
+      z = ez;
+
+      printf ("%2.5f  %2.5f  %2.5f\n", ex, ey, ez);
+      printf ("%2.5f  %2.5f  %2.5f\n", x, y, z);
+
+      ex = x * cos(angle2) + z * sin(angle2);
+      ez = z * cos(angle2) - x * sin(angle2);
+      ey = y;
+ 
+      angle3 = -atan(ez/ey); 
+      y = ey * cos(angle3) - ez * sin(angle3);
+      z = ey * sin(angle3) + ez * cos(angle3);
+      x = ex;
+
+      printf ("%2.5f  %2.5f  %2.5f\n\n", x, y, z);
+
+
+      Structure_rotate_position_z (strct, angle);
+      Structure_rotate_position_y (strct, angle2);
+      Structure_rotate_position_x (strct, angle3);
+
+      for (i = 0; i < strct->NumPart; i++)
+      {
+        tensor[0] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[0];
+        tensor[1] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[1];
+        tensor[2] += strct->Part[i].Mass * strct->Part[i].Pos[2] * strct->Part[i].Pos[2];
+
+        tensor[3] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[1];
+        tensor[4] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[2];
+        tensor[5] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[2];
+
+        mtot += strct->Part[i].Mass;
+      }
+
+      gsl_matrix_set (disp, 0, 0, tensor[0]/mtot);
+      gsl_matrix_set (disp, 1, 1, tensor[1]/mtot);
+      gsl_matrix_set (disp, 2, 2, tensor[2]/mtot);
+      gsl_matrix_set (disp, 0, 1, tensor[3]/mtot);
+      gsl_matrix_set (disp, 1, 0, tensor[3]/mtot);
+      gsl_matrix_set (disp, 0, 2, tensor[4]/mtot);
+      gsl_matrix_set (disp, 2, 0, tensor[4]/mtot);
+      gsl_matrix_set (disp, 1, 2, tensor[5]/mtot);
+      gsl_matrix_set (disp, 2, 1, tensor[5]/mtot);
 
       for (i = 0; i < ndim; i++)
       {
         for (j = 0; j < ndim; j++)
-          printf ("%e  ", gsl_matrix_get(disp, i, j));
+          printf ("%2.5f  ", gsl_matrix_get(disp, i, j));
         printf ("\n");
       }
 
       gsl_eigen_symmv (disp, eval, evec, w);
       gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_DESC);
 
-      for (i = 0; i < ndim; i++)
-      {
-        for (j = 0; j < ndim; j++)
-          printf ("%e  ", gsl_matrix_get(disp, i, j));
-        printf ("\n");
-      }
 
       for (i = 0; i < ndim; i++)
       {
-        printf ("%e   ", gsl_vector_get(eval, i));
+        printf ("%2.5f   ", gsl_vector_get(eval, i));
         for (j = 0; j < ndim; j++)
-          printf ("%e  ", gsl_matrix_get(evec, i, j));
+          printf ("%2.5f  ", gsl_matrix_get(evec, j, i));
         printf ("\n");
-      }
+     }
+*/
+//--------------------------->
 
-      strct->sigmaPosEval[0] = gsl_vector_get(eval, 0);
-      strct->sigmaPosEval[1] = gsl_vector_get(eval, 1);
-      strct->sigmaPosEval[2] = gsl_vector_get(eval, 2);
     }
   }
   gsl_eigen_symmv_free (w);
@@ -456,8 +578,12 @@ void Structure_calculate_disp_tensor_vel (Catalog * ctlg, Simulation * sim, int 
     if (strct_to_get[k])
     {
       strct = &ctlg->strctProps[k];
+      Structure_correct_periodicity       (strct, sim);
+
       for (i = 0; i < ndim * 2; i++)
           tensor[i] = 0.0;
+
+      mtot = 0.0;
 
       for (i = 0; i < strct->NumPart; i++)
       {
@@ -468,28 +594,33 @@ void Structure_calculate_disp_tensor_vel (Catalog * ctlg, Simulation * sim, int 
         tensor[3] += strct->Part[i].Mass * strct->Part[i].Vel[0] * strct->Part[i].Vel[1];
         tensor[4] += strct->Part[i].Mass * strct->Part[i].Vel[0] * strct->Part[i].Vel[2];
         tensor[5] += strct->Part[i].Mass * strct->Part[i].Vel[1] * strct->Part[i].Vel[2];
+
+        mtot += strct->Part[i].Mass;
       }
 
-      gsl_matrix_set (disp, 0, 0, tensor[0]);
-      gsl_matrix_set (disp, 1, 1, tensor[1]);
-      gsl_matrix_set (disp, 2, 2, tensor[2]);
-      gsl_matrix_set (disp, 0, 1, tensor[3]);
-      gsl_matrix_set (disp, 1, 0, tensor[3]);
-      gsl_matrix_set (disp, 0, 2, tensor[4]);
-      gsl_matrix_set (disp, 2, 0, tensor[4]);
-      gsl_matrix_set (disp, 1, 2, tensor[5]);
-      gsl_matrix_set (disp, 2, 1, tensor[5]);
+      gsl_matrix_set (disp, 0, 0, tensor[0]/mtot);
+      gsl_matrix_set (disp, 1, 1, tensor[1]/mtot);
+      gsl_matrix_set (disp, 2, 2, tensor[2]/mtot);
+      gsl_matrix_set (disp, 0, 1, tensor[3]/mtot);
+      gsl_matrix_set (disp, 1, 0, tensor[3]/mtot);
+      gsl_matrix_set (disp, 0, 2, tensor[4]/mtot);
+      gsl_matrix_set (disp, 2, 0, tensor[4]/mtot);
+      gsl_matrix_set (disp, 1, 2, tensor[5]/mtot);
+      gsl_matrix_set (disp, 2, 1, tensor[5]/mtot);
 
+      /*
       for (i = 0; i < ndim; i++)
       {
         for (j = 0; j < ndim; j++)
           printf ("%e  ", gsl_matrix_get(disp, i, j));
         printf ("\n");
       }
+      */
 
       gsl_eigen_symmv (disp, eval, evec, w);
       gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_DESC);
 
+      /*
       for (i = 0; i < ndim; i++)
       {
         for (j = 0; j < ndim; j++)
@@ -504,6 +635,7 @@ void Structure_calculate_disp_tensor_vel (Catalog * ctlg, Simulation * sim, int 
           printf ("%e  ", gsl_matrix_get(evec, i, j));
         printf ("\n");
       }
+      */
 
       strct->sigmaVelEval[0] = gsl_vector_get(eval, 0);
       strct->sigmaVelEval[1] = gsl_vector_get(eval, 1);
@@ -515,6 +647,123 @@ void Structure_calculate_disp_tensor_vel (Catalog * ctlg, Simulation * sim, int 
   gsl_matrix_free (evec);
   gsl_matrix_free (disp);
 }
+
+
+void Structure_rotate_position_x (Structure * strct, double angle)
+{
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    r0 = strct->Part[i].Pos[0];
+    r1 = strct->Part[i].Pos[1];
+    r2 = strct->Part[i].Pos[2];
+
+    strct->Part[i].Pos[1] =  r1 * cos(angle) - r2 * sin(angle);
+    strct->Part[i].Pos[2] =  r1 * sin(angle) + r2 * cos(angle);
+  }
+}
+
+
+void Structure_rotate_position_y (Structure * strct, double angle)
+{
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    r0 = strct->Part[i].Pos[0];
+    r1 = strct->Part[i].Pos[1];
+    r2 = strct->Part[i].Pos[2];
+
+    strct->Part[i].Pos[0] = r0 * cos(angle) + r2 * sin(angle);
+    strct->Part[i].Pos[2] = r2 * cos(angle) - r0 * sin(angle);
+  }
+}
+
+
+void Structure_rotate_position_z (Structure * strct, double angle)
+{
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    r0 = strct->Part[i].Pos[0];
+    r1 = strct->Part[i].Pos[1];
+    r2 = strct->Part[i].Pos[2];
+
+    strct->Part[i].Pos[0] = r0 * cos(angle) - r1 * sin(angle);
+    strct->Part[i].Pos[1] = r1 * cos(angle) + r0 * sin(angle);
+  }
+}
+
+
+void Structure_rotate_velocity_x (Structure * strct, double angle)
+{
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    r0 = strct->Part[i].Vel[0];
+    r1 = strct->Part[i].Vel[1];
+    r2 = strct->Part[i].Vel[2];
+
+    strct->Part[i].Vel[1] =  r1 * cos(angle) - r2 * sin(angle);
+    strct->Part[i].Vel[2] =  r1 * sin(angle) + r2 * cos(angle);
+  }
+}
+
+
+void Structure_rotate_velocity_y (Structure * strct, double angle)
+{
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    r0 = strct->Part[i].Vel[0];
+    r1 = strct->Part[i].Vel[1];
+    r2 = strct->Part[i].Vel[2];
+
+    strct->Part[i].Vel[0] = r0 * cos(angle) + r2 * sin(angle);
+    strct->Part[i].Vel[2] = r2 * cos(angle) - r0 * sin(angle);
+  }
+}
+
+
+void Structure_rotate_velocity_z (Structure * strct, double angle)
+{ 
+  int    i;
+  float  r0;
+  float  r1;
+  float  r2;
+  
+  for (i = 0; i < strct->NumPart; i++)
+  { 
+    r0 = strct->Part[i].Vel[0];
+    r1 = strct->Part[i].Vel[1];
+    r2 = strct->Part[i].Vel[2];
+    
+    strct->Part[i].Vel[0] = r0 * cos(angle) - r1 * sin(angle);
+    strct->Part[i].Vel[1] = r1 * cos(angle) + r0 * sin(angle);
+  }
+}
+
+
+
 
 
 
