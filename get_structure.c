@@ -53,6 +53,7 @@ int main (int argc, char ** argv)
   Catalog_init (&opt.catalog);
   Catalog_load_properties (&opt.catalog);
 
+
   // 3995614986
   // 4273503266
   // 3840676851
@@ -69,27 +70,28 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
     strct_to_get[i] = 0;
 
+  strct_to_get[opt.id[0]] = 1;
+  /*
   for (i = 0; i < opt.nstruct; i++)
   {
-//    printf ("%d\n", opt.id[i]);
+    printf ("%d\n", opt.id[i]);
     strct_to_get[opt.id[i]] = 1;
   }
+  */
 
-/*
+  /*
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
-*/
+  */
 
-
+  /*
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].HostID == opt.id[0])
       strct_to_get[i] = 1;
-
+  */
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
-
-
 
   Particle * P;
   int        numpart = 0;
@@ -150,7 +152,12 @@ void get_structure_params (Options * opt)
 {
   int   i;
   int   dummy;
-  char  buffer [NAME_LENGTH];
+  char  buffer   [NAME_LENGTH];
+  char  namebuff [NAME_LENGTH];
+  char  prfxbuff [NAME_LENGTH];
+  char  frmtbuff [NAME_LENGTH];
+  char  pathbuff [NAME_LENGTH];
+  int   nflsbuff;
 
   opt->param.file = fopen (opt->param.name, "r");
   if (opt->param.file == NULL)
@@ -160,26 +167,29 @@ void get_structure_params (Options * opt)
     exit (0);
   }
 
-  // Catalog
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->catalog.archive, buffer);
-                                           Archive_prefix (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->catalog.archive, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->catalog.archive, dummy);
+  // Output
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->output, namebuff);
+  Archive_prefix (&opt->output, prfxbuff);
+  Archive_format (&opt->output, frmtbuff);
+  Archive_path   (&opt->output, pathbuff);
+  Archive_nfiles (&opt->output, nflsbuff);
+
+  // Catalogues
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->catalog.archive, namebuff);
+  Archive_prefix (&opt->catalog.archive, prfxbuff);
+  Archive_format (&opt->catalog.archive, frmtbuff);
+  Archive_path   (&opt->catalog.archive, pathbuff);
+  Archive_nfiles (&opt->catalog.archive, nflsbuff);
 
   // Simulation
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->simulation.archive, buffer);
-                                           Archive_prefix (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->simulation.archive, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->simulation.archive, dummy);
-
-  // Output
-  fscanf (opt->param.file, "%s", buffer);  Archive_name   (&opt->output, buffer);
-                                           Archive_prefix (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_format (&opt->output, buffer);
-  fscanf (opt->param.file, "%s", buffer);  Archive_path   (&opt->output, buffer);
-  fscanf (opt->param.file, "%d", &dummy);  Archive_nfiles (&opt->output, dummy);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prfxbuff,namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->simulation.archive, namebuff);
+  Archive_prefix (&opt->simulation.archive, prfxbuff);
+  Archive_format (&opt->simulation.archive, frmtbuff);
+  Archive_path   (&opt->simulation.archive, pathbuff);
+  Archive_nfiles (&opt->simulation.archive, nflsbuff);
 
   // Close
   fclose (opt->param.file);

@@ -24,17 +24,23 @@ void Catalog_init (Catalog * ctlg)
       (!strcmp(ctlg->archive.format, "velociraptor")))
     ctlg->format = STF;
   else
-    if ((!strcmp(ctlg->archive.format, "hmkr"))            ||  \
-        (!strcmp(ctlg->archive.format, "hmkr_treebricks")) ||  \
-        (!strcmp(ctlg->archive.format, "HaloMaker"))       ||  \
-        (!strcmp(ctlg->archive.format, "halomaker")))
-      ctlg->format = HALOMAKER;
-    else
-    {
-      printf ("Format %s not supported\n", ctlg->archive.format);
-      printf ("Exiting...\n");
-      exit (0);
-    }
+  if ((!strcmp(ctlg->archive.format, "stf_hdf5"))          ||  \
+      (!strcmp(ctlg->archive.format, "STF_HDF5"))          ||  \
+      (!strcmp(ctlg->archive.format, "VELOCIraptor_hdf5")) ||  \
+      (!strcmp(ctlg->archive.format, "velociraptor_hdf5")))
+    ctlg->format = STF_HDF5;
+  else
+  if ((!strcmp(ctlg->archive.format, "hmkr"))            ||  \
+      (!strcmp(ctlg->archive.format, "hmkr_treebricks")) ||  \
+      (!strcmp(ctlg->archive.format, "HaloMaker"))       ||  \
+      (!strcmp(ctlg->archive.format, "halomaker")))
+    ctlg->format = HALOMAKER;
+  else
+  {
+    printf ("Format %s not supported\n", ctlg->archive.format);
+    printf ("Exiting...\n");
+    exit (0);
+  }
 }
 
 
@@ -50,6 +56,7 @@ void Catalog_load (Catalog * ctlg)
 void Catalog_load_properties (Catalog * ctlg)
 {
   if (ctlg->format == STF)         stf_read_properties (ctlg);
+  if (ctlg->format == STF_HDF5)    stf_read_properties (ctlg);
   if (ctlg->format == HALOMAKER)   halomaker_read_properties (ctlg);
 }
 
@@ -69,6 +76,7 @@ void Catalog_load_particles (Catalog * ctlg)
 void Catalog_get_particle_properties (Catalog * ctlg, Simulation * sim)
 {
   if (ctlg->format == STF)        stf_catalog_get_particle_properties       (ctlg, sim);
+  if (ctlg->format == STF_HDF5)   stf_catalog_get_particle_properties       (ctlg, sim);
   if (ctlg->format == HALOMAKER)  halomaker_catalog_get_particle_properties (ctlg, sim);
 }
 
@@ -146,7 +154,8 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
 
 void Catalog_fill_isolated (Catalog * ctlg)
 {
-  if (ctlg->format == STF)  stf_catalog_fill_isolated (ctlg);
+  if (ctlg->format == STF)       stf_catalog_fill_isolated (ctlg);
+  if (ctlg->format == STF_HDF5)  stf_catalog_fill_isolated (ctlg);
 }
 
 

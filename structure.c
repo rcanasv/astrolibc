@@ -146,6 +146,7 @@ void Structure_get_particle_radius (Structure * strct)
 void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * strct_to_get)
 {
   if (ctlg->format == STF)        stf_structure_get_particle_properties       (ctlg, sim, strct_to_get);
+  if (ctlg->format == STF_HDF5)   stf_structure_get_particle_properties       (ctlg, sim, strct_to_get);
   if (ctlg->format == HALOMAKER)  halomaker_structure_get_particle_properties (ctlg, sim, strct_to_get);
 }
 
@@ -396,7 +397,7 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
         tensor[3] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[1];
         tensor[4] += strct->Part[i].Mass * strct->Part[i].Pos[0] * strct->Part[i].Pos[2];
         tensor[5] += strct->Part[i].Mass * strct->Part[i].Pos[1] * strct->Part[i].Pos[2];
- 
+
         mtot += strct->Part[i].Mass;
       }
 
@@ -410,7 +411,7 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
       gsl_matrix_set (disp, 1, 2, tensor[5]/mtot);
       gsl_matrix_set (disp, 2, 1, tensor[5]/mtot);
 
-      /*    
+      /*
       for (i = 0; i < ndim; i++)
       {
         for (j = 0; j < ndim; j++)
@@ -432,7 +433,7 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
       }
       */
 
-      /* 
+      /*
       for (i = 0; i < ndim; i++)
       {
         double eval_i  = gsl_vector_get (eval, i);
@@ -454,7 +455,7 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
           tensor[i] = 0.0;
 
       mtot = 0;
- 
+
       double ex, ey, ez;
       double x, y, z;
       double angle, angle2, angle3;
@@ -493,8 +494,8 @@ void Structure_calculate_disp_tensor_pos (Catalog * ctlg, Simulation * sim, int 
       ex = x * cos(angle2) + z * sin(angle2);
       ez = z * cos(angle2) - x * sin(angle2);
       ey = y;
- 
-      angle3 = -atan(ez/ey); 
+
+      angle3 = -atan(ez/ey);
       y = ey * cos(angle3) - ez * sin(angle3);
       z = ey * sin(angle3) + ez * cos(angle3);
       x = ex;
@@ -745,18 +746,18 @@ void Structure_rotate_velocity_y (Structure * strct, double angle)
 
 
 void Structure_rotate_velocity_z (Structure * strct, double angle)
-{ 
+{
   int    i;
   float  r0;
   float  r1;
   float  r2;
-  
+
   for (i = 0; i < strct->NumPart; i++)
-  { 
+  {
     r0 = strct->Part[i].Vel[0];
     r1 = strct->Part[i].Vel[1];
     r2 = strct->Part[i].Vel[2];
-    
+
     strct->Part[i].Vel[0] = r0 * cos(angle) - r1 * sin(angle);
     strct->Part[i].Vel[1] = r1 * cos(angle) + r0 * sin(angle);
   }

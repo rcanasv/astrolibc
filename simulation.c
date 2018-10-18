@@ -15,6 +15,15 @@ void Simulation_init (Simulation * sim)
       (!strcmp(sim->archive.format, "gadget")))
   {
     sim->format = GADGET;
+    gadget_init (sim);
+  }
+  else
+  if ((!strcmp(sim->archive.format, "Gadget_Header")) ||  \
+      (!strcmp(sim->archive.format, "GADGET_HEADER")) ||  \
+      (!strcmp(sim->archive.format, "gadget_header")))
+  {
+    sim->format = GADGET_HEAD;
+    gadget_init (sim);
   }
   else
   if ((!strcmp(sim->archive.format, "ramses")) ||  \
@@ -65,6 +74,8 @@ void Simulation_init (Simulation * sim)
 
 void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part)
 {
+  if (sim->format == GADGET)      gadget_load_particles   (sim, filenum, part);
+  if (sim->format == GADGET_HEAD) gadget_load_particles   (sim, filenum, part);
   if (sim->format == RAMSES)      ramses_load_particles   (sim, filenum, part);
   if (sim->format == RAMSES_STAR) ramses_load_particles   (sim, filenum, part);
   if (sim->format == EAGLE)       hdf5_sim_load_particles (sim, filenum, part);

@@ -14,10 +14,22 @@ void stf_read_properties (Catalog * stf)
 {
   int    i, j, k;
 
-  int    dummyi;
-  long   dummyl;
-  float  dummyf;
-  double dummyd;
+  int       dummyi;
+  long      dummyl;
+  float     dummyf;
+  double    dummyd;
+
+  int     * buffi;
+  long    * buffl;
+  float   * bufff;
+  double  * buffd;
+
+  hid_t    id_file;
+  hid_t    id_group;
+  hid_t    id_dataset;
+  hid_t    id_dataspace;
+  hid_t    id_attribute;
+  herr_t   status;
 
   FILE * f;
   char   propts_fname [NAME_LENGTH];
@@ -38,10 +50,25 @@ void stf_read_properties (Catalog * stf)
       exit (0);
     }
   }
-  fgets  (longbuffer, sizeof(longbuffer), f);  sscanf (longbuffer, "%d  %d", &dummyi, &(stf->nprocs));
-  fgets  (longbuffer, sizeof(longbuffer), f);  sscanf (longbuffer, "%d  %d", &dummyi, &(stf->nstruct));
   fclose (f);
 
+
+  if (stf->format == STF_HDF5)
+  {
+    id_file  = H5Fopen (propts_fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+    id_group = H5Gopen (id_file, "/", H5P_DEFAULT);
+    hdf5_get_data (id_group, "Total_num_of_groups", &stf->nstruct,  sizeof(stf->nstruct));
+    hdf5_get_data (id_group, "Num_of_files",        &stf->nprocs,   sizeof(stf->nprocs));
+    status = H5Fclose (id_file);
+    printf ("Tot structs %d\n", stf->nstruct);
+  }
+  else
+  {
+    f = fopen (propts_fname, "r");
+    fgets  (longbuffer, sizeof(longbuffer), f);  sscanf (longbuffer, "%d  %d", &dummyi, &(stf->nprocs));
+    fgets  (longbuffer, sizeof(longbuffer), f);  sscanf (longbuffer, "%d  %d", &dummyi, &(stf->nstruct));
+    fclose (f);
+  }
   //
   // Allocate memory for structure properties
   //
@@ -75,80 +102,231 @@ void stf_read_properties (Catalog * stf)
 
   for (i = 0; i < stf->nprocs; i++)
   {
-    sprintf (propts_fname, "%s/%s.properties", stf->archive.path, stf->archive.prefix);
-    if ((f = fopen (propts_fname, "r")) == NULL)
-      sprintf (propts_fname, "%s/%s.properties.%d", stf->archive.path, stf->archive.prefix, i);
-
-    if ((f = fopen (propts_fname, "r")) == NULL)
+    if (stf->format == STF_HDF5)
     {
-      printf ("ERROR: Cannot open file  %s\n", propts_fname);
-      exit (0);
+      id_file  = H5Fopen (propts_fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+      id_group = H5Gopen (id_file, "/", H5P_DEFAULT);
+      hdf5_get_data (id_group, "Num_of_groups", &mystructs,  sizeof(mystructs));
+
+      buffi = (int *)    malloc (sizeof(int)    * mystructs);
+      buffd = (double *) malloc (sizeof(double) * mystructs);
+
+      hdf5_get_data (id_group, "ID", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].ID = buffi[j];
+
+      hdf5_get_data (id_group, "ID_mbp", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpID = buffi[j];
+
+      hdf5_get_data (id_group, "hostHaloID", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].HostID = buffi[j];
+
+      hdf5_get_data (id_group, "numSubStruct", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].NumSubs = buffi[j];
+
+      hdf5_get_data (id_group, "npart", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].NumPart = buffi[j];
+
+      hdf5_get_data (id_group, "Structuretype", buffi, sizeof(buffi[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Type = buffi[j];
+
+      hdf5_get_data (id_group, "Xc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Pos[0] = buffd[j];
+
+      hdf5_get_data (id_group, "Yc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Pos[1] = buffd[j];
+
+      hdf5_get_data (id_group, "Zc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Pos[2] = buffd[j];
+
+      hdf5_get_data (id_group, "Xcmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpPos[0] = buffd[j];
+
+      hdf5_get_data (id_group, "Ycmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpPos[1] = buffd[j];
+
+      hdf5_get_data (id_group, "Zcmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpPos[2] = buffd[j];
+
+      hdf5_get_data (id_group, "VXc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Vel[0] = buffd[j];
+
+      hdf5_get_data (id_group, "VYc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Vel[1] = buffd[j];
+
+      hdf5_get_data (id_group, "VZc", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Vel[2] = buffd[j];
+
+      hdf5_get_data (id_group, "VXcmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpVel[0] = buffd[j];
+
+      hdf5_get_data (id_group, "VYcmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpVel[1] = buffd[j];
+
+      hdf5_get_data (id_group, "VZcmbp", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].mbpVel[2] = buffd[j];
+
+      hdf5_get_data (id_group, "Mass_tot", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].TotMass = buffd[j];
+
+      hdf5_get_data (id_group, "Efrac", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Efrac = buffd[j];
+
+      hdf5_get_data (id_group, "R_size", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Rsize = buffd[j];
+
+      hdf5_get_data (id_group, "R_HalfMass", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].RHalfMass = buffd[j];
+
+      hdf5_get_data (id_group, "Rmax", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Rvmax = buffd[j];
+
+      hdf5_get_data (id_group, "Vmax", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Vmax = buffd[j];
+
+      hdf5_get_data (id_group, "sigV", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Vdisp = buffd[j];
+
+      hdf5_get_data (id_group, "lambda_B", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].Lambda = buffd[j];
+
+      hdf5_get_data (id_group, "Lx", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].L[0] = buffd[j];
+
+      hdf5_get_data (id_group, "Ly", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].L[1] = buffd[j];
+
+      hdf5_get_data (id_group, "Lz", buffd, sizeof(buffd[0]));
+      for (j = 0; j < mystructs; j++)  stf->strctProps[j+offst].L[2] = buffd[j];
+      //"hostDirectHaloID"
+      //"hostFOFID"
+      //"Mvir"
+      //"Mass_FOF"
+      //"Mass_200mean"
+      //"Mass_200crit"
+      //"Mass_BN98"
+      //"Rvir"
+      //"R_200mean");
+      //"R_200crit");
+      //"R_BN98");
+      //"veldisp_xx"
+      //"veldisp_xy"
+      //"veldisp_xz"
+      //"veldisp_yx"
+      //"veldisp_yy"
+      //"veldisp_yz"
+      //"veldisp_zx"
+      //"veldisp_zy"
+      //"veldisp_zz"
+      //"q"
+      //"s"
+      //"eig_xx"
+      //"eig_xy"
+      //"eig_xz"
+      //"eig_yx"
+      //"eig_yy"
+      //"eig_yz"
+      //"eig_zx"
+      //"eig_zy"
+      //"eig_zz"
+      //"cNFW"
+      //"Krot"
+      //"Ekin"
+      //"Epot"
+      free (buffi);
+      free (buffd);
+      status = H5Gclose (id_group);
+      status = H5Fclose (id_file);
+      offst += mystructs;
     }
-
-    fgets  (longbuffer, NAME_LENGTH, f);
-    fgets  (longbuffer, NAME_LENGTH, f);
-    sscanf (longbuffer, "%d  %d", &mystructs, &dummyi);
-    fgets  (longbuffer, 3000, f);
-
-    for (j = 0; j < mystructs; j++)
+    else
     {
-      fgets (longbuffer, 3000, f);
-      sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
-              %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
-              %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
-              %lf  %lf",                                                                          \
-              &(stf->strctProps[j+offst].ID),            \
-              &(stf->strctProps[j+offst].mbpID),         \
-              &(stf->strctProps[j+offst].DirectHostID),  \
-              &(stf->strctProps[j+offst].HostID),        \
-              &(stf->strctProps[j+offst].NumSubs),       \
-              &(stf->strctProps[j+offst].Type),          \
-              &(stf->strctProps[j+offst].NumPart),       \
-              &dummyd,                                   \
-              &(stf->strctProps[j+offst].Pos[0]),        \
-              &(stf->strctProps[j+offst].Pos[1]),        \
-              &(stf->strctProps[j+offst].Pos[2]),        \
-              &(stf->strctProps[j+offst].mbpPos[0]),     \
-              &(stf->strctProps[j+offst].mbpPos[1]),     \
-              &(stf->strctProps[j+offst].mbpPos[2]),     \
-              &(stf->strctProps[j+offst].Vel[0]),        \
-              &(stf->strctProps[j+offst].Vel[1]),        \
-              &(stf->strctProps[j+offst].Vel[2]),        \
-              &(stf->strctProps[j+offst].mbpVel[0]),     \
-              &(stf->strctProps[j+offst].mbpVel[1]),     \
-              &(stf->strctProps[j+offst].mbpVel[2]),     \
-              &(stf->strctProps[j+offst].TotMass),       \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &(stf->strctProps[j+offst].Efrac),         \
-              &dummyd,                                   \
-              &(stf->strctProps[j+offst].Rsize),         \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &(stf->strctProps[j+offst].RHalfMass),     \
-              &(stf->strctProps[j+offst].Rvmax),         \
-              &(stf->strctProps[j+offst].Vmax),          \
-              &(stf->strctProps[j+offst].Vdisp),         \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &dummyd,                                   \
-              &(stf->strctProps[j+offst].Lambda),        \
-              &(stf->strctProps[j+offst].L[0]),          \
-              &(stf->strctProps[j+offst].L[1]),          \
-              &(stf->strctProps[j+offst].L[2])           \
-            );
+      sprintf (propts_fname, "%s/%s.properties", stf->archive.path, stf->archive.prefix);
+      if ((f = fopen (propts_fname, "r")) == NULL)
+        sprintf (propts_fname, "%s/%s.properties.%d", stf->archive.path, stf->archive.prefix, i);
+      if ((f = fopen (propts_fname, "r")) == NULL)
+      {
+        printf ("ERROR: Cannot open file  %s\n", propts_fname);
+        exit (0);
+      }
+
+      fgets  (longbuffer, NAME_LENGTH, f);
+      fgets  (longbuffer, NAME_LENGTH, f);
+      sscanf (longbuffer, "%d  %d", &mystructs, &dummyi);
+      fgets  (longbuffer, 3000, f);
+
+      for (j = 0; j < mystructs; j++)
+      {
+        fgets (longbuffer, 3000, f);
+        /*
+        sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
+                %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
+                %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
+                %lf  %lf",                                                                          \
+                &(stf->strctProps[j+offst].ID),            \
+                &(stf->strctProps[j+offst].mbpID),         \
+                &(stf->strctProps[j+offst].DirectHostID),  \
+                &(stf->strctProps[j+offst].HostID),        \
+                &(stf->strctProps[j+offst].NumSubs),       \
+                &(stf->strctProps[j+offst].Type),          \
+                &(stf->strctProps[j+offst].NumPart),       \
+        */
+        sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
+                %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
+                %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
+                %lf  %lf",                                                                          \
+                &(stf->strctProps[j+offst].ID),            \
+                &(stf->strctProps[j+offst].mbpID),         \
+                &(stf->strctProps[j+offst].HostID),        \
+                &(stf->strctProps[j+offst].NumSubs),       \
+                &(stf->strctProps[j+offst].NumPart),       \
+                &(stf->strctProps[j+offst].Type),          \
+       //-----------------------------------------------------
+                &dummyd,                                   \
+                &(stf->strctProps[j+offst].Pos[0]),        \
+                &(stf->strctProps[j+offst].Pos[1]),        \
+                &(stf->strctProps[j+offst].Pos[2]),        \
+                &(stf->strctProps[j+offst].mbpPos[0]),     \
+                &(stf->strctProps[j+offst].mbpPos[1]),     \
+                &(stf->strctProps[j+offst].mbpPos[2]),     \
+                &(stf->strctProps[j+offst].Vel[0]),        \
+                &(stf->strctProps[j+offst].Vel[1]),        \
+                &(stf->strctProps[j+offst].Vel[2]),        \
+                &(stf->strctProps[j+offst].mbpVel[0]),     \
+                &(stf->strctProps[j+offst].mbpVel[1]),     \
+                &(stf->strctProps[j+offst].mbpVel[2]),     \
+                &(stf->strctProps[j+offst].TotMass),       \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &(stf->strctProps[j+offst].Efrac),         \
+                &dummyd,                                   \
+                &(stf->strctProps[j+offst].Rsize),         \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &(stf->strctProps[j+offst].RHalfMass),     \
+                &(stf->strctProps[j+offst].Rvmax),         \
+                &(stf->strctProps[j+offst].Vmax),          \
+                &(stf->strctProps[j+offst].Vdisp),         \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &dummyd,                                   \
+                &(stf->strctProps[j+offst].Lambda),        \
+                &(stf->strctProps[j+offst].L[0]),          \
+                &(stf->strctProps[j+offst].L[1]),          \
+                &(stf->strctProps[j+offst].L[2])           \
+              );
+      }
+      offst += mystructs;
+      fclose(f);
     }
-    offst += mystructs;
-    fclose(f);
   }
 }
 
@@ -293,7 +471,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
-//        sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
+    //  sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
         sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
                                   &stf->strctProps[i].MatchMrrts[j]);
       }
@@ -473,6 +651,8 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     exit (0);
   }
   free (files_to_read);
+
+  printf ("HERE\n");
   return;
 }
 
@@ -482,17 +662,62 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
 {
 
   int    i, j, k;
-  FILE * f;
   char   fname  [NAME_LENGTH];
   char   buffer [NAME_LENGTH];
   int    nparts;
+
+  int     * buffi;
+  long    * buffl;
+  float   * bufff;
+  double  * buffd;
+
+  hid_t    id_file;
+  hid_t    id_group;
+  hid_t    id_dataset;
+  hid_t    id_dataspace;
+  hid_t    id_attribute;
+  herr_t   status;
+
+  FILE * f;
 
   stfExtendedOutput * extended;
 
   nparts = 0;
 
   sprintf(fname, "%s/%s.extended.%d", stf->archive.path, stf->archive.prefix, filenum);
-  if ((f = fopen(fname, "r")) != NULL)
+  if ((f = fopen(fname, "r")) == NULL)
+  {
+    printf ("ERROR: Cannot open file  %s\n", fname);
+    exit (0);
+  }
+  fclose (f);
+
+  if (stf->format == STF_HDF5)
+  {
+    id_file  = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+    id_group = H5Gopen (id_file, "/", H5P_DEFAULT);
+    hdf5_get_data (id_group, "Nparts", &nparts,  sizeof(nparts));
+
+    if (nparts > 0)
+    {
+      buffi = (int *) malloc (sizeof(int) * nparts);
+      extended = (stfExtendedOutput *) malloc (nparts * sizeof(stfExtendedOutput));
+      *(xtndd) = extended;
+
+      hdf5_get_data (id_group, "Index", buffi, sizeof(buffi[0]));
+      for (i = 0; i < nparts; i++) extended[i].oIndex = buffi[i];
+
+      hdf5_get_data (id_group, "StructID", buffi, sizeof(buffi[0]));
+      for (i = 0; i < nparts; i++) extended[i].IdStruct = buffi[i];
+
+      free (buffi);
+      status = H5Gclose (id_group);
+      status = H5Fclose (id_file);
+    }
+    else
+      extended = NULL;
+  }
+  else
   {
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
@@ -504,26 +729,14 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
       for (i = 0; i < nparts; i++)
       {
         fgets(buffer, NAME_LENGTH, f);
-
-       // sscanf(buffer, "%d  %d  %d  %d  ",
-       //                &extended[i].oIndex, &extended[i].IdStruct, \
-       //                &extended[i].IdHost, &extended[i].IdIGM);
-
         sscanf(buffer, "%d  %d  ", &extended[i].oIndex, &extended[i].IdStruct);
       }
       *(xtndd) = extended;
     }
     else
       extended = NULL;
-
     fclose (f);
   }
-  else
-  {
-    printf ("Couldn't open file  %s\n", fname);
-    exit (0);
-  }
-
   return nparts;
 }
 

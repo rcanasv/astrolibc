@@ -10,6 +10,7 @@
 
 #include "base.h"
 #include "typedef.h"
+#include "format.h"
 
 
 //
@@ -34,6 +35,7 @@ typedef struct gheader
 } gheader;
 
 
+void gadget_init (Simulation * gdt);
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part);
 void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archive * output);
 

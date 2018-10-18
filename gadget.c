@@ -6,9 +6,235 @@
 
  #include "gadget.h"
 
+void gadget_init (Simulation * gdt)
+{
+  FILE  * fd;
+  int     n, k, pc, pc_new;
+  int     dummy;
+  int     ntot_withmasses;
+  char    hname [4];
+  char    fname [NAME_LENGTH];
+
+  gheader header1;
+
+  pc = 0;
+
+  sprintf (fname, "%s/%s", gdt->archive.path, gdt->archive.prefix);
+  if ((fd = fopen (fname, "r")) == NULL)
+  {
+    sprintf (fname, "%s/%s.0", gdt->archive.path, gdt->archive.prefix);
+    if ((fd = fopen (fname, "r")) == NULL)
+    {
+      printf ("Couldn't open file %s ... Exiting\n", fname);
+      exit (0);
+    }
+  }
+
+
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+    fread(&hname[0], sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+  }
+
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  fread(&header1, sizeof(header1), 1, fd);
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+
+  gdt->npart = 0;
+  for(k = 0; k < 6; k++)
+    gdt->npart += header1.npartTotal[k];
+
+  gdt->Lbox = header1.BoxSize;
+  for (k = 0; k < 6; k++)
+  {
+    gdt->MassTable[k]     = header1.mass[k];
+    gdt->NpartThisFile[k] = header1.npart[k];
+    gdt->NpartTot[k]      = header1.npartTotal[k];
+  }
+  gdt->NfilesPerSnapshot     = header1.num_files;
+  gdt->Cooling               = header1.flag_cooling;
+  gdt->Feedback              = header1.flag_feedback;
+  gdt->SFR                   = header1.flag_sfr;
+  gdt->h                     = header1.HubbleParam;
+  gdt->HubbleParam           = gdt->h * 100.0;
+  gdt->cosmology.HubbleParam = gdt->h * 100.0;
+  gdt->cosmology.OmegaM      = header1.Omega0;
+  gdt->cosmology.OmegaL      = header1.OmegaLambda;
+  gdt->a                     = header1.time;
+  gdt->z                     = header1.redshift;
+
+  fclose (fd);
+  return;
+}
+
 
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
 {
+  FILE  * fd;
+  int     n, k, pc, pc_new;
+  int     NumPart;
+  int     dummy;
+  int     ntot_withmasses;
+  char    fname [NAME_LENGTH];
+  char    hname [4];
+
+  Particle * P;
+  gheader    header1;
+
+  pc = 0;
+
+  //
+  // Open File
+  //
+  sprintf (fname, "%s/%s", gdt->archive.path, gdt->archive.prefix);
+  if ((fd = fopen (fname, "r")) == NULL)
+  {
+    sprintf (fname, "%s/%s.%d", gdt->archive.path, gdt->archive.prefix, filenum);
+    if ((fd = fopen (fname, "r")) == NULL)
+    {
+      printf ("Couldn't open file %s ... Exiting\n", fname);
+      exit (0);
+    }
+  }
+
+  //
+  // Read Header
+  //
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+    fread(&hname[0], sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     //printf ("%d\n", dummy);
+  }
+
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  fread(&header1, sizeof(header1), 1, fd);
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+
+  //
+  // Allocate Memory
+  //
+  // Get total number of particles in THIS file
+  for(k = 0, NumPart = 0; k < 6; k++)
+    NumPart += header1.npart[k];
+
+  // Get total number of particles with mass array in THIS file
+  for(k = 0, ntot_withmasses = 0; k < 6; k++)
+    if(header1.mass[k] == 0)
+      ntot_withmasses += header1.npart[k];
+
+  printf("Allocating memory...");
+  if((*(part) = (Particle *) malloc (NumPart * sizeof(Particle))) == NULL)
+  {
+    fprintf(stderr, "failed to allocate memory.\n");
+    exit(0);
+  }
+  P = *(part);
+  printf("done\n");
+
+
+  //
+  // Read Positions
+  //
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&hname, sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+  }
+
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  for(k = 0, pc_new = pc; k < 6; k++)
+    for(n = 0; n < header1.npart[k]; n++)
+    {
+      fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
+      pc_new++;
+    }
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+
+  //
+  // Read Velocities
+  //
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&hname, sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+  }
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  for(k = 0, pc_new = pc; k < 6; k++)
+    for(n = 0; n < header1.npart[k]; n++)
+    {
+      fread(&P[pc_new].Vel[0], sizeof(float), 3, fd);
+      pc_new++;
+    }
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+
+  //
+  // Read Ids
+  //
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&hname, sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+  }
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  for(k = 0, pc_new = pc; k < 6; k++)
+    for(n = 0; n < header1.npart[k]; n++)
+    {
+      fread(&P[pc_new].Id, sizeof(int), 1, fd);
+      pc_new++;
+    }
+  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+
+  //
+  // Read Masses
+  //
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&hname, sizeof(hname), 1, fd);  //printf ("%s\n", hname);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);  //printf ("%d\n", dummy);
+  }
+  if(ntot_withmasses>0)
+    fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  for(k = 0, pc_new = pc; k < 6; k++)
+  {
+    for(n = 0; n < header1.npart[k]; n++)
+    {
+      P[pc_new].Type = k;
+      if(header1.mass[k] == 0)
+       	fread(&P[pc_new].Mass, sizeof(float), 1, fd);
+      else
+       	P[pc_new].Mass= header1.mass[k];
+      pc_new++;
+    }
+  }
+  if(ntot_withmasses>0)
+    fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
+  //
+  // Need to add here gas and star properties
+  //
+
+  // Close File
+  printf("Successful snapshot reading\n");
+  fclose(fd);
+
   return;
 }
 
@@ -87,8 +313,8 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   fwrite(header, sizeof(gheader), 1, snap_file);
   fwrite(&dummy,  sizeof(dummy),   1, snap_file);
 
-  
-/*
+
+   /*
    for(k = 0; k < 6; k++)
      printf("\tType %i Particles \t%i\n", k, header->npart[k]);
    for(k = 0; k < 6; k++)
@@ -106,7 +332,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
    printf("\tOmegaL              \t%g\n", header->OmegaLambda);
    printf("\tHubbleParam         \t%g\n", header->HubbleParam);
    printf("\tFill bytes          \t%s\n", header->fill);
-*/   
+   */
 
   //!------ Pos
   dummy = 3 * sizeof(float) * NPartTot;
@@ -141,7 +367,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   offset = 0;
   if(dummy != 0)
   {
-//     printf("writing mass block\n");
+   // printf("writing mass block\n");
     fwrite(&dummy, sizeof(dummy), 1, snap_file);
     for(k = 0; k < 6; k++)
     {
@@ -154,7 +380,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
     fwrite(&dummy, sizeof(dummy), 1, snap_file);
   }
 
-//   printf("done writing\n");
+   // printf("done writing\n");
 
   //! free memory
   for(k = 0; k < 6; k++)
