@@ -31,6 +31,10 @@ ifeq ($(MACHINE),pulsar)
 HDF5_INCL   = -I/opt/gcc/5.4.0/zlib/1.2.11/include  -I/opt/gcc/5.4.0/hdf5/1.8.18/include
 HDF5_LIB    = -L/opt/gcc/5.4.0/hdf5/1.8.18/lib  /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5_hl.a /opt/gcc/5.4.0/hdf5/1.8.18/lib/libhdf5.a -L/opt/gcc/5.4.0/zlib/1.2.11/lib
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.18/lib
+
+GSL_INCL    = -I/opt/gsl/gsl-2.3_gcc-5.4.0/include
+GSL_LIB     = -L/opt/gsl/gsl-2.3_gcc-5.4.0/lib
+GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
 ifeq ($(MACHINE),hyades)

@@ -257,7 +257,7 @@ void stf_read_properties (Catalog * stf)
       for (j = 0; j < mystructs; j++)
       {
         fgets (longbuffer, 3000, f);
-        /*
+
         sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
@@ -269,7 +269,8 @@ void stf_read_properties (Catalog * stf)
                 &(stf->strctProps[j+offst].NumSubs),       \
                 &(stf->strctProps[j+offst].Type),          \
                 &(stf->strctProps[j+offst].NumPart),       \
-        */
+
+        /*
         sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
@@ -280,6 +281,7 @@ void stf_read_properties (Catalog * stf)
                 &(stf->strctProps[j+offst].NumSubs),       \
                 &(stf->strctProps[j+offst].NumPart),       \
                 &(stf->strctProps[j+offst].Type),          \
+      */
        //-----------------------------------------------------
                 &dummyd,                                   \
                 &(stf->strctProps[j+offst].Pos[0]),        \
@@ -812,7 +814,11 @@ void stf_catalog_fill_isolated (Catalog * stf)
   for (i = 1; i <= stf->nstruct; i++)
   {
     strct1 = &stf->strctProps[i];
-    strct2 = &stf->strctProps[strct1->HostID];
+
+    if (strct1->HostID > 0)
+      strct2 = &stf->strctProps[strct1->HostID];
+    else
+      strct2 = NULL;
 
     if (strct1->Type > 7)
     {
@@ -832,38 +838,39 @@ void stf_catalog_fill_isolated (Catalog * stf)
         continue;
       }
 
-      //
-      // If first structure save values
-      // largest structure in the IHSC will
-      // be the central
-      //
-      if (strct2->dummyi == 0)
+      if (strct2 != NULL)
       {
-        strct2->dummyd = strct1->TotMass;
-        strct2->dummyi = strct1->ID;
-      }
-
-      //
-      // Determine if galaxy is TRULY isolated
-      //
-      if (strct2->NumSubs == 1)
-         strct1->Isolated = 1;
-      else
-      {
-        if ((strct1->Type == 10) && (strct1->NumSubs == 0))
-          strct1->Looselyint = 1;
+        //
+        // If first structure save values
+        // largest structure in the IHSC will
+        // be the central
+        //
+        if (strct2->dummyi == 0)
+        {
+          strct2->dummyd = strct1->TotMass;
+          strct2->dummyi = strct1->ID;
+        }
+        //
+        // Determine if galaxy is TRULY isolated
+        //
+        if (strct2->NumSubs == 1)
+           strct1->Isolated = 1;
         else
-          strct1->Highlyint = 1;
-      }
-
-      //
-      // If mass is greater than current 'central'
-      // update central
-      //
-      if (strct1->TotMass > strct2->dummyd)
-      {
-        strct2->dummyd = strct1->TotMass;
-        strct2->dummyi = strct1->ID;
+        {
+          if ((strct1->Type == 10) && (strct1->NumSubs == 0))
+            strct1->Looselyint = 1;
+          else
+            strct1->Highlyint = 1;
+        }
+        //
+        // If mass is greater than current 'central'
+        // update central
+        //
+        if (strct1->TotMass > strct2->dummyd)
+        {
+          strct2->dummyd = strct1->TotMass;
+          strct2->dummyi = strct1->ID;
+        }
       }
     }
   }

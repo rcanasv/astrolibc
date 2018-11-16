@@ -166,7 +166,7 @@ int main (int argc, char ** argv)
       for (j = 1; j <= opt.catalog[i].nstruct; j++)
       {
         strct1 = &opt.catalog[i].strctProps[j];
-        if (strct1->Type == 7)
+        if (strct1->Type == 7 && strct1->NumSubs > 0)
         {
 //      NumSubs
 //      iSubs;
