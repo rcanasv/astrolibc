@@ -159,6 +159,10 @@ int main (int argc, char ** argv)
 
   if (opt.iFraction)
   {
+    int  nsat_m09;
+    int  nsat_m10;
+    int  nsat_m11;
+
     for (i = 0; i < opt.nsnap; i++)
     {
       sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
@@ -168,17 +172,35 @@ int main (int argc, char ** argv)
         strct1 = &opt.catalog[i].strctProps[j];
         if (strct1->Type == 7 && strct1->NumSubs > 0)
         {
-//      NumSubs
-//      iSubs;
-//      SubIDs;
+          nsat_m09 = 0;
+          nsat_m10 = 0;
+          nsat_m11 = 0;
+
+          for (k = 1; k < strct1->NumSubs; k++)
+          {
+            strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
+            if (strct3->TotMass >= 1e9  && strct3->TotMass < 1e10)
+              nsat_m09++;
+            if (strct3->TotMass >= 1e10 && strct3->TotMass < 1e11)
+              nsat_m10++;
+            if (strct3->TotMass >= 1e11)
+              nsat_m11++;
+          }
+
           strct2 = &opt.catalog[i].strctProps[strct1->dummyi];
-          fprintf (f, "%e  ", strct1->TotMass);
-          fprintf (f, "%e  ", strct2->TotMass);
-          fprintf (f, "%e  ", strct2->dummyd);
-          fprintf (f, "%5d ", strct1->NumSubs);
-          fprintf (f, "%5d ", strct2->Central);
-          fprintf (f, "%5d ", strct1->ID);
-          fprintf (f, "%5d ", strct2->ID);
+          strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
+          fprintf (f, "%e  ", strct2->dummyd);    // Total Stellar Mass
+          fprintf (f, "%e  ", strct1->TotMass);   // Mass IHSC
+          fprintf (f, "%e  ", strct2->TotMass);   // Mass Central
+          fprintf (f, "%e  ", strct3->TotMass);   // Mass Second most massive Gal
+          fprintf (f, "%5d ", strct1->NumSubs);   // NumSubs
+          fprintf (f, "%5d ", strct2->Central);   // Is Central central?
+          fprintf (f, "%5d ", strct1->ID);        // ID IHSC
+          fprintf (f, "%5d ", strct2->ID);        // ID Central
+          fprintf (f, "%5d ", strct3->ID);        // ID Second most
+          fprintf (f, "%5d ", nsat_m09);          // Num sats 1e9  <= M < 1e10
+          fprintf (f, "%5d ", nsat_m10);          // Num sats 1e10 <= M < 1e11
+          fprintf (f, "%5d ", nsat_m11);          // Num sats 1e11 <= M
           fprintf (f, "\n");
         }
       }

@@ -115,28 +115,34 @@ void Catalog_free (Catalog * ctlg)
 
 void Catalog_fill_SubIDS (Catalog * ctlg)
 {
-  int i, j;
-  int bob;
-  int tmp;
+  int  i;
+  int  j;
+  int  bob;
+  int  tmp;
+
+  Structure * strct;
+  Structure * sorted;
 
   for (i = 1; i <= ctlg->nstruct; i++)
   {
-    if (bob = ctlg->strctProps[i].NumSubs)
+    strct = &ctlg->strctProps[i];
+    if (bob = strct->NumSubs)
     {
-      ctlg->strctProps[i].SubIDs = (int *) malloc (bob * sizeof(int));
-      ctlg->strctProps[i].iSubs = 1;
+      strct->SubIDs = (int *) malloc (bob * sizeof(int));
+      strct->iSubs = 1;
       for (j = 0; j < bob; j++)
-        ctlg->strctProps[i].SubIDs[j] = 0;
+        strct->SubIDs[j] = 0;
     }
-    ctlg->strctProps[i].dummy = 0;
+    strct->dummy = 0;
   }
   //
   // HostIDs
   //
   for (i = 1; i <= ctlg->nstruct; i++)
   {
-    if (ctlg->strctProps[i].HostID != -1 && \
-        ctlg->strctProps[i].HostID != ctlg->strctProps[i].ID)
+    strct = &ctlg->strctProps[i];
+    if (strct->HostID != -1 && \
+        strct->HostID != strct->ID)
     {
       bob = i;
       do
@@ -146,6 +152,26 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
         ctlg->strctProps[bob].SubIDs[tmp] = i;
       }
       while (ctlg->strctProps[bob].HostID != -1);
+    }
+  }
+    
+  //
+  // Now sort by mass
+  //
+  for (i = 1; i <= ctlg->nstruct; i++)
+  {
+    strct = &ctlg->strctProps[i];
+    if (strct->NumSubs)
+    {
+      sorted = (Structure *) malloc (strct->NumSubs*sizeof(Structure));
+      for (j = 0; j < strct->NumSubs; j++)
+        memcpy (&sorted[j], &ctlg->strctProps[strct->SubIDs[j]], sizeof(Structure));
+      qsort (sorted, strct->NumSubs, sizeof(Structure), Structure_mass_compare);
+
+      for (j = 0; j < strct->NumSubs; j++)
+        strct->SubIDs[j] = sorted[j].ID;
+
+      free (sorted);
     }
   }
 }

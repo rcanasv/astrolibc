@@ -68,19 +68,11 @@ int main (int argc, char ** argv)
   //  3.  Get Several structures into a single file
   //  4.  Get everything inside 3DFOF
   //  2.  Get everything inside 6DFOF
-  //
   strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
   for (i = 1; i <= opt.catalog.nstruct; i++)
     strct_to_get[i] = 0;
   strct_to_get[opt.id[0]] = 1;
 
-  /*
-  for (i = 0; i < opt.nstruct; i++)
-  {
-    printf ("%d\n", opt.id[i]);
-    strct_to_get[opt.id[i]] = 1;
-  }
-  */
 
   if ((opt.i3dfof == 1)              || \
       (opt.iallinfof_single ==  1) || \
@@ -100,10 +92,9 @@ int main (int argc, char ** argv)
 
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
-
-
   Particle * P;
-  int        numpart = 0;
+  int numpart = 0;
+
 
 
   if (opt.i3dfof == 1)
@@ -132,6 +123,8 @@ int main (int argc, char ** argv)
     free (P);
   }
 
+
+
   if (opt.iallinfof_single == 1)
   {
     numpart = 0;
@@ -159,6 +152,7 @@ int main (int argc, char ** argv)
       gadget_write_snapshot (P, numpart, &header, &opt.output);
     free (P);
   }
+
 
 
   if (opt.iallinfof_multiple == 1)
