@@ -20,6 +20,9 @@ typedef struct Options
   int            nstruct;
   int            ilist;
   int          * id;
+  int            i3dfof;
+  int            iallinfof_single;
+  int            iallinfof_multiple;
   Archive        list;
   Archive        param;
   Archive        output;
@@ -58,6 +61,7 @@ int main (int argc, char ** argv)
   // 4273503266
   // 3840676851
 
+
   //
   //  1.  Get Individual structure
   //  2.  Get Several structures a file for each one
@@ -65,11 +69,9 @@ int main (int argc, char ** argv)
   //  4.  Get everything inside 3DFOF
   //  2.  Get everything inside 6DFOF
   //
-
   strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
   for (i = 1; i <= opt.catalog.nstruct; i++)
     strct_to_get[i] = 0;
-
   strct_to_get[opt.id[0]] = 1;
 
   /*
@@ -80,61 +82,101 @@ int main (int argc, char ** argv)
   }
   */
 
+  if ((opt.i3dfof == 1)              || \
+      (opt.iallinfof_single ==  1) || \
+      (opt.iallinfof_multiple == 1))
+  {
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+      if (opt.catalog.strctProps[i].HostID == opt.id[0])
+        strct_to_get[i] = 1;
+  }
+
+
   /*
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
   */
 
-  /*
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-    if (opt.catalog.strctProps[i].HostID == opt.id[0])
-      strct_to_get[i] = 1;
-  */
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
+
 
   Particle * P;
   int        numpart = 0;
 
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+
+  if (opt.i3dfof == 1)
   {
-    if (strct_to_get[i] == 1)
-      numpart += opt.catalog.strctProps[i].NumPart;
+    numpart = 0;
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      if (strct_to_get[i] == 1)
+        numpart += opt.catalog.strctProps[i].NumPart;
+    }
+
+    P = (Particle *) malloc (numpart * sizeof(Particle));
+    k = 0;
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      if (strct_to_get[i] == 1)
+      {
+        for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
+        {
+          Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
+          P[k].Type = 1;
+        }
+      }
+    }
+    gadget_write_snapshot (P, numpart, &header, &opt.output);
+    free (P);
   }
 
-  P = (Particle *) malloc (numpart * sizeof(Particle));
-  k = 0;
-
-  for (i = 1; i <= opt.catalog.nstruct; i++)
+  if (opt.iallinfof_single == 1)
   {
-    if (strct_to_get[i] == 1)
+    numpart = 0;
+    for (i = 1; i <= opt.catalog.nstruct; i++)
     {
-      for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
+      if ((strct_to_get[i] == 1) && (i != opt.id[0]))
+        numpart += opt.catalog.strctProps[i].NumPart;
+    }
+
+    P = (Particle *) malloc (numpart * sizeof(Particle));
+    k = 0;
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      if ((strct_to_get[i] == 1) && (i != opt.id[0]))
       {
-        Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
-        P[k].Type = 1;
+        for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
+        {
+          Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
+          P[k].Type = 1;
+        }
+      }
+    }
+
+    for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
+      gadget_write_snapshot (P, numpart, &header, &opt.output);
+    free (P);
+  }
+
+
+  if (opt.iallinfof_multiple == 1)
+  {
+    for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
+    {
+      if (strct_to_get[i] == 1)
+      {
+        strct = &opt.catalog.strctProps[i];
+        for (j = 0; j < strct->NumPart; j++)
+          strct->Part[j].Type = 1;
+        sprintf (opt.output.name, "%s.gdt_%03d", opt.output.prefix, k);
+
+        gadget_write_snapshot (strct->Part, strct->NumPart, &header, &opt.output);
+        k++;
       }
     }
   }
-  gadget_write_snapshot (P, numpart, &header, &opt.output);
-  free (P);
-
-/*
-  for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
-  {
-    if (strct_to_get[i] == 1)
-    {
-      strct = &opt.catalog.strctProps[i];
-      for (j = 0; j < strct->NumPart; j++)
-        strct->Part[j].Type = 1;
-      sprintf (opt.output.name, "%s.gdt_%03d", opt.output.prefix, k);
-
-      gadget_write_snapshot (strct->Part, strct->NumPart, &header, &opt.output);
-      k++;
-    }
-  }
-*/
 
 
   free (strct_to_get);
@@ -193,8 +235,8 @@ void get_structure_params (Options * opt)
   // Close
   fclose (opt->param.file);
 
- if (opt->ilist)
- {
+  if (opt->ilist)
+  {
     opt->list.file = fopen (opt->list.name, "r");
     if (opt->list.file == NULL)
     {
@@ -225,17 +267,20 @@ int get_structure_options (int argc, char ** argv, Options * opt)
   extern int    optopt;
 
   struct option lopts[] = {
-    {"help",    0, NULL, 'h'},
-    {"verbose", 0, NULL, 'v'},
-    {"param",   1, NULL, 'p'},
-    {"id",      2, NULL, 'i'},
-    {"list",    2, NULL, 'l'},
-    {0,         0, NULL, 0}
+    {"help",         0, NULL, 'h'},
+    {"verbose",      0, NULL, 'v'},
+    {"param",        1, NULL, 'p'},
+    {"id",           2, NULL, 'i'},
+    {"list",         2, NULL, 'l'},
+    {"3dfof",        1, NULL, 'f'},
+    {"all-in-fof-s", 1, NULL, 's'},
+    {"all-in-fof-m", 1, NULL, 'm'},
+    {0,              0, NULL,   0}
   };
 
   opt->ilist = 0;
 
-  while ((myopt = getopt_long (argc, argv, "i:p:l:vh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "i:p:l:fsmvh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -254,6 +299,21 @@ int get_structure_options (int argc, char ** argv, Options * opt)
       case 'l':
         opt->ilist = 1;
         strcpy (opt->list.name, optarg);
+        flag++;
+        break;
+
+      case 'f':
+        opt->i3dfof = 1;
+        flag++;
+        break;
+
+      case 's':
+        opt->iallinfof_single = 1;
+        flag++;
+        break;
+
+      case 'm':
+        opt->iallinfof_multiple = 1;
         flag++;
         break;
 
