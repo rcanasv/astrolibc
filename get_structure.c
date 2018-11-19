@@ -71,6 +71,7 @@ int main (int argc, char ** argv)
     strct_to_get[i] = 0;
 
   strct_to_get[opt.id[0]] = 1;
+
   /*
   for (i = 0; i < opt.nstruct; i++)
   {
@@ -103,25 +104,23 @@ int main (int argc, char ** argv)
   }
 
   P = (Particle *) malloc (numpart * sizeof(Particle));
-
   k = 0;
 
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     if (strct_to_get[i] == 1)
+    {
       for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
       {
         Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
         P[k].Type = 1;
       }
+    }
   }
-
   gadget_write_snapshot (P, numpart, &header, &opt.output);
-
   free (P);
 
 /*
-
   for (i = 1, k = 0; i <= opt.catalog.nstruct; i++)
   {
     if (strct_to_get[i] == 1)
