@@ -654,7 +654,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
   }
   free (files_to_read);
 
-  printf ("HERE\n");
   return;
 }
 
@@ -721,6 +720,9 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
   }
   else
   {
+
+    f = fopen(fname, "r");
+
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
     rewind(f);
@@ -739,6 +741,7 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
       extended = NULL;
     fclose (f);
   }
+
   return nparts;
 }
 
