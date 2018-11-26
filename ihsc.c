@@ -159,9 +159,16 @@ int main (int argc, char ** argv)
 
   if (opt.iFraction)
   {
-    int  nsat_m09;
-    int  nsat_m10;
-    int  nsat_m11;
+    int     nsat_m09;
+    int     nsat_m10;
+    int     nsat_m11;
+    int     nsat_f0p001_0p05;
+    int     nsat_f0p05_0p30;
+    int     nsat_f0p30_1p0;
+    double  minsat_f0p001_0p05;
+    double  minsat_f0p05_0p30;
+    double  minsat_f0p30_1p0;
+    double  fmass;
 
     for (i = 0; i < opt.nsnap; i++)
     {
@@ -169,12 +176,19 @@ int main (int argc, char ** argv)
       f = fopen (buffer, "w");
       for (j = 1; j <= opt.catalog[i].nstruct; j++)
       {
-        strct1 = &opt.catalog[i].strctProps[j];
+        strct1 = &opt.catalog[i].strctProps[j];              // IHSC
+        strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
         if (strct1->Type == 7 && strct1->NumSubs > 0)
         {
           nsat_m09 = 0;
           nsat_m10 = 0;
           nsat_m11 = 0;
+          nsat_f0p001_0p05 = 0;
+          nsat_f0p05_0p30  = 0;
+          nsat_f0p30_1p0   = 0;
+          minsat_f0p001_0p05 = 0.0;
+          minsat_f0p05_0p30  = 0.0;
+          minsat_f0p30_1p0   = 0.0;
 
           for (k = 1; k < strct1->NumSubs; k++)
           {
@@ -185,22 +199,44 @@ int main (int argc, char ** argv)
               nsat_m10++;
             if (strct3->TotMass >= 1e11)
               nsat_m11++;
+
+            fmass = strct3->TotMass/strct2->TotMass;
+            if (fmass >= 0.001 && fmass < 0.05)
+            {
+              nsat_f0p001_0p05++;
+              minsat_f0p001_0p05 += strct3->TotMass;
+            }
+            if (fmass >= 0.05 && fmass < 0.3)
+            {
+              nsat_f0p05_0p30++;
+              minsat_f0p05_0p30 += strct3->TotMass;
+            }
+            if (fmass >= 0.3)
+            {
+              nsat_f0p30_1p0++;
+              minsat_f0p30_1p0 += strct3->TotMass;
+            }
           }
 
-          strct2 = &opt.catalog[i].strctProps[strct1->dummyi];
           strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
-          fprintf (f, "%e  ", strct2->dummyd);    // Total Stellar Mass
-          fprintf (f, "%e  ", strct1->TotMass);   // Mass IHSC
-          fprintf (f, "%e  ", strct2->TotMass);   // Mass Central
-          fprintf (f, "%e  ", strct3->TotMass);   // Mass Second most massive Gal
-          fprintf (f, "%5d ", strct1->NumSubs);   // NumSubs
-          fprintf (f, "%5d ", strct2->Central);   // Is Central central?
-          fprintf (f, "%5d ", strct1->ID);        // ID IHSC
-          fprintf (f, "%5d ", strct2->ID);        // ID Central
-          fprintf (f, "%5d ", strct3->ID);        // ID Second most
-          fprintf (f, "%5d ", nsat_m09);          // Num sats 1e9  <= M < 1e10
-          fprintf (f, "%5d ", nsat_m10);          // Num sats 1e10 <= M < 1e11
-          fprintf (f, "%5d ", nsat_m11);          // Num sats 1e11 <= M
+          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
+          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
+          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
+          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
+          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
+          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
+          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
+          fprintf (f, "%5d ", strct2->ID);          // ID Central
+          fprintf (f, "%5d ", strct3->ID);          // ID Second most
+          fprintf (f, "%5d ", nsat_m09);            // Num sats 1e9  <= M < 1e10
+          fprintf (f, "%5d ", nsat_m10);            // Num sats 1e10 <= M < 1e11
+          fprintf (f, "%5d ", nsat_m11);            // Num sats 1e11 <= M
+          fprintf (f, "%5d ", nsat_f0p001_0p05);    // Num sats 0.001  <= f < 0.05
+          fprintf (f, "%5d ", nsat_f0p05_0p30);     // Num sats 0.05   <= f < 0.3
+          fprintf (f, "%5d ", nsat_f0p30_1p0);      // Num sats 0.3    <= f
+          fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
+          fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
+          fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
           fprintf (f, "\n");
         }
       }
