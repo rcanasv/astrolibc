@@ -87,6 +87,8 @@ typedef struct Structure
   double     mbpVel[3];
   double     sigmaPosEval[3];
   double     sigmaVelEval[3];
+  double     j[4];
+  double     sigma;
 
   // Isolation
   char       Isolated;

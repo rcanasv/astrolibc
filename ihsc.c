@@ -76,13 +76,14 @@ int main (int argc, char ** argv)
 
   for (i = 0; i < opt.nsnap; i++)
   {
-    //Simulation_init                 (&opt.simulation[i]);
+    Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-    //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
-
+    if (&opt.simuation[i].format == RAMSES || &opt.simuation[i].format == RAMSES_STAR)
+      ramses_catalog_calculate_star_age (&opt.simulation[i], &opt.catalog[i]);
     if (opt.iTrack)
       if (i < (opt.nsnap - 1))
         stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
@@ -147,6 +148,17 @@ int main (int argc, char ** argv)
   memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
+
+  int * strct_to_get;
+  for (i = 0; i < opt.nsnap; i++)
+  {
+    strct_to_get = (int *) malloc ((opt.catalog[i].nstruct+1) * sizeof(int));
+    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      strct_to_get[j] = 1;
+    Structure_calculate_fmass_radius (&opt.catalog[i], &opt.simulation[i], strct_to_get, 0.50);
+    free (strct_to_get);
+  }
+
   // --------------------------------------------------- //
 
 
@@ -169,6 +181,7 @@ int main (int argc, char ** argv)
     double  minsat_f0p05_0p30;
     double  minsat_f0p30_1p0;
     double  fmass;
+    double  radius;
 
     for (i = 0; i < opt.nsnap; i++)
     {
@@ -218,7 +231,13 @@ int main (int argc, char ** argv)
             }
           }
 
+          radius = 2.0 * strct2->Rx;
+          Structure_calculate_j_r       (strct2, radius);
+          Structure_calculate_sigma_v_r (strct2, radius);
+          Structure_calculate_sfr       (strct2);
+
           strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
+
           fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
           fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
           fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
@@ -237,6 +256,14 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
+          fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
+          fprintf (f, "%e ",  strct2->l[3]);        // j(r)
+          fprintf (f, "%e ",  radius);              // r
+          fprintf (f, "%e ",  strct2->SFR20);       // SFR20
+          fprintf (f, "%e ",  strct2->SFR50);       // SFR50
+          fprintf (f, "%e ",  strct2->SFR100);      // SFR100
+
+
           fprintf (f, "\n");
         }
       }

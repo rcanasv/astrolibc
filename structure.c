@@ -151,7 +151,8 @@ void Structure_get_particle_properties (Catalog * ctlg, Simulation * sim, int * 
 }
 
 
-void Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
+
+void Structure_calculate_fmass_radius (Catalog * ctlg, Simulation * sim, int * strct_to_get, double fraction)
 {
   int     i, j, k;
   double  mtot;
@@ -196,6 +197,90 @@ void Structure_calculate_fmass_radius    (Catalog * ctlg, Simulation * sim, int 
   }
 }
 
+
+void Structure_calculate_j_r (Structure * strct, double radius)
+{
+  int     i;
+  double  mass = 0;
+
+  Particle * P;
+
+  Structure_get_particle_radius (strct);
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    P = &strct->Part[i];
+    if (P->Radius <= radius)
+    {
+      strct->j[0] += P->Mass * (P->Pos[1]*P->Vel[2] - P->Pos[2]*P->Vel[1]);
+      strct->j[1] += P->Mass * (P->Pos[2]*P->Vel[0] - P->Pos[0]*P->Vel[2]);
+      strct->j[2] += P->Mass * (P->Pos[0]*P->Vel[1] - P->Pos[1]*P->Vel[0]);
+      mass += P->Mass;
+    }
+  }
+
+  strct->j[0] /= mass;
+  strct->j[1] /= mass;
+  strct->j[2] /= mass;
+
+  strct->j[4] = sqrt(j[0]*j[0] + j[1]*j[1] + j[2]*j[2]);
+}
+
+
+void Structure_calculate_sigma_v_r (Structure * strct, double radius)
+{
+  int     i;
+  double  mass   = 0;
+  double  sigmax = 0;
+  double  sigmay = 0;
+  double  sigmaz = 0;
+
+  Particle * P;
+
+  Structure_get_particle_radius (strct);
+  for (i = 0; i < strct->NumPart; i++)
+  {
+    P = &strct->Part[i];
+    if (P->Radius <= radius)
+    {
+      sigmax += P->Mass * P->Vel[0];
+      sigmay += P->Mass * P->Vel[1];
+      sigmaz += P->Mass * P->Vel[2];
+      mass   += P->Mass;
+    }
+  }
+
+  sigmax /= mass;
+  sigmay /= mass;
+  sigmaz /= mass;
+
+  strct->sigma = sqrt(sigmax*sigmax + sigmay*sigmay + sigmaz*sigmaz);
+}
+
+
+void Structure_calculate_sfr (Structure * strct)
+{
+  if (strct->Type > 7)
+  {
+    strct->SFR20  = 0;
+    strct->SFR50  = 0;
+    strct->SFR100 = 0;
+    for (k = 0; k < strct->NumPart; k++)
+    {
+      if ((strct->Part[k].Age > 0.0))// && (strct->Part[k].Radius < opt.Rlim))
+      {
+        if (strct->Part[k].Age <  20e6)   strct->SFR20  += strct->Part[k].Mass;
+        if (strct->Part[k].Age <  50e6)   strct->SFR50  += strct->Part[k].Mass;
+        if (strct->Part[k].Age < 100e6)   strct->SFR100 += strct->Part[k].Mass;
+      }
+    }
+    //
+    // SFR in  Msun / yr
+    //
+    strct->SFR20  /=  20e6;
+    strct->SFR50  /=  50e6;
+    strct->SFR100 /= 100e6;
+  }
+}
 
 void Structure_calculate_surface_density (Structure * strct, double * rotation, double ledge, double redge, int nbins, double ** bins, double ** Sigma)
 {
