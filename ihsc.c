@@ -49,12 +49,14 @@ int main (int argc, char ** argv)
   Structure   * strct2;
   Structure   * strct3;
   Structure   * sorted;
-  double        fihsc;
-  double        mstot;
-  double        mass_min;
-  double        mass_max;
-  double        frac_min;
-  double        frac_max;
+  Structure     tmpstrct;
+  int           numpart;
+  int        ** strct_to_get;
+  Particle    * P;
+  gheader       header;
+  double        fihsc, mstot;
+  double        mass_min, mass_max;
+  double        frac_min, frac_max;
   int           top;
 
   test_options (argc, argv, &opt);
@@ -82,7 +84,7 @@ int main (int argc, char ** argv)
     Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
-    if (&opt.simuation[i].format == RAMSES || &opt.simuation[i].format == RAMSES_STAR)
+    if (opt.simulation[i].format == RAMSES || opt.simulation[i].format == RAMSES_STAR)
       ramses_catalog_calculate_star_age (&opt.simulation[i], &opt.catalog[i]);
     if (opt.iTrack)
       if (i < (opt.nsnap - 1))
@@ -149,14 +151,14 @@ int main (int argc, char ** argv)
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
 
-  int * strct_to_get;
+  int * strct2get;
   for (i = 0; i < opt.nsnap; i++)
   {
-    strct_to_get = (int *) malloc ((opt.catalog[i].nstruct+1) * sizeof(int));
+    strct2get = (int *) malloc ((opt.catalog[i].nstruct+1) * sizeof(int));
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
-      strct_to_get[j] = 1;
-    Structure_calculate_fmass_radius (&opt.catalog[i], &opt.simulation[i], strct_to_get, 0.50);
-    free (strct_to_get);
+      strct2get[j] = 1;
+    Structure_calculate_fmass_radius (&opt.catalog[i], &opt.simulation[i], strct2get, 0.50);
+    free (strct2get);
   }
 
   // --------------------------------------------------- //
@@ -257,13 +259,11 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
           fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
-          fprintf (f, "%e ",  strct2->l[3]);        // j(r)
+          fprintf (f, "%e ",  strct2->j[3]);        // j(r)
           fprintf (f, "%e ",  radius);              // r
           fprintf (f, "%e ",  strct2->SFR20);       // SFR20
           fprintf (f, "%e ",  strct2->SFR50);       // SFR50
           fprintf (f, "%e ",  strct2->SFR100);      // SFR100
-
-
           fprintf (f, "\n");
         }
       }
@@ -433,12 +433,6 @@ int main (int argc, char ** argv)
   //
   // Write snapshots for visualization
   //
-  int          numpart;
-  int       ** strct_to_get;
-  Particle   * P;
-  gheader      header;
-  Structure    tmpstrct;
-
   if (opt.iExtract)
   {
     strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));

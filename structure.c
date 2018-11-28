@@ -222,7 +222,9 @@ void Structure_calculate_j_r (Structure * strct, double radius)
   strct->j[1] /= mass;
   strct->j[2] /= mass;
 
-  strct->j[4] = sqrt(j[0]*j[0] + j[1]*j[1] + j[2]*j[2]);
+  strct->j[4] = sqrt(strct->j[0]*strct->j[0] + \
+                     strct->j[1]*strct->j[1] + \
+                     strct->j[2]*strct->j[2]);
 }
 
 
@@ -259,6 +261,8 @@ void Structure_calculate_sigma_v_r (Structure * strct, double radius)
 
 void Structure_calculate_sfr (Structure * strct)
 {
+  int k;
+  
   if (strct->Type > 7)
   {
     strct->SFR20  = 0;
