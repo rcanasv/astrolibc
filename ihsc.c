@@ -81,11 +81,9 @@ int main (int argc, char ** argv)
     Simulation_init                 (&opt.simulation[i]);
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-    Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
-    if (opt.simulation[i].format == RAMSES || opt.simulation[i].format == RAMSES_STAR)
-      ramses_catalog_calculate_star_age (&opt.simulation[i], &opt.catalog[i]);
     if (opt.iTrack)
       if (i < (opt.nsnap - 1))
         stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
@@ -146,20 +144,31 @@ int main (int argc, char ** argv)
     }
   }
 
-  sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
-  memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
-  qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
+  //sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
+  //memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
+  //qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
 
+  
   int * strct2get;
   for (i = 0; i < opt.nsnap; i++)
   {
     strct2get = (int *) malloc ((opt.catalog[i].nstruct+1) * sizeof(int));
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
-      strct2get[j] = 1;
+    {
+      strct1 = &opt.catalog[i].strctProps[j];
+      if (strct1->Central == 1)
+        strct2get[j] = 1;
+      else
+        strct2get[j] = 0;
+    }
+    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct2get);
     Structure_calculate_fmass_radius (&opt.catalog[i], &opt.simulation[i], strct2get, 0.50);
+    if (opt.simulation[i].format == RAMSES || opt.simulation[i].format == RAMSES_STAR)
+      ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct2get);
     free (strct2get);
   }
+   
 
   // --------------------------------------------------- //
 
@@ -233,10 +242,12 @@ int main (int argc, char ** argv)
             }
           }
 
+          
           radius = 2.0 * strct2->Rx;
           Structure_calculate_j_r       (strct2, radius);
           Structure_calculate_sigma_v_r (strct2, radius);
           Structure_calculate_sfr       (strct2);
+          
 
           strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
 
@@ -258,12 +269,14 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
+          
           fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
           fprintf (f, "%e ",  strct2->j[3]);        // j(r)
           fprintf (f, "%e ",  radius);              // r
           fprintf (f, "%e ",  strct2->SFR20);       // SFR20
           fprintf (f, "%e ",  strct2->SFR50);       // SFR50
           fprintf (f, "%e ",  strct2->SFR100);      // SFR100
+          
           fprintf (f, "\n");
         }
       }

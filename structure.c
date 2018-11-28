@@ -206,6 +206,11 @@ void Structure_calculate_j_r (Structure * strct, double radius)
   Particle * P;
 
   Structure_get_particle_radius (strct);
+
+  strct->j[0] = 0.0;
+  strct->j[1] = 0.0;
+  strct->j[2] = 0.0;
+
   for (i = 0; i < strct->NumPart; i++)
   {
     P = &strct->Part[i];
@@ -222,7 +227,7 @@ void Structure_calculate_j_r (Structure * strct, double radius)
   strct->j[1] /= mass;
   strct->j[2] /= mass;
 
-  strct->j[4] = sqrt(strct->j[0]*strct->j[0] + \
+  strct->j[3] = sqrt(strct->j[0]*strct->j[0] + \
                      strct->j[1]*strct->j[1] + \
                      strct->j[2]*strct->j[2]);
 }

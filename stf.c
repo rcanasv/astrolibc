@@ -608,6 +608,9 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     }
   }
 
+  printf ("Memory allocated for particles\n");
+
+
   //
   //  Load particles to structures
   //
