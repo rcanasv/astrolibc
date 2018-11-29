@@ -249,9 +249,9 @@ void Structure_calculate_sigma_v_r (Structure * strct, double radius)
     P = &strct->Part[i];
     if (P->Radius <= radius)
     {
-      sigmax += P->Mass * P->Vel[0];
-      sigmay += P->Mass * P->Vel[1];
-      sigmaz += P->Mass * P->Vel[2];
+      sigmax += P->Mass * (P->Vel[0]*P->Vel[0]);
+      sigmay += P->Mass * (P->Vel[1]*P->Vel[1]);
+      sigmaz += P->Mass * (P->Vel[2]*P->Vel[2]);
       mass   += P->Mass;
     }
   }
@@ -267,7 +267,7 @@ void Structure_calculate_sigma_v_r (Structure * strct, double radius)
 void Structure_calculate_sfr (Structure * strct)
 {
   int k;
-  
+
   if (strct->Type > 7)
   {
     strct->SFR20  = 0;
