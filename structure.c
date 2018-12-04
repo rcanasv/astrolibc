@@ -260,7 +260,7 @@ void Structure_calculate_sigma_v_r (Structure * strct, double radius)
   sigmay /= mass;
   sigmaz /= mass;
 
-  strct->sigma = sqrt(sigmax*sigmax + sigmay*sigmay + sigmaz*sigmaz);
+  strct->sigma = sqrt(sigmax + sigmay + sigmaz);
 }
 
 
