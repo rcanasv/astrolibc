@@ -149,7 +149,7 @@ int main (int argc, char ** argv)
   //qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
 
-  
+
   int * strct2get;
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -168,7 +168,7 @@ int main (int argc, char ** argv)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct2get);
     free (strct2get);
   }
-   
+
 
   // --------------------------------------------------- //
 
@@ -193,6 +193,10 @@ int main (int argc, char ** argv)
     double  minsat_f0p30_1p0;
     double  fmass;
     double  radius;
+    double  minsat_m08;
+    double  minsat_m09;
+    double  minsat_m10;
+    double  minsat_m11;
 
     for (i = 0; i < opt.nsnap; i++)
     {
@@ -213,10 +217,24 @@ int main (int argc, char ** argv)
           minsat_f0p001_0p05 = 0.0;
           minsat_f0p05_0p30  = 0.0;
           minsat_f0p30_1p0   = 0.0;
+          minsat_m08 = 0.0;
+          minsat_m09 = 0.0;
+          minsat_m10 = 0.0;
+          minsat_m11 = 0.0;
 
           for (k = 1; k < strct1->NumSubs; k++)
           {
             strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
+
+            if (strct3->TotMass >= 1e8)
+              minsat_m08 += strct3->TotMass;
+            if (strct3->TotMass >= 1e9)
+              minsat_m09 += strct3->TotMass;
+            if (strct3->TotMass >= 1e10)
+              minsat_m10 += strct3->TotMass;
+            if (strct3->TotMass >= 1e11)
+              minsat_m11 += strct3->TotMass;
+
             if (strct3->TotMass >= 1e9  && strct3->TotMass < 1e10)
               nsat_m09++;
             if (strct3->TotMass >= 1e10 && strct3->TotMass < 1e11)
@@ -242,12 +260,11 @@ int main (int argc, char ** argv)
             }
           }
 
-          
           radius = 2.0 * strct2->Rx;
           Structure_calculate_j_r       (strct2, radius);
           Structure_calculate_sigma_v_r (strct2, radius);
           Structure_calculate_sfr       (strct2);
-          
+
 
           strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
 
@@ -269,14 +286,19 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
-          
+
           fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
           fprintf (f, "%e ",  strct2->j[3]);        // j(r)
           fprintf (f, "%e ",  radius);              // r
           fprintf (f, "%e ",  strct2->SFR20);       // SFR20
           fprintf (f, "%e ",  strct2->SFR50);       // SFR50
           fprintf (f, "%e ",  strct2->SFR100);      // SFR100
-          
+
+          fprintf (f, "%e ", minsat_m08);            // Mass in sats M > 1e8
+          fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
+          fprintf (f, "%e ", minsat_m10);            // Mass in sats M > 1e10
+          fprintf (f, "%e ", minsat_m11);            // Mass in sats M > 1e11
+
           fprintf (f, "\n");
         }
       }
