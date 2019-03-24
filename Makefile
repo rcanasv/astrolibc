@@ -14,6 +14,10 @@ ifeq ($(MACHINE),raijin)
 HDF5_INCL   = -I/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/include
 HDF5_LIB    = -L/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib  /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5_hl.a /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5.a
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,//home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib
+
+GSL_INCL    = -I//apps/gsl/2.3/include
+GSL_LIB     = -L/apps/gsl/2.3/lib
+GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
 ifeq ($(MACHINE),icrar)
@@ -46,7 +50,7 @@ endif
 
 INC         = $(HDF5_INCL) $(GSL_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB)
-FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
+FLAGS       = -lm  $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c

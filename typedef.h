@@ -33,9 +33,9 @@ typedef struct Cosmology
 
 typedef struct Particle
 {
-  float       Pos[3];
-  float       Vel[3];
-  float       Mass;
+  double      Pos[3];
+  double      Vel[3];
+  double      Mass;
   int         Id;
   int         Level;
   float       Age;

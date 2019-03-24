@@ -335,18 +335,18 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
    */
 
   //!------ Pos
-  dummy = 3 * sizeof(float) * NPartTot;
+  dummy = 3 * sizeof(P[0].Pos[0]) * NPartTot;
   fwrite(&dummy, sizeof(int), 1, snap_file);
   for (k = 0; k < 6; k++)
     for(n = 0; n < id_ref[k]; n++)
-      fwrite(&P[ids[k][n]].Pos[0], sizeof(float), 3, snap_file);
+      fwrite(&P[ids[k][n]].Pos[0], sizeof(P[0].Pos[0]), 3, snap_file);
   fwrite(&dummy, sizeof(int), 1, snap_file);
 
   //!------ Vel
   fwrite(&dummy, sizeof(int), 1, snap_file);
   for(k = 0; k < 6; k++)
     for (n = 0; n < id_ref[k]; n++)
-      fwrite(&P[ids[k][n]].Vel[0], sizeof(float), 3, snap_file);
+      fwrite(&P[ids[k][n]].Vel[0], sizeof(P[0].Vel[0]), 3, snap_file);
   fwrite(&dummy, sizeof(int), 1, snap_file);
 
   //!------- ID
@@ -362,7 +362,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   for(k = 0; k < 6; k++)
     if((header->mass[k] == 0) && (header->npart[k] > 0))
       dummy += header->npart[k];
-  dummy *= sizeof(float);
+  dummy *= sizeof(P[0].Mass);
 
   offset = 0;
   if(dummy != 0)
@@ -374,7 +374,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
       if((header->npart[k] > 0) && (header->mass[k] == 0))
       {
         for(n = 0; n < id_ref[k]; n++)
-          fwrite(&P[ids[k][n]].Mass, sizeof(float), 1, snap_file);
+          fwrite(&P[ids[k][n]].Mass, sizeof(P[0].Mass), 1, snap_file);
       }
     }
     fwrite(&dummy, sizeof(dummy), 1, snap_file);
