@@ -59,6 +59,9 @@ analyze_galaxy_catalog: analyze_galaxy_catalog.c
 ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
 		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/ctlgMatch $(FLAGS)
 
+find: find.c archive.c catalog.c stf.c gadget.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
+		$(CC) $(INC) $(LIB) find.c archive.c catalog.c stf.c gadget.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/find $(FLAGS)
+
 convert: convert.c archive.c catalog.c stf.c halomaker.c
 		gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
 
