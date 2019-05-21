@@ -209,5 +209,44 @@ typedef struct Simulation
   char       RunLabel      [NAME_LENGTH];
 } Simulation;
 
+// Specifically for RAMSES
+//
+// May also be aplicable for nonRamses AMR codes
+// no need to change this for the moment
+//
+typedef struct
+{
+  int     myIndex;
+  int     nextIndex;
+  int     prevIndex;
+  double  Pos       [3];
+  int     fatherIndex;
+  int     nborIndex [6];
+  int     sonIndex  [8];
+  int     cpuMap    [8];
+  int     refMap    [8];
+  double  octRho    [8];
+  double  octPos    [8][3];
+  int     octIsRef  [8];
+} Cell;
+
+typedef struct
+{
+  Cell * cell;
+  int    num;
+} Level;
+
+typedef struct
+{
+  int     alloc_ngrid;
+  int     alloc_level;
+  int     nlevelmax;
+  int     ncpu;
+  int  ** ngrid;
+  Level * level;
+} Grid;
+
+
+
 
 #endif    /*  TYPEDEF_H  */

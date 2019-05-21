@@ -9,6 +9,382 @@
 #include "ramses.h"
 
 
+void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
+{
+  FILE  * f;
+  int     ncpu;
+  int     ndim;
+  int     nvarh;
+  int     nlevelmax;
+  int     ngridmax;
+  int     nboundary;
+  int     i, n, j, k;
+  int     dummy;
+  int     dummyi;
+  double  dummyd;
+  double  gamma;
+  int     twondim, twotondim;
+
+  char    fname    [NAME_LENGTH];
+  char    dummys   [NAME_LENGTH];
+  char    buffer   [NAME_LENGTH];
+  char    ordering [NAME_LENGTH];
+
+  if (!(grid->alloc_ngrid && grid->alloc_level))
+  {
+    printf ("Can't read hydro without amr data\n");
+    printf ("Load amr data first\n");
+    printf ("Exiting\n");
+    exit (0);
+  }
+
+  sprintf (fname, "%s/hydro_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+
+  RMSSSKIP  fread(&ncpu,  sizeof(int), 1, f);   RMSSSKIP   // ncpu
+  RMSSSKIP  fread(&nvarh, sizeof(int), 1, f);   RMSSSKIP   // nvarh
+  RMSSSKIP  fread(&ndim,  sizeof(int), 1, f);   RMSSSKIP   // ndim
+
+  twondim   = 2 * ndim;
+  twotondim = (int) pow (2, ndim);
+
+  RMSSSKIP  fread(&nlevelmax, sizeof(int),    1, f);   RMSSSKIP   // nlevelmax
+  RMSSSKIP  fread(&nboundary, sizeof(int),    1, f);   RMSSSKIP   // nboundary
+  RMSSSKIP  fread(&gamma,     sizeof(double), 1, f);   RMSSSKIP   // gamma
+
+  for (i = 0; i < nlevelmax; i++)
+  {
+    for (j = 0; j < ncpu; j++)
+    {
+      // Level
+      RMSSSKIP
+      fread (&tmplvl, sizeof(int), 1, f);
+      RMSSSKIP
+
+      // Ngrids
+      RMSSSKIP
+      fread (&tmpng, sizeof(int), 1, f);
+      RMSSSKIP
+
+      if (j != filenum)
+      {
+        if (tmpng > 0)
+        {
+          for (k = 0; k < twotondim; k++)
+          {
+            for (l = 0; l < nvarh; l++)
+            {
+              RMSSSKIP
+              fseek (f, bsize, SEEK_CUR);
+              RMSSSKIP
+            }
+          }
+        }
+      }
+      else
+      {
+        if (tmpng > 0)
+        {
+          if (tmpng != grid->ngrid[i][filenum])
+          {
+            printf ("ngrid doesn't match, aborting\n");
+            exit (0);
+          }
+          else
+            printf ("reading hydro  cpu  %d  -  %d grids\n", filenum, tmpng);
+
+          for (k = 0; k < twotondim; k++)
+          {
+            // Compute oct center
+            for (n = 0; n < tmpng; n++)
+            {
+              grid->level[i].cell[n].octPos[k][0] = grid->level[n].cell[l].Pos[0] + xc[k][0];
+              grid->level[i].cell[n].octPos[k][1] = grid->level[n].cell[l].Pos[0] + xc[k][1];
+              grid->level[i].cell[n].octPos[k][2] = grid->level[n].cell[l].Pos[0] + xc[k][2];
+            }
+
+            // Check if cell is refined
+            for (n = 0; n < tmpng; n++)
+              grid->level[i].cell[n].octIsRef[k] = ((grid->level[i].cell[n].sonIndex > 0) && (i < levelmax-1));
+
+            for (l = 0; l < nvarh; l++)
+            {
+              //
+              // Only read density for the moment
+              // Skipping the rest of the properties
+              //
+              RMSSSKIP
+              if (l == 0)
+                for (n = 0; n < tmpng; n++)
+                  fread (&grid->level[i].cell[n].octRho[k], sizeof(double), 1, f);
+              else
+                fseek (f, bsize, SEEK_CUR);
+              RMSSSKIP
+            }
+          } // k loop
+        } // if tmpng > 0
+      } // else - Actually reading stuff
+    } // cpus loop
+  } // nlevelmax loop
+}
+
+
+
+
+void ramses_amr_init (Grid * grid)
+{
+  grid->alloc_ngrid = 0;
+  grid->alloc_level = 0;
+  grid->level = NULL;
+  grid->ngrid = NULL;
+}
+
+
+void ramses_amr_free (Grid * grid)
+{
+  if (grid->alloc_level)
+  {
+    for (k = 0; k < grid->nlevelmax; k++)
+      if (grid->level[k].num)
+        free (grid->level[k].cell)
+    free (grid->level);
+  }
+
+  if (grid->alloc_ngrid)
+  {
+    for (k = 0; k < grid->nlevelmax; k++)
+      free (grid->ngrid[k])
+    free (grid->ngrid);
+  }
+}
+
+
+void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
+{
+  if (grid->alloc_level || grid->alloc_ngrid)
+    return;
+
+  FILE  * f;
+  int     mycpu;
+  int     bsize;
+  int     ncpu;
+  int     ndim;
+  int     nx [3];
+  int     nlevelmax;
+  int     ngridmax;
+  int     nboundary;
+  int     ngrid_current;
+  double  boxlen;
+  int     i, n, j, k;
+  int     dummy;
+  int     dummyi;
+  double  dummyd;
+  char    name[100];
+  int     twondim, twotondim;
+
+  char    fname    [NAME_LENGTH];
+  char    dummys   [NAME_LENGTH];
+  char    buffer   [NAME_LENGTH];
+  char    ordering [NAME_LENGTH];
+
+  sprintf (fname, "%s/amr_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
+  if ((f = fopen (fname, "r")) == NULL)
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+
+  RMSSSKIP   fread (&ncpu,  sizeof(int), 1, f);   RMSSSKIP  // ncpu
+  RMSSSKIP   fread (&ndim,  sizeof(int), 1, f);   RMSSSKIP  // ndim
+
+  twondim   = 2 * ndim;
+  twotondim = (int) pow (2, ndim);
+
+  RMSSSKIP   fread (&nx,            sizeof(nx),     1, f);   RMSSSKIP  // nx, ny, nz
+  RMSSSKIP   fread (&nlevelmax,     sizeof(int),    1, f);   RMSSSKIP  // nlevelmax
+  RMSSSKIP   fread (&ngridmax,      sizeof(int),    1, f);   RMSSSKIP  // ngridmax
+  RMSSSKIP   fread (&nboundary,     sizeof(int),    1, f);   RMSSSKIP  // nboundary
+  RMSSSKIP   fread (&ngrid_current, sizeof(int),    1, f);   RMSSSKIP  // ngrid_current
+  RMSSSKIP   fread (&boxlen,        sizeof(double), 1, f);   RMSSSKIP  // boxlen
+  RMSSSKIP   fread (&nx,            sizeof(nx),     1, f);   RMSSSKIP  // noutput, iout, ifout
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // tout
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // aout
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // t
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // dtold
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // dtnew
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // nstep, nstep_coarse
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // einit, mass_tot_0, rho_tot
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // omega_m, omega_l, omega_k, omega_b, h0, aexp_ini, boxlen_ini
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // aexp, hexp, aexp_old, epot_tot_init, epot_tot_old
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // mass_sph
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // headl Nproc x Nlevel  array
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);                     RMSSSKIP  // taill Nproc x Nlevel  array
+
+  // Allocate memory
+  grid->ncpu      = ncpu;
+  grid->nlevelmax = nlevelmax;
+  grid->ngrid     = (int **) malloc (nlevelmax * (sizeof(int *)));
+  for (k = 0; k < nlevelmax; k++)
+    grid->ngrid[k] = (int *) malloc ((ncpu+nboundary) * sizeof(int));
+  grid->alloc_ngrid = 1;
+
+  // Numbl
+  RMSSSKIP
+  for (k = 0; k < nlevelmax; k++)
+    for (j = 0; j < ncpu; j++)
+      fread (&grid->ngrid[k][j], sizeof(int), 1, f);
+  RMSSSKIP
+
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP  // numbtot
+
+  if (nboundary > 0)
+  {
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP  // headb
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP  // tailb
+    // numb
+    RMSSSKIP
+    for (k = 0; k < nlevelmax; k++)
+      for (j = ncpu; j < nboundary; j++)
+        fread (&grid->ngrid[k][j], sizeof(int), 1, f);
+    RMSSSKIP
+  }
+
+  // Free memory
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP    // headf, tailf, numb, used_mem, used_mem_tot
+
+  // Cpu boundaries
+  //
+  // Ordering
+  //
+  RMSSSKIP   fread (&ordering, dummy, 1, f);   RMSSSKIP
+  if (!strncmp("bisection", ordering, 9))
+  {
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP
+  }
+  else
+  {
+    RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP  // Indices as info.txt
+  }
+
+  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level son
+  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level flag1
+  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level cpu_map
+
+  // Skip for cells that this cpu is not reading
+  int toskip = 3 + ndim + 1 + twondim + 3*twotondim;
+
+  // Allocate memory
+  grid->level = (Level *) malloc (grid->nlevelmax * sizeof(Level));
+  for (k = 0; k < grid->nlevelmax; k++)
+  {
+    grid->level[k].num = grid->ngrid[k][filenum];
+    if (grid->level[k].num)
+      grid->level[k].cell = (Cell *) malloc (grid->level[k].num * sizeof(Cell));
+  }
+  grid->alloc_level = 1;
+
+  // Load data
+  for (k = 0; k < grid->nlevelmax; k++)
+  {
+    for (j = 0; j < grid->ncpu; j++)
+    {
+      // If not cpu skip
+      if (j != filenum)
+      {
+        for (n = 0; n < toskip; n++)
+        {
+          RMSSSKIP
+          fseek (f, dummy, SEEK_CUR);
+          RMSSSKIP
+        }
+      }
+      else
+      {
+        // Grid Index
+        RMSSSKIP
+        for (n = 0; n < grid->level[k].num; n++)
+          fread (&grid->level[k].grid[n].myIndex, sizeof(int), 1, f);
+        RMSSSKIP
+
+        // Next Index
+        RMSSSKIP
+        for (n = 0; n < grid->level[k].num; n++)
+          fread (&grid->level[k].grid[n].nextIndex, sizeof(int), 1, f);
+        RMSSSKIP
+
+        // Prev Index
+        RMSSSKIP
+        for (n = 0; n < grid->level[k].num; n++)
+          fread (&grid->level[k].grid[n].prevIndex, sizeof(int), 1, f);
+        RMSSSKIP
+
+        // Grid Position
+        for (i = 0; i < ndim; i++)
+        {
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].grid[n].Pos[i], sizeof(int), 1, f);
+          RMSSSKIP
+        }
+
+        // Father Index
+        RMSSSKIP
+        for (n = 0; n < grid->level[k].num; n++)
+          fread (&grid->level[k].grid[n].fatherIndex, sizeof(int), 1, f);
+        RMSSSKIP
+
+        // Neighbour
+        for (i = 0; i < twondim; i++)
+        {
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].grid[n].nborIndex[i], sizeof(int), 1, f);
+          RMSSSKIP
+        }
+
+        // Son
+        for (i = 0; i < twotondim; i++)
+        {
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].grid[n].sonIndex[i], sizeof(int), 1, f);
+          RMSSSKIP
+        }
+
+        // Cpu map
+        for (i = 0; i < twotondim; i++)
+        {
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].grid[n].cpuMap[i], sizeof(int), 1, f);
+          RMSSSKIP
+        }
+
+        // Ref Map
+        for (i = 0; i < twotondim; i++)
+        {
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].grid[n].refMap[i], sizeof(int), 1, f);
+          RMSSSKIP
+        }
+      }
+    }
+  }
+
+  fclose (f);
+}
+
+
+
 void ramses_init (Simulation * ramses)
 {
   int     i;
@@ -427,10 +803,10 @@ void  ramses_structure_calculate_star_age (Simulation * ramses, Catalog * ctlg, 
             k = 1;
             while (tau_frw[k] > strct->Part[j].Age  && k < n_frw)
               k++;
-  
+
             t = t_frw[k]   * (strct->Part[j].Age - tau_frw[k-1]) / (tau_frw[k]   - tau_frw[k-1]) + \
                 t_frw[k-1] * (strct->Part[j].Age - tau_frw[k])   / (tau_frw[k-1] - tau_frw[k]);
-  
+
            // Age in years
             strct->Part[j].Age = (time_simu - t) / (ramses->cosmology.HubbleParam*1e5/3.08e24) / (365*24*3600.0);
           }
