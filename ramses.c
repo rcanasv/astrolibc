@@ -24,6 +24,9 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
   double  dummyd;
   double  gamma;
   int     twondim, twotondim;
+  double  xc[8][3];
+  int     ix, iy, iz;
+  double  dx;
 
   char    fname    [NAME_LENGTH];
   char    dummys   [NAME_LENGTH];
@@ -58,6 +61,19 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
 
   for (i = 0; i < nlevelmax; i++)
   {
+    // Geometry
+    dx = pow(0.5,i);
+    for (j = 0; j < twotondim; j++)
+    {
+      iz = (j-1) / 4;
+      iy = (j-1 -4*iz) / 2;
+      ix = (j-1 -4*iz -2*iy);
+      xc[j][0] = (double(ix) - 0.5)*dx;
+      xc[j][1] = (double(iy) - 0.5)*dx;
+      xc[j][2] = (double(iz) - 0.5)*dx;
+    }
+
+    // Loop over cpus
     for (j = 0; j < ncpu; j++)
     {
       // Level
@@ -97,6 +113,8 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
           else
             printf ("reading hydro  cpu  %d  -  %d grids\n", filenum, tmpng);
 
+          grid->level[i].cell[n].dx = dx;
+
           for (k = 0; k < twotondim; k++)
           {
             // Compute oct center
@@ -109,7 +127,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
 
             // Check if cell is refined
             for (n = 0; n < tmpng; n++)
-              grid->level[i].cell[n].octIsRef[k] = ((grid->level[i].cell[n].sonIndex > 0) && (i < levelmax-1));
+              grid->level[i].cell[n].okOct[k] = (!((grid->level[i].cell[n].sonIndex > 0) && (i < levelmax-1)));
 
             for (l = 0; l < nvarh; l++)
             {

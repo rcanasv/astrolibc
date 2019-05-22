@@ -227,7 +227,8 @@ typedef struct
   int     refMap    [8];
   double  octRho    [8];
   double  octPos    [8][3];
-  int     octIsRef  [8];
+  double  dx;
+  int     okOct     [8];
 } Cell;
 
 typedef struct
