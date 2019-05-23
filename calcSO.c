@@ -17,7 +17,8 @@
 typedef struct Options
 {
   int            iVerbose;
-  int            iFraction;
+  int            iExtract;
+  int            iSO;
   int            nsnap;
   Archive        param;
   Archive        output;
@@ -41,10 +42,10 @@ int main (int argc, char ** argv)
   Structure   * sorted;
   Structure     tmpstrct;
   int           numpart;
-  int        ** strct_to_get;
+  int         * strct_to_get;
+  int         * files_to_read;
   Particle    * P;
   gheader       header;
-
 
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
@@ -60,13 +61,11 @@ int main (int argc, char ** argv)
   // opt.catalos[n] in opt.catalog[n+1] and so on
   //
 
-  Simulation_init                 (&opt.simulation[i]);
-  Catalog_init                    (&opt.catalog[i]);
-  Catalog_load_properties         (&opt.catalog[i]);
-  Catalog_fill_SubIDS             (&opt.catalog[i]);
-  Catalog_fill_isolated           (&opt.catalog[i]);
-
-
+  Simulation_init                 (&opt.simulation);
+  Catalog_init                    (&opt.catalog);
+  Catalog_load_properties         (&opt.catalog);
+  Catalog_fill_SubIDS             (&opt.catalog);
+  Catalog_fill_isolated           (&opt.catalog);
 
   // --------------------------------------------------- //
   // Tag central galaxy
@@ -103,6 +102,47 @@ int main (int argc, char ** argv)
     }
   }
 
+  strct_to_get  = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+    strct_to_get[i] = 0;
+
+  FILE  * f;
+  char    fname  [NAME_LENGTH];
+  char    buffer [NAME_LENGTH];
+  int     tmpid;
+  int     nfiles;
+  int *   files_of_strct = NULL;
+
+  sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
+  f = fopen (fname, "r");
+
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+  {
+    strct_to_get[i] = 0;
+
+    fgets  (buffer, NAME_LENGTH, f);
+    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
+    fgets  (buffer, NAME_LENGTH, f);
+
+    get_n_num_from_string (buffer, nfiles, &files_of_strct);
+    if ((nfiles == 1) && (files_of_strct[0] == 1))
+    {
+      strct_to_get[i] = 1;
+      break;
+    }
+    free (files_of_strct);
+  }
+  fclose (f);
+
+  Grid  myGrid;
+  ramses_amr_init (&myGrid);
+  ramses_amr_load (&opt.simulation, 0, &myGrid);
+
+  // First check that grid is properly loaded
+  for (i = 0; i < myGrid.nlevelmax; i++)
+    printf ("Level  %2d  ngrid  %5d\n", i, myGrid.ngrid[i][0]);
+
+
 
   /*
   int * strct2get;
@@ -128,14 +168,15 @@ int main (int argc, char ** argv)
   // --------------------------------------------------- //
   // Free memory
   Catalog_free (&opt.catalog);
+  ramses_amr_free (&myGrid);
   return 0;
 
   // --------------------------------------------------- //
   // Diffuse stellar fraction
-  FILE * f;
-  char buffer [NAME_LENGTH];
+  //FILE * f;
+  //char buffer [NAME_LENGTH];
 
-  if (opt.iFraction)
+  if (opt.iSO)
   {
     int     nsat_m09;
     int     nsat_m10;
@@ -147,12 +188,12 @@ int main (int argc, char ** argv)
     double  minsat_m10;
     double  minsat_m11;
 
-      sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
+      sprintf (buffer, "%s.ihsc", opt.catalog.archive.prefix);
       f = fopen (buffer, "w");
-      for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      for (j = 1; j <= opt.catalog.nstruct; j++)
       {
-        strct1 = &opt.catalog[i].strctProps[j];              // IHSC
-        strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
+        strct1 = &opt.catalog.strctProps[j];              // IHSC
+        strct2 = &opt.catalog.strctProps[strct1->dummyi]; // Central
         if (strct1->Type == 7 && strct1->NumSubs > 0)
         {
           nsat_m09 = 0;
@@ -165,7 +206,7 @@ int main (int argc, char ** argv)
 
           for (k = 1; k < strct1->NumSubs; k++)
           {
-            strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
+            strct3 = &opt.catalog.strctProps[strct1->SubIDs[k]];
 
             if (strct3->TotMass >= 1e8)
               minsat_m08 += strct3->TotMass;
@@ -191,7 +232,7 @@ int main (int argc, char ** argv)
           Structure_calculate_sfr       (strct2);
           */
 
-          strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
+          strct3 = &opt.catalog.strctProps[strct1->SubIDs[strct1->NumSubs-2]];
 
           fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
           fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
@@ -292,19 +333,19 @@ void calcSO_params (Options * opt)
 
   // Catalogues
   fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
-  Archive_name   (&opt->catalog[i].archive, namebuff);
-  Archive_prefix (&opt->catalog[i].archive, namebuff);
-  Archive_format (&opt->catalog[i].archive, frmtbuff);
-  Archive_path   (&opt->catalog[i].archive, pathbuff);
-  Archive_nfiles (&opt->catalog[i].archive, nflsbuff);
+  Archive_name   (&opt->catalog.archive, namebuff);
+  Archive_prefix (&opt->catalog.archive, namebuff);
+  Archive_format (&opt->catalog.archive, frmtbuff);
+  Archive_path   (&opt->catalog.archive, pathbuff);
+  Archive_nfiles (&opt->catalog.archive, nflsbuff);
 
   // Simulation
   fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
-  Archive_name   (&opt->simulation[i].archive, namebuff);
-  Archive_prefix (&opt->simulation[i].archive, namebuff);
-  Archive_format (&opt->simulation[i].archive, frmtbuff);
-  Archive_path   (&opt->simulation[i].archive, pathbuff);
-  Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
+  Archive_name   (&opt->simulation.archive, namebuff);
+  Archive_prefix (&opt->simulation.archive, namebuff);
+  Archive_format (&opt->simulation.archive, frmtbuff);
+  Archive_path   (&opt->simulation.archive, pathbuff);
+  Archive_nfiles (&opt->simulation.archive, nflsbuff);
 
   // Close
   fclose (opt->param.file);

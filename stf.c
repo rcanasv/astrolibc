@@ -622,7 +622,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     // Go through every file of simulation/extendedOutput
     //
 
-    FILE * fff=fopen("gal","w");
+    //FILE * fff=fopen("gal","w");
 
     for (i = 0; i < sim->archive.nfiles; i++)
     {
@@ -649,7 +649,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
             {
               strct = &stf->strctProps[id];
 
-fprintf(fff, "%10.3lf  %10.3lf  %10.3lf  %ld  %ld  %ld\n", part[indx].Pos[0],part[indx].Pos[1],part[indx].Pos[2], indx, id, i);
+//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf  %ld  %ld  %ld\n", part[indx].Pos[0],part[indx].Pos[1],part[indx].Pos[2], indx, id, i);
 
               Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
               strct->dummyi++;
@@ -660,7 +660,7 @@ fprintf(fff, "%10.3lf  %10.3lf  %10.3lf  %ld  %ld  %ld\n", part[indx].Pos[0],par
         }
       }
     }
-    fclose(fff);
+  //  fclose(fff);
   }
   else
   {

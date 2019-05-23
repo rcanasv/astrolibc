@@ -18,7 +18,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
   int     nlevelmax;
   int     ngridmax;
   int     nboundary;
-  int     i, n, j, k;
+  int     i, j, k, l, n;
   int     dummy;
   int     dummyi;
   double  dummyd;
@@ -27,6 +27,8 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
   double  xc[8][3];
   int     ix, iy, iz;
   double  dx;
+  int     tmplvl;
+  int     tmpng;
 
   char    fname    [NAME_LENGTH];
   char    dummys   [NAME_LENGTH];
@@ -68,9 +70,9 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
       iz = (j-1) / 4;
       iy = (j-1 -4*iz) / 2;
       ix = (j-1 -4*iz -2*iy);
-      xc[j][0] = (double(ix) - 0.5)*dx;
-      xc[j][1] = (double(iy) - 0.5)*dx;
-      xc[j][2] = (double(iz) - 0.5)*dx;
+      xc[j][0] = ((double)ix - 0.5)*dx;
+      xc[j][1] = ((double)iy - 0.5)*dx;
+      xc[j][2] = ((double)iz - 0.5)*dx;
     }
 
     // Loop over cpus
@@ -95,7 +97,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
             for (l = 0; l < nvarh; l++)
             {
               RMSSSKIP
-              fseek (f, bsize, SEEK_CUR);
+              fseek (f, dummy, SEEK_CUR);
               RMSSSKIP
             }
           }
@@ -127,7 +129,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
 
             // Check if cell is refined
             for (n = 0; n < tmpng; n++)
-              grid->level[i].cell[n].okOct[k] = (!((grid->level[i].cell[n].sonIndex > 0) && (i < levelmax-1)));
+              grid->level[i].cell[n].okOct[k] = (!((grid->level[i].cell[n].sonIndex > 0) && (i < nlevelmax-1)));
 
             for (l = 0; l < nvarh; l++)
             {
@@ -140,7 +142,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
                 for (n = 0; n < tmpng; n++)
                   fread (&grid->level[i].cell[n].octRho[k], sizeof(double), 1, f);
               else
-                fseek (f, bsize, SEEK_CUR);
+                fseek (f, dummy, SEEK_CUR);
               RMSSSKIP
             }
           } // k loop
@@ -164,18 +166,20 @@ void ramses_amr_init (Grid * grid)
 
 void ramses_amr_free (Grid * grid)
 {
+  int k;
+
   if (grid->alloc_level)
   {
     for (k = 0; k < grid->nlevelmax; k++)
       if (grid->level[k].num)
-        free (grid->level[k].cell)
+        free (grid->level[k].cell);
     free (grid->level);
   }
 
   if (grid->alloc_ngrid)
   {
     for (k = 0; k < grid->nlevelmax; k++)
-      free (grid->ngrid[k])
+      free (grid->ngrid[k]);
     free (grid->ngrid);
   }
 }
@@ -329,19 +333,19 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         // Grid Index
         RMSSSKIP
         for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].grid[n].myIndex, sizeof(int), 1, f);
+          fread (&grid->level[k].cell[n].myIndex, sizeof(int), 1, f);
         RMSSSKIP
 
         // Next Index
         RMSSSKIP
         for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].grid[n].nextIndex, sizeof(int), 1, f);
+          fread (&grid->level[k].cell[n].nextIndex, sizeof(int), 1, f);
         RMSSSKIP
 
         // Prev Index
         RMSSSKIP
         for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].grid[n].prevIndex, sizeof(int), 1, f);
+          fread (&grid->level[k].cell[n].prevIndex, sizeof(int), 1, f);
         RMSSSKIP
 
         // Grid Position
@@ -349,14 +353,14 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         {
           RMSSSKIP
           for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].grid[n].Pos[i], sizeof(int), 1, f);
+            fread (&grid->level[k].cell[n].Pos[i], sizeof(int), 1, f);
           RMSSSKIP
         }
 
         // Father Index
         RMSSSKIP
         for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].grid[n].fatherIndex, sizeof(int), 1, f);
+          fread (&grid->level[k].cell[n].fatherIndex, sizeof(int), 1, f);
         RMSSSKIP
 
         // Neighbour
@@ -364,7 +368,7 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         {
           RMSSSKIP
           for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].grid[n].nborIndex[i], sizeof(int), 1, f);
+            fread (&grid->level[k].cell[n].nborIndex[i], sizeof(int), 1, f);
           RMSSSKIP
         }
 
@@ -373,7 +377,7 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         {
           RMSSSKIP
           for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].grid[n].sonIndex[i], sizeof(int), 1, f);
+            fread (&grid->level[k].cell[n].sonIndex[i], sizeof(int), 1, f);
           RMSSSKIP
         }
 
@@ -382,7 +386,7 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         {
           RMSSSKIP
           for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].grid[n].cpuMap[i], sizeof(int), 1, f);
+            fread (&grid->level[k].cell[n].cpuMap[i], sizeof(int), 1, f);
           RMSSSKIP
         }
 
@@ -391,7 +395,7 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
         {
           RMSSSKIP
           for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].grid[n].refMap[i], sizeof(int), 1, f);
+            fread (&grid->level[k].cell[n].refMap[i], sizeof(int), 1, f);
           RMSSSKIP
         }
       }
