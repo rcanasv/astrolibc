@@ -139,9 +139,45 @@ int main (int argc, char ** argv)
   ramses_amr_load (&opt.simulation, 0, &myGrid);
 
   // First check that grid is properly loaded
-  for (i = 0; i < myGrid.nlevelmax; i++)
-    printf ("Level  %2d  ngrid  %5d\n", i, myGrid.ngrid[i][0]);
+  for (k = 0; k < myGrid.nlevelmax; k++)
+  {
+    sprintf (fname, "amr_lvl_%d", k);
+    f = fopen(fname, "w");
+    for (i = 0; i < myGrid.level[k].num; i++)
+    {
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[0]);
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[1]);
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[2]);
+      fprintf (f, "%d  ", myGrid.level[k].cell[i].myIndex);
+      for (j = 0; j < 8; j++)
+        fprintf (f, "%d  ", myGrid.level[k].cell[i].sonIndex[j]);
+      fprintf (f, "\n");
+    }
+    fclose (f);
+  }
 
+  ramses_hydro_read (&opt.simulation, 0, &myGrid);
+
+  for (k = 0; k < myGrid.nlevelmax; k++)
+  {
+    sprintf (fname, "hydro_lvl_%d", k);
+    f = fopen(fname, "w");
+    for (i = 0; i < myGrid.level[k].num; i++)
+    {
+      for (j = 0; j < 8; j++)
+      {
+        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][0]);
+        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][1]);
+        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][2]);
+        fprintf (f, "%e  ", myGrid.level[k].cell[i].octRho[j]);
+        fprintf (f, "\n");
+      }
+    }
+    fclose (f);
+  }
+
+  ramses_amr_free (&myGrid);
+  return 0;
 
 
   /*

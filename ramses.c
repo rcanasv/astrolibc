@@ -64,12 +64,12 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
   for (i = 0; i < nlevelmax; i++)
   {
     // Geometry
-    dx = pow(0.5,i);
+    dx = pow(0.5,i+1);
     for (j = 0; j < twotondim; j++)
     {
-      iz = (j-1) / 4;
-      iy = (j-1 -4*iz) / 2;
-      ix = (j-1 -4*iz -2*iy);
+      iz =  j / 4;
+      iy = (j -4*iz) / 2;
+      ix = (j -4*iz -2*iy);
       xc[j][0] = ((double)ix - 0.5)*dx;
       xc[j][1] = ((double)iy - 0.5)*dx;
       xc[j][2] = ((double)iz - 0.5)*dx;
@@ -112,24 +112,23 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
             printf ("ngrid doesn't match, aborting\n");
             exit (0);
           }
-          else
-            printf ("reading hydro  cpu  %d  -  %d grids\n", filenum, tmpng);
 
-          grid->level[i].cell[n].dx = dx;
+          for (n = 0; n < tmpng; n++)
+            grid->level[i].cell[n].dx = dx;
 
           for (k = 0; k < twotondim; k++)
           {
             // Compute oct center
             for (n = 0; n < tmpng; n++)
             {
-              grid->level[i].cell[n].octPos[k][0] = grid->level[n].cell[l].Pos[0] + xc[k][0];
-              grid->level[i].cell[n].octPos[k][1] = grid->level[n].cell[l].Pos[0] + xc[k][1];
-              grid->level[i].cell[n].octPos[k][2] = grid->level[n].cell[l].Pos[0] + xc[k][2];
+              grid->level[i].cell[n].octPos[k][0] = grid->level[i].cell[n].Pos[0] + xc[k][0];
+              grid->level[i].cell[n].octPos[k][1] = grid->level[i].cell[n].Pos[1] + xc[k][1];
+              grid->level[i].cell[n].octPos[k][2] = grid->level[i].cell[n].Pos[2] + xc[k][2];
             }
 
             // Check if cell is refined
             for (n = 0; n < tmpng; n++)
-              grid->level[i].cell[n].okOct[k] = (!((grid->level[i].cell[n].sonIndex > 0) && (i < nlevelmax-1)));
+              grid->level[i].cell[n].okOct[k] = (!((grid->level[i].cell[n].sonIndex > 0) && (tmplvl < nlevelmax)));
 
             for (l = 0; l < nvarh; l++)
             {
@@ -296,9 +295,9 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
     RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP  // Indices as info.txt
   }
 
-  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level son
-  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level flag1
-  RMSSSKIP    fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level cpu_map
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level son
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level flag1
+  RMSSSKIP   fseek (f, dummy, SEEK_CUR);   RMSSSKIP   // Coarse level cpu_map
 
   // Skip for cells that this cpu is not reading
   int toskip = 3 + ndim + 1 + twondim + 3*twotondim;
@@ -318,89 +317,92 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
   {
     for (j = 0; j < grid->ncpu; j++)
     {
-      // If not cpu skip
-      if (j != filenum)
+      if (grid->ngrid[k][j])
       {
-        for (n = 0; n < toskip; n++)
+        // If not cpu skip
+        if (j != filenum)
         {
+          for (n = 0; n < toskip; n++)
+          {
+            RMSSSKIP
+            fseek (f, dummy, SEEK_CUR);
+            RMSSSKIP
+          }
+        }
+        else
+        {
+          // Grid Index
           RMSSSKIP
-          fseek (f, dummy, SEEK_CUR);
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].cell[n].myIndex, sizeof(int), 1, f);
           RMSSSKIP
+
+          // Next Index
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].cell[n].nextIndex, sizeof(int), 1, f);
+          RMSSSKIP
+
+          // Prev Index
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].cell[n].prevIndex, sizeof(int), 1, f);
+          RMSSSKIP
+
+          // Grid Position
+          for (i = 0; i < ndim; i++)
+          {
+            RMSSSKIP
+            for (n = 0; n < grid->level[k].num; n++)
+              fread (&grid->level[k].cell[n].Pos[i], sizeof(double), 1, f);
+            RMSSSKIP
+          }
+
+          // Father Index
+          RMSSSKIP
+          for (n = 0; n < grid->level[k].num; n++)
+            fread (&grid->level[k].cell[n].fatherIndex, sizeof(int), 1, f);
+          RMSSSKIP
+
+          // Neighbour
+          for (i = 0; i < twondim; i++)
+          {
+            RMSSSKIP
+            for (n = 0; n < grid->level[k].num; n++)
+              fread (&grid->level[k].cell[n].nborIndex[i], sizeof(int), 1, f);
+            RMSSSKIP
+          }
+
+          // Son
+          for (i = 0; i < twotondim; i++)
+          {
+            RMSSSKIP
+            for (n = 0; n < grid->level[k].num; n++)
+              fread (&grid->level[k].cell[n].sonIndex[i], sizeof(int), 1, f);
+            RMSSSKIP
+          }
+
+          // Cpu map
+          for (i = 0; i < twotondim; i++)
+          {
+            RMSSSKIP
+            for (n = 0; n < grid->level[k].num; n++)
+              fread (&grid->level[k].cell[n].cpuMap[i], sizeof(int), 1, f);
+            RMSSSKIP
+          }
+
+          // Ref Map
+          for (i = 0; i < twotondim; i++)
+          {
+            RMSSSKIP
+            for (n = 0; n < grid->level[k].num; n++)
+              fread (&grid->level[k].cell[n].refMap[i], sizeof(int), 1, f);
+            RMSSSKIP
+          }
         }
       }
-      else
-      {
-        // Grid Index
-        RMSSSKIP
-        for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].cell[n].myIndex, sizeof(int), 1, f);
-        RMSSSKIP
-
-        // Next Index
-        RMSSSKIP
-        for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].cell[n].nextIndex, sizeof(int), 1, f);
-        RMSSSKIP
-
-        // Prev Index
-        RMSSSKIP
-        for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].cell[n].prevIndex, sizeof(int), 1, f);
-        RMSSSKIP
-
-        // Grid Position
-        for (i = 0; i < ndim; i++)
-        {
-          RMSSSKIP
-          for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].cell[n].Pos[i], sizeof(int), 1, f);
-          RMSSSKIP
-        }
-
-        // Father Index
-        RMSSSKIP
-        for (n = 0; n < grid->level[k].num; n++)
-          fread (&grid->level[k].cell[n].fatherIndex, sizeof(int), 1, f);
-        RMSSSKIP
-
-        // Neighbour
-        for (i = 0; i < twondim; i++)
-        {
-          RMSSSKIP
-          for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].cell[n].nborIndex[i], sizeof(int), 1, f);
-          RMSSSKIP
-        }
-
-        // Son
-        for (i = 0; i < twotondim; i++)
-        {
-          RMSSSKIP
-          for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].cell[n].sonIndex[i], sizeof(int), 1, f);
-          RMSSSKIP
-        }
-
-        // Cpu map
-        for (i = 0; i < twotondim; i++)
-        {
-          RMSSSKIP
-          for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].cell[n].cpuMap[i], sizeof(int), 1, f);
-          RMSSSKIP
-        }
-
-        // Ref Map
-        for (i = 0; i < twotondim; i++)
-        {
-          RMSSSKIP
-          for (n = 0; n < grid->level[k].num; n++)
-            fread (&grid->level[k].cell[n].refMap[i], sizeof(int), 1, f);
-          RMSSSKIP
-        }
-      }
-    }
-  }
+    } // ncpu
+  } // nlevelmax
 
   fclose (f);
 }
