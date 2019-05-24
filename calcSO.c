@@ -46,6 +46,12 @@ int main (int argc, char ** argv)
   int         * files_to_read;
   Particle    * P;
   gheader       header;
+  FILE  * f;
+  char    fname  [NAME_LENGTH];
+  char    buffer [NAME_LENGTH];
+  int     tmpid;
+  int     nfiles;
+  int *   files_of_strct = NULL;
 
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
@@ -62,6 +68,7 @@ int main (int argc, char ** argv)
   //
 
   Simulation_init                 (&opt.simulation);
+  /*
   Catalog_init                    (&opt.catalog);
   Catalog_load_properties         (&opt.catalog);
   Catalog_fill_SubIDS             (&opt.catalog);
@@ -106,13 +113,6 @@ int main (int argc, char ** argv)
   for (i = 1; i <= opt.catalog.nstruct; i++)
     strct_to_get[i] = 0;
 
-  FILE  * f;
-  char    fname  [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
-  int     tmpid;
-  int     nfiles;
-  int *   files_of_strct = NULL;
-
   sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
   f = fopen (fname, "r");
 
@@ -133,6 +133,7 @@ int main (int argc, char ** argv)
     free (files_of_strct);
   }
   fclose (f);
+  */
 
   Grid  myGrid;
   ramses_amr_init (&myGrid);
@@ -148,9 +149,6 @@ int main (int argc, char ** argv)
       fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[0]);
       fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[1]);
       fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[2]);
-      fprintf (f, "%d  ", myGrid.level[k].cell[i].myIndex);
-      for (j = 0; j < 8; j++)
-        fprintf (f, "%d  ", myGrid.level[k].cell[i].sonIndex[j]);
       fprintf (f, "\n");
     }
     fclose (f);
@@ -158,10 +156,10 @@ int main (int argc, char ** argv)
 
   ramses_hydro_read (&opt.simulation, 0, &myGrid);
 
-  for (k = 0; k < myGrid.nlevelmax; k++)
+  sprintf (fname, "hydro_all");
+  f = fopen(fname, "w");
+  for (k = 9; k < myGrid.nlevelmax; k++)
   {
-    sprintf (fname, "hydro_lvl_%d", k);
-    f = fopen(fname, "w");
     for (i = 0; i < myGrid.level[k].num; i++)
     {
       for (j = 0; j < 8; j++)
@@ -170,11 +168,13 @@ int main (int argc, char ** argv)
         fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][1]);
         fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][2]);
         fprintf (f, "%e  ", myGrid.level[k].cell[i].octRho[j]);
+        fprintf (f, "%d  ", myGrid.level[k].cell[i].okOct[j]);
+        fprintf (f, "%d  ", k+1);
         fprintf (f, "\n");
       }
     }
-    fclose (f);
   }
+  fclose (f);
 
   ramses_amr_free (&myGrid);
   return 0;
