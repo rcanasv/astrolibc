@@ -36,6 +36,8 @@ void stf_read_properties (Catalog * stf)
   char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
+  int    oTask;
+
   //
   // Open properties file to read total number of structures
   // and number of processors if stf was run with MPI
@@ -250,6 +252,7 @@ void stf_read_properties (Catalog * stf)
       }
 
       fgets  (longbuffer, NAME_LENGTH, f);
+      sscanf (longbuffer, "%d  %d", &oTask, &dummyi);
       fgets  (longbuffer, NAME_LENGTH, f);
       sscanf (longbuffer, "%d  %d", &mystructs, &dummyi);
       fgets  (longbuffer, 3000, f);
@@ -257,7 +260,7 @@ void stf_read_properties (Catalog * stf)
       for (j = 0; j < mystructs; j++)
       {
         fgets (longbuffer, 3000, f);
-
+        stf->strctProps[j+offst].oTask = oTask;
         sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \

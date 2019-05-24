@@ -136,6 +136,9 @@ typedef struct Structure
   char flg_SortedByRadius;
   char flg_CorrectedPeriodicity;
   char flg_ShiftedCM;
+
+  // oTask
+  int oTask;
 } Structure;
 
 

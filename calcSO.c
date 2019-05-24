@@ -36,22 +36,25 @@ int main (int argc, char ** argv)
 {
   int           i, j, k, l, n, m;
   Options       opt;
+
+  Particle    * P;
   Structure   * strct1;
   Structure   * strct2;
   Structure   * strct3;
   Structure   * sorted;
   Structure     tmpstrct;
-  int           numpart;
-  int         * strct_to_get;
-  int         * files_to_read;
-  Particle    * P;
+  Grid          myGrid;
   gheader       header;
+
   FILE  * f;
   char    fname  [NAME_LENGTH];
   char    buffer [NAME_LENGTH];
   int     tmpid;
   int     nfiles;
-  int *   files_of_strct = NULL;
+  int     numpart;
+  int   * strct_to_get;
+  int   * files_to_read;
+  int   * files_of_strct = NULL;
 
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
@@ -68,7 +71,6 @@ int main (int argc, char ** argv)
   //
 
   Simulation_init                 (&opt.simulation);
-  /*
   Catalog_init                    (&opt.catalog);
   Catalog_load_properties         (&opt.catalog);
   Catalog_fill_SubIDS             (&opt.catalog);
@@ -116,6 +118,8 @@ int main (int argc, char ** argv)
   sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
   f = fopen (fname, "r");
 
+  int idtoget;
+
   for (i = 1; i <= opt.catalog.nstruct; i++)
   {
     strct_to_get[i] = 0;
@@ -125,56 +129,79 @@ int main (int argc, char ** argv)
     fgets  (buffer, NAME_LENGTH, f);
 
     get_n_num_from_string (buffer, nfiles, &files_of_strct);
-    if ((nfiles == 1) && (files_of_strct[0] == 1))
+    if ((nfiles == 1) && (files_of_strct[0] == 0))
     {
       strct_to_get[i] = 1;
+      idtoget = i;
+      printf ("id to get  %d\n", idtoget);
       break;
     }
     free (files_of_strct);
   }
   fclose (f);
-  */
 
-  Grid  myGrid;
-  ramses_amr_init (&myGrid);
-  ramses_amr_load (&opt.simulation, 0, &myGrid);
 
-  // First check that grid is properly loaded
-  for (k = 0; k < myGrid.nlevelmax; k++)
+  double galpos [3];
+  strct1 = &opt.catalog.strctProps[idtoget];
+  strct2 = &opt.catalog.strctProps[strct1->dummyi];
+  galpos[0] = strct2->Pos[0];
+  galpos[1] = strct2->Pos[1];
+  galpos[2] = strct2->Pos[2];
+
+
+  ramses_amr_init                 (&myGrid);
+  ramses_amr_load                 (&opt.simulation, 0, &myGrid);
+  ramses_hydro_read               (&opt.simulation, 0, &myGrid);
+
+  int ngaspart = 0;
+  int sum = 0;
+
+  for (k = myGrid.nlevelmax-1; k >= 0; k--)
   {
-    sprintf (fname, "amr_lvl_%d", k);
-    f = fopen(fname, "w");
+    printf ("%2d  %6d\n", k, myGrid.level[k].num);
+    sum += myGrid.level[k].num;
     for (i = 0; i < myGrid.level[k].num; i++)
     {
-      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[0]);
-      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[1]);
-      fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[2]);
-      fprintf (f, "\n");
+      for (j = 0; j < 8; j++)
+      {
+        if (myGrid.level[k].cell[i].okOct[j])
+          ngaspart++;
+      }
     }
-    fclose (f);
   }
+  printf ("sum  %d\n", sum);
 
-  ramses_hydro_read (&opt.simulation, 0, &myGrid);
+  // Allocate memory for gas particles
+  Particle * gasPart = (Particle *) malloc (ngaspart * sizeof(Particle));
+  n = 0;
+  double lbox = opt.simulation.Lbox;
+  double dx, vol;
+  double unit_m = opt.simulation.unit_m;
 
-  sprintf (fname, "hydro_all");
-  f = fopen(fname, "w");
-  for (k = 9; k < myGrid.nlevelmax; k++)
+  for (k = myGrid.nlevelmax-1; k >= 0; k--)
   {
     for (i = 0; i < myGrid.level[k].num; i++)
     {
       for (j = 0; j < 8; j++)
       {
-        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][0]);
-        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][1]);
-        fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][2]);
-        fprintf (f, "%e  ", myGrid.level[k].cell[i].octRho[j]);
-        fprintf (f, "%d  ", myGrid.level[k].cell[i].okOct[j]);
-        fprintf (f, "%d  ", k+1);
-        fprintf (f, "\n");
+        if (myGrid.level[k].cell[i].okOct[j])
+        {
+          gasPart[n].Pos[0] = lbox * myGrid.level[k].cell[i].octPos[j][0];
+          gasPart[n].Pos[1] = lbox * myGrid.level[k].cell[i].octPos[j][1];
+          gasPart[n].Pos[2] = lbox * myGrid.level[k].cell[i].octPos[j][2];
+          dx  = myGrid.level[k].cell[i].dx;
+          vol = dx * dx * dx;
+          gasPart[n].Mass = unit_m * vol * myGrid.level[k].cell[i].octRho[j];
+          n++;
+        }
       }
     }
   }
-  fclose (f);
+
+  FILE * ff = fopen("gaspart", "w");
+  for (i = 0; i < ngaspart; i++)
+    fprintf (ff, "%e  %e  %e  %e\n", gasPart[i].Pos[0], gasPart[i].Pos[1], gasPart[i].Pos[2], gasPart[i].Mass);
+  fclose (ff);
 
   ramses_amr_free (&myGrid);
   return 0;
@@ -475,3 +502,41 @@ void calcSO_usage (int opt, char ** argv)
     exit (0);
   }
 }
+
+/*
+// First check that grid is properly loaded
+for (k = 0; k < myGrid.nlevelmax; k++)
+{
+  sprintf (fname, "amr_lvl_%d", k);
+  f = fopen(fname, "w");
+  for (i = 0; i < myGrid.level[k].num; i++)
+  {
+    fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[0]);
+    fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[1]);
+    fprintf (f, "%e  ", myGrid.level[k].cell[i].Pos[2]);
+    fprintf (f, "\n");
+  }
+  fclose (f);
+}
+
+sprintf (fname, "hydro_all");
+f = fopen(fname, "w");
+for (k = 9; k < myGrid.nlevelmax; k++)
+{
+  for (i = 0; i < myGrid.level[k].num; i++)
+  {
+    for (j = 0; j < 8; j++)
+    {
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][0]);
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][1]);
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].octPos[j][2]);
+      fprintf (f, "%e  ", myGrid.level[k].cell[i].octRho[j]);
+      fprintf (f, "%d  ", myGrid.level[k].cell[i].okOct[j]);
+      fprintf (f, "%d  ", k+1);
+      fprintf (f, "\n");
+    }
+  }
+}
+fclose (f);
+
+*/

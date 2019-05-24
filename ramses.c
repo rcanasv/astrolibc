@@ -128,7 +128,7 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
 
             // Check if cell is refined
             for (n = 0; n < tmpng; n++)
-              grid->level[i].cell[n].okOct[k] = ((grid->level[i].cell[n].sonIndex[k] == 0) && (tmplvl < nlevelmax));
+              grid->level[i].cell[n].okOct[k] = !((grid->level[i].cell[n].sonIndex[k] > 0) && (tmplvl < nlevelmax));
 
             for (l = 0; l < nvarh; l++)
             {
