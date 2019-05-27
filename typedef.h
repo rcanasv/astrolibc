@@ -42,6 +42,7 @@ typedef struct Particle
   float       Metal;
   float       Chem;
   int         Type;
+  int         dummyi;
   float       Radius;
 } Particle;
 
