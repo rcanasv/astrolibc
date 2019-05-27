@@ -194,6 +194,7 @@ typedef struct Simulation
   double     mstarTot;
   double     mstarLst;
   int        nsink;
+  int      * npartinfile;
 
   // For GADGET
   double     Ez;

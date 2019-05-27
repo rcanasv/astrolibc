@@ -450,6 +450,8 @@ void ramses_init (Simulation * ramses)
 
   // Box is now in kpc
   ramses->Lbox *= ramses->unit_l;
+
+  ramses->npartinfile = NULL;
 }
 
 
@@ -527,6 +529,10 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
   RMSSSKIP  fread(&ramses->ncpu,     sizeof(int),    1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->ndim,     sizeof(int),    1, f);  RMSSSKIP
   RMSSSKIP  fread(&ramses->npart,    sizeof(int),    1, f);  RMSSSKIP
+
+  if (ramses->npartinfile == NULL)
+    ramses->npartinfile = (int *) malloc (ramses->ncpu * sizeof(int));
+  ramses->npartinfile[filenum] = ramses->npart;
 
   if (ramses->format == RAMSES)
   {

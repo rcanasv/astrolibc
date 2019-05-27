@@ -56,6 +56,8 @@ int main (int argc, char ** argv)
   int   * files_to_read;
   int   * files_of_strct = NULL;
 
+  int     dummyi;
+
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
 
@@ -121,18 +123,22 @@ int main (int argc, char ** argv)
   int idtoget;
 
   for (i = 1; i <= opt.catalog.nstruct; i++)
-  {
     strct_to_get[i] = 0;
+
+  for (i = 1; i <= opt.catalog.nstruct; i++)
+  {
+    strct1 = &opt.catalog.strctProps[i];
 
     fgets  (buffer, NAME_LENGTH, f);
     sscanf (buffer, "%d  %d", &tmpid, &nfiles);
     fgets  (buffer, NAME_LENGTH, f);
 
     get_n_num_from_string (buffer, nfiles, &files_of_strct);
-    if ((nfiles == 1) && (files_of_strct[0] == 0))
+    if ((nfiles == 1) && (files_of_strct[0] == 0) && strct1->Type == 7)
     {
       strct_to_get[i] = 1;
       idtoget = i;
+      break;
     }
     free (files_of_strct);
   }
@@ -142,6 +148,10 @@ int main (int argc, char ** argv)
   double galpos [3];
   strct1 = &opt.catalog.strctProps[idtoget];
   strct2 = &opt.catalog.strctProps[strct1->dummyi];
+
+  printf ("idtoget    %d\n", idtoget);
+  printf ("strct1 id  %d\n", strct1->ID);
+  printf ("strct2 id  %d\n", strct2->ID);
   galpos[0] = strct2->Pos[0];
   galpos[1] = strct2->Pos[1];
   galpos[2] = strct2->Pos[2];
@@ -153,6 +163,8 @@ int main (int argc, char ** argv)
   int ngaspart  = 0;
   int ndmpart   = 0;
   int nstarpart = 0;
+  int totpart   = 0;
+  int nghost    = 0;
 
   for (k = myGrid.nlevelmax-1; k >= 9; k--)
   {
@@ -169,17 +181,57 @@ int main (int argc, char ** argv)
   //
   // Load all particles in file(s)
   //
+  Particle * partbuffer;
+  int        partinfile;
+  double     dmp_mass;
+  double     mratio;
 
+  dmp_mass = 1.0 / (1024.0*1024.0*1024.0) \
+             * (opt.simulation.cosmology.OmegaM - opt.simulation.cosmology.OmegaB) \
+             /  opt.simulation.cosmology.OmegaM * opt.simulation.unit_m;
+
+  ramses_load_particles   (&opt.simulation, 0, &partbuffer);
+
+  for (i = 0; i < opt.simulation.npartinfile[0]; i++)
+  {
+    mratio = fabs(partbuffer[i].Mass/dmp_mass - 1);
+    if (mratio < 1e-4 && partbuffer[i].Age == 0)
+    {
+      partbuffer[i].Type = 1;
+      ndmpart++;
+    }
+    else
+    {
+      if (partbuffer[i].Age != 0)
+      {
+        partbuffer[i].Type = 4;
+        nstarpart++;
+      }
+      else
+      {
+        partbuffer[i].Type = -1;
+        nghost++;
+      }
+    }
+  }
 
   //
   // Allocate memory for DM, Stars and Gas
   //
-  Particle * gasPart = (Particle *) malloc (ngaspart * sizeof(Particle));
-  n = 0;
+  totpart = ngaspart + ndmpart + nstarpart;
+  printf ("ngaspart   %8d\n", ngaspart);
+  printf ("dm mass     %e\n", dmp_mass);
+  printf ("ndmpart    %8d\n", ndmpart);
+  printf ("nstarpart  %8d\n", nstarpart);
+  printf ("nghost     %8d\n", nghost);
+  printf ("totpart    %8d\n", totpart);
+  Particle * allPart = (Particle *) malloc (totpart * sizeof(Particle));
   double lbox = opt.simulation.Lbox;
   double dx, vol;
   double unit_m = opt.simulation.unit_m;
 
+  // Copy gas particles to array
+  n = 0;
   for (k = myGrid.nlevelmax-1; k >= 9; k--)
   {
     for (i = 0; i < myGrid.level[k].num; i++)
@@ -188,62 +240,87 @@ int main (int argc, char ** argv)
       {
         if (myGrid.level[k].cell[i].okOct[j])
         {
-          gasPart[n].Pos[0] = lbox * myGrid.level[k].cell[i].octPos[j][0];
-          gasPart[n].Pos[1] = lbox * myGrid.level[k].cell[i].octPos[j][1];
-          gasPart[n].Pos[2] = lbox * myGrid.level[k].cell[i].octPos[j][2];
+          allPart[n].Pos[0] = lbox * myGrid.level[k].cell[i].octPos[j][0];
+          allPart[n].Pos[1] = lbox * myGrid.level[k].cell[i].octPos[j][1];
+          allPart[n].Pos[2] = lbox * myGrid.level[k].cell[i].octPos[j][2];
           dx  = myGrid.level[k].cell[i].dx;
           vol = dx * dx * dx;
-          gasPart[n].Mass = unit_m * vol * myGrid.level[k].cell[i].octRho[j];
-          gasPart[n].Id = n;
-          gasPart[n].Type = 1;
+          allPart[n].Mass = unit_m * vol * myGrid.level[k].cell[i].octRho[j];
+          allPart[n].Id = n;
+          allPart[n].Type = 2;
           n++;
         }
       }
     }
   }
 
-  for (i = 0; i < ngaspart; i++)
+  FILE * ff = fopen("tmp", "w");
+  // Copy dm + star particles to array
+  for (i = 0; i < opt.simulation.npartinfile[0]; i++)
+    if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
+    {
+      Particle_copy (&partbuffer[i], &allPart[n]);
+      fprintf (ff, "%e  %e  %e\n", allPart[n].Pos[0], allPart[n].Pos[1], allPart[n].Pos[2]);
+      n++;
+    }
+  fclose(ff);
+
+  // Free memory
+  ramses_amr_free (&myGrid);
+  free (partbuffer);
+
+  // Calculat R200
+  printf ("%e  %e  %e\n", galpos[0], galpos[1], galpos[2]);
+  for (i = 0; i < totpart; i++)
   {
-    gasPart[i].Pos[0] -= galpos[0];
-    gasPart[i].Pos[1] -= galpos[1];
-    gasPart[i].Pos[2] -= galpos[2];
-    Particle_get_radius (&gasPart[i]);
+    allPart[i].Pos[0] -= galpos[0];
+    allPart[i].Pos[1] -= galpos[1];
+    allPart[i].Pos[2] -= galpos[2];
+    allPart[i].dummyi  = 0;
+    Particle_get_radius (&allPart[i]);
   }
-  qsort (gasPart, ngaspart, sizeof(Particle), Particle_rad_compare);
+  qsort (allPart, totpart, sizeof(Particle), Particle_rad_compare);
+  for (i = 0; i < totpart; i++)
+    printf ("%e  %e  %e  %e\n", allPart[i].Pos[0], allPart[i].Pos[1], allPart[i].Pos[2], allPart[i].Radius);
 
-  double msum = 0.0;
-  double pi  = acos(-1.0);
-  double fac = 4.0 * pi / 3.0;
-  double G = 43009.1e-10;                // in (kpc/M_sun)*(km/s)^2
-  double H = opt.simulation.cosmology.HubbleParam / 1000.0; // in (km/s)/kpc
-  double crit    = 3.0 * H * H / (8.0 * pi * G);
-  double crit200 = 200.0 * crit;
-  double rad, rho;
-  int  ninR200;
 
-   printf ("Rho_crit  %e\n", crit);
+  double  msum    = 0.0;
+  double  pi      = acos(-1.0);
+  double  fac     = 4.0 * pi / 3.0;
+  double  G       = 43009.1e-10;                                    // in (kpc/M_sun)*(km/s)^2
+  double  H       = opt.simulation.cosmology.HubbleParam / 1000.0;  // in (km/s)/kpc
+  double  crit    = 3.0 * H * H / (8.0 * pi * G);
+  double  crit200 = 200.0 * crit;
+  double  rad;
+  double  rho;
+  int     ninR200;
 
-  for (i = 0; i < ngaspart; i++)
+  //
+  for (i = 0, msum = 0; i < totpart; i++)
   {
-    msum += gasPart[i].Mass;
-    rad = gasPart[i].Radius;
+    msum += allPart[i].Mass;
+    rad = allPart[i].Radius;
     rho = msum / (fac * rad * rad * rad);
     if (rho < crit200)
       break;
     else
-      gasPart[i].dummyi = 1;
+      allPart[i].dummyi = 1;
   }
-  printf ("R200  %e  M200  %e  Rho  %e\n", rad, msum, rho);
+  printf ("R200  %e  M200  %e  Rho  %e  i %d\n", rad, msum, rho, i);
 
-  for (i = 0, ninR200 = 0; i < ngaspart; i++)
-    if (gasPart[i].dummyi == 1)
+  for (i = 0, ninR200 = 0; i < totpart; i++)
+    if (allPart[i].dummyi == 1)
       ninR200++;
 
   Particle * partinR200;
   partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
-  for (i = 0, j = 0; i < ngaspart; i++)
-    if (gasPart[i].dummyi == 1)
-      Particle_copy (&gasPart[i], &partinR200[j++]);
+  for (i = 0, j = 0; i < totpart; i++)
+    if (allPart[i].dummyi == 1)
+    {
+      Particle_copy (&allPart[i], &partinR200[j]);
+      //partinR200[j].Type = 1;
+      j++;
+    }
 
   //FILE * ff = fopen("gaspart", "w");
   //for (i = 0; i < ngaspart; i++)
@@ -251,10 +328,9 @@ int main (int argc, char ** argv)
   //fclose (ff);
   gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
 
-  free (gasPart);
   free (partinR200);
+  free (allPart);
 
-  ramses_amr_free (&myGrid);
   return 0;
 
 
