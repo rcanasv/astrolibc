@@ -43,7 +43,7 @@ int main (int argc, char ** argv)
   Structure   * strct3;
   Structure   * sorted;
   Structure     tmpstrct;
-  Grid          myGrid;
+  Grid        * myGrid;
   gheader       header;
 
   FILE  * f;
@@ -52,33 +52,40 @@ int main (int argc, char ** argv)
   int     tmpid;
   int     nfiles;
   int     numpart;
-  int   * strct_to_get;
-  int   * files_to_read;
-  int   * files_of_strct = NULL;
+
+  int       * strct_to_get   = NULL;
+  int       * files_to_read  = NULL;
+  int       * files_of_strct = NULL;
+  int       * npartinfile    = NULL;
+  Particle  * partbuffer     = NULL;
+  Particle ** allPart        = NULL;
+
+  double      dmp_mass;
+  double      mratio;
+
+  int    ngaspart;
+  int    ndmpart;
+  int    nstarpart;
+  int    totpart;
+  int    nghost;
+
+  int    itasks;
+  int    ifiles;
 
   int     dummyi;
 
+  // Read params
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
 
-  //
-  //  Load catalogs and simulation details
-  // for Horizon-AGN only info_XXXX is needed
-  //
-  // Here I am assuming progenitor trees with a single
-  // snapshot connection AND only two snapshots per tree file
-  //
-  // This means  opt.tree[n] has the progenitors of
-  // opt.catalos[n] in opt.catalog[n+1] and so on
-  //
-
+  // Load sim and catalog information
   Simulation_init                 (&opt.simulation);
   Catalog_init                    (&opt.catalog);
   Catalog_load_properties         (&opt.catalog);
   Catalog_fill_SubIDS             (&opt.catalog);
   Catalog_fill_isolated           (&opt.catalog);
 
-  // --------------------------------------------------- //
+
   // Tag central galaxy
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -113,253 +120,260 @@ int main (int argc, char ** argv)
     }
   }
 
-  strct_to_get  = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-    strct_to_get[i] = 0;
 
-  sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
-  f = fopen (fname, "r");
-
-  int idtoget;
-
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-    strct_to_get[i] = 0;
-
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-  {
-    strct1 = &opt.catalog.strctProps[i];
-
-    fgets  (buffer, NAME_LENGTH, f);
-    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
-    fgets  (buffer, NAME_LENGTH, f);
-
-    get_n_num_from_string (buffer, nfiles, &files_of_strct);
-    if ((nfiles == 1) && (files_of_strct[0] == 0) && strct1->Type == 7)
-    {
-      strct_to_get[i] = 1;
-      idtoget = i;
-      break;
-    }
-    free (files_of_strct);
-  }
-  fclose (f);
-
-
-  double galpos [3];
-  strct1 = &opt.catalog.strctProps[idtoget];
-  strct2 = &opt.catalog.strctProps[strct1->dummyi];
-
-  printf ("idtoget    %d\n", idtoget);
-  printf ("strct1 id  %d\n", strct1->ID);
-  printf ("strct2 id  %d\n", strct2->ID);
-  galpos[0] = strct2->Pos[0];
-  galpos[1] = strct2->Pos[1];
-  galpos[2] = strct2->Pos[2];
-
-  ramses_amr_init                 (&myGrid);
-  ramses_amr_load                 (&opt.simulation, 0, &myGrid);
-  ramses_hydro_read               (&opt.simulation, 0, &myGrid);
-
-  int ngaspart  = 0;
-  int ndmpart   = 0;
-  int nstarpart = 0;
-  int totpart   = 0;
-  int nghost    = 0;
-
-  for (k = myGrid.nlevelmax-1; k >= 9; k--)
-  {
-    for (i = 0; i < myGrid.level[k].num; i++)
-    {
-      for (j = 0; j < 8; j++)
-      {
-        if (myGrid.level[k].cell[i].okOct[j])
-          ngaspart++;
-      }
-    }
-  }
-
-  //
-  // Load all particles in file(s)
-  //
-  Particle * partbuffer;
-  int        partinfile;
-  double     dmp_mass;
-  double     mratio;
+  // Allocate arrays
+  strct_to_get  = (int *)       malloc ((opt.catalog.nstruct+1)        *sizeof(int));
+  files_to_read = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
+  npartinfile   = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
+  myGrid        = (Grid *)      malloc ((opt.simulation.archive.nfiles)*sizeof(int));
+  allPart       = (Particle **) malloc ((opt.simulation.archive.nfiles)*sizeof(int));
 
   dmp_mass = 1.0 / (1024.0*1024.0*1024.0) \
              * (opt.simulation.cosmology.OmegaM - opt.simulation.cosmology.OmegaB) \
              /  opt.simulation.cosmology.OmegaM * opt.simulation.unit_m;
 
-  ramses_load_particles   (&opt.simulation, 0, &partbuffer);
-
-  for (i = 0; i < opt.simulation.npartinfile[0]; i++)
-  {
-    mratio = fabs(partbuffer[i].Mass/dmp_mass - 1);
-    if (mratio < 1e-4 && partbuffer[i].Age == 0)
-    {
-      partbuffer[i].Type = 1;
-      ndmpart++;
-    }
-    else
-    {
-      if (partbuffer[i].Age != 0)
-      {
-        partbuffer[i].Type = 4;
-        nstarpart++;
-      }
-      else
-      {
-        partbuffer[i].Type = -1;
-        nghost++;
-      }
-    }
-  }
-
-  //
-  // Allocate memory for DM, Stars and Gas
-  //
-  totpart = ngaspart + ndmpart + nstarpart;
-  printf ("ngaspart   %8d\n", ngaspart);
-  printf ("dm mass     %e\n", dmp_mass);
-  printf ("ndmpart    %8d\n", ndmpart);
-  printf ("nstarpart  %8d\n", nstarpart);
-  printf ("nghost     %8d\n", nghost);
-  printf ("totpart    %8d\n", totpart);
-  Particle * allPart = (Particle *) malloc (totpart * sizeof(Particle));
-  double lbox = opt.simulation.Lbox;
-  double dx, vol;
+  double lbox   = opt.simulation.Lbox;
   double unit_m = opt.simulation.unit_m;
+  double dx;
+  double vol;
 
-  // Copy gas particles to array
-  n = 0;
-  for (k = myGrid.nlevelmax-1; k >= 9; k--)
-  {
-    for (i = 0; i < myGrid.level[k].num; i++)
-    {
-      for (j = 0; j < 8; j++)
-      {
-        if (myGrid.level[k].cell[i].okOct[j])
-        {
-          allPart[n].Pos[0] = lbox * myGrid.level[k].cell[i].octPos[j][0];
-          allPart[n].Pos[1] = lbox * myGrid.level[k].cell[i].octPos[j][1];
-          allPart[n].Pos[2] = lbox * myGrid.level[k].cell[i].octPos[j][2];
-          dx  = myGrid.level[k].cell[i].dx;
-          vol = dx * dx * dx;
-          allPart[n].Mass = unit_m * vol * myGrid.level[k].cell[i].octRho[j];
-          allPart[n].Id = n;
-          allPart[n].Type = 2;
-          n++;
-        }
-      }
-    }
-  }
-
-  FILE * ff = fopen("tmp", "w");
-  // Copy dm + star particles to array
-  for (i = 0; i < opt.simulation.npartinfile[0]; i++)
-    if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
-    {
-      Particle_copy (&partbuffer[i], &allPart[n]);
-      fprintf (ff, "%e  %e  %e\n", allPart[n].Pos[0], allPart[n].Pos[1], allPart[n].Pos[2]);
-      n++;
-    }
-  fclose(ff);
-
-  // Free memory
-  ramses_amr_free (&myGrid);
-  free (partbuffer);
-
-  // Calculat R200
-  printf ("%e  %e  %e\n", galpos[0], galpos[1], galpos[2]);
-  for (i = 0; i < totpart; i++)
-  {
-    allPart[i].Pos[0] -= galpos[0];
-    allPart[i].Pos[1] -= galpos[1];
-    allPart[i].Pos[2] -= galpos[2];
-    allPart[i].dummyi  = 0;
-    Particle_get_radius (&allPart[i]);
-  }
-  qsort (allPart, totpart, sizeof(Particle), Particle_rad_compare);
-  for (i = 0; i < totpart; i++)
-    printf ("%e  %e  %e  %e\n", allPart[i].Pos[0], allPart[i].Pos[1], allPart[i].Pos[2], allPart[i].Radius);
-
-
-  double  msum    = 0.0;
-  double  pi      = acos(-1.0);
-  double  fac     = 4.0 * pi / 3.0;
-  double  G       = 43009.1e-10;                                    // in (kpc/M_sun)*(km/s)^2
-  double  H       = opt.simulation.cosmology.HubbleParam / 1000.0;  // in (km/s)/kpc
-  double  crit    = 3.0 * H * H / (8.0 * pi * G);
-  double  crit200 = 200.0 * crit;
-  double  rad;
-  double  rho;
-  int     ninR200;
+  // Variables for R200 stuff
+  double     pi      = acos(-1.0);
+  double     fac     = 4.0 * pi / 3.0;
+  double     G       = 43009.1e-10;                                    // in (kpc/M_sun)*(km/s)^2
+  double     H       = opt.simulation.cosmology.HubbleParam / 1000.0;  // in (km/s)/kpc
+  double     crit    = 3.0 * H * H / (8.0 * pi * G);
+  double     crit200 = 200.0 * crit;
+  double     msum;
+  double     rad;
+  double     rho;
+  int        ninR200;
+  double     galpos [3];
+  double     prev[3];
+  Particle * partinR200;
 
   //
-  for (i = 0, msum = 0; i < totpart; i++)
+  // Loop over tasks
+  //
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   {
-    msum += allPart[i].Mass;
-    rad = allPart[i].Radius;
-    rho = msum / (fac * rad * rad * rad);
-    if (rho < crit200)
-      break;
-    else
-      allPart[i].dummyi = 1;
-  }
-  printf ("R200  %e  M200  %e  Rho  %e  i %d\n", rad, msum, rho, i);
+    // Reset array values
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+      strct_to_get[i] = 0;
 
-  for (i = 0, ninR200 = 0; i < totpart; i++)
-    if (allPart[i].dummyi == 1)
-      ninR200++;
+    for (i = 0; i < opt.simulation.archive.nfiles; i++)
+      files_to_read[i] = 0;
 
-  Particle * partinR200;
-  partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
-  for (i = 0, j = 0; i < totpart; i++)
-    if (allPart[i].dummyi == 1)
+
+    // Tag files to read
+    sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
+    f = fopen (fname, "r");
+    for (i = 1; i <= opt.catalog.nstruct; i++)
     {
-      Particle_copy (&allPart[i], &partinR200[j]);
-      //partinR200[j].Type = 1;
-      j++;
+      strct1 = &opt.catalog.strctProps[i];
+
+      fgets  (buffer, NAME_LENGTH, f);
+      sscanf (buffer, "%d  %d", &tmpid, &nfiles);
+      fgets  (buffer, NAME_LENGTH, f);
+
+      get_n_num_from_string (buffer, nfiles, &files_of_strct);
+      if ((strct1->oTask == itasks) && \
+          (strct1->Type == 7)       && \
+          (strct1->NumSubs > 1))
+      {
+        strct_to_get[i] = 1;
+        for (j = 0; j < nfiles; j++)
+          files_to_read[files_of_strct[j]] = 1;
+      }
+      free (files_of_strct);
     }
-
-  //FILE * ff = fopen("gaspart", "w");
-  //for (i = 0; i < ngaspart; i++)
-  //  fprintf (ff, "%e  %e  %e  %e\n", gasPart[i].Pos[0], gasPart[i].Pos[1], gasPart[i].Pos[2], gasPart[i].Mass);
-  //fclose (ff);
-  gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
-
-  free (partinR200);
-  free (allPart);
-
-  return 0;
+    fclose (f);
 
 
-  /*
-  int * strct2get;
-  for (i = 0; i < opt.nsnap; i++)
-  {
-    strct2get = (int *) malloc ((opt.catalog[i].nstruct+1) * sizeof(int));
-    for (j = 1; j <= opt.catalog[i].nstruct; j++)
+    // Load over files to read particles
+    for (n = 0; n < opt.simulation.archive.nfiles; n++)
     {
-      strct1 = &opt.catalog[i].strctProps[j];
-      if (strct1->Central == 1)
-        strct2get[j] = 1;
-      else
-        strct2get[j] = 0;
-    }
-    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct2get);
-    Structure_calculate_fmass_radius (&opt.catalog[i], &opt.simulation[i], strct2get, 0.50);
-    if (opt.simulation[i].format == RAMSES || opt.simulation[i].format == RAMSES_STAR)
-      ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct2get);
-    free (strct2get);
-  }
-  */
+      if(files_to_read[n])
+      {
+        // Reset particle counters
+        ngaspart  = 0;
+        ndmpart   = 0;
+        nstarpart = 0;
+        totpart   = 0;
+        nghost    = 0;
 
-  // --------------------------------------------------- //
+        // Load AMR + gas particles
+        ramses_amr_init   (&myGrid[n]);
+        ramses_amr_load   (&opt.simulation, n, &myGrid[n]);
+        ramses_hydro_read (&opt.simulation, n, &myGrid[n]);
+
+        for (k = myGrid[n].nlevelmax-1; k >= 9; k--)
+          for (i = 0; i < myGrid[n].level[k].num; i++)
+            for (j = 0; j < 8; j++)
+              if (myGrid[n].level[k].cell[i].okOct[j])
+                ngaspart++;
+
+        // Load dark matter and star particles
+        ramses_load_particles   (&opt.simulation, n, &partbuffer);
+        for (i = 0; i < opt.simulation.npartinfile[n]; i++)
+        {
+          mratio = fabs(partbuffer[i].Mass/dmp_mass - 1);
+          if (mratio < 1e-4 && partbuffer[i].Age == 0)
+          {
+            partbuffer[i].Type = 1;
+            ndmpart++;
+          }
+          else
+          {
+            if (partbuffer[i].Age != 0)
+            {
+              partbuffer[i].Type = 4;
+              nstarpart++;
+            }
+            else
+            {
+              partbuffer[i].Type = -1;
+              nghost++;
+            }
+          }
+        } // Loop over particles in file
+
+        // Add total particles in file(s) with index n
+        totpart = ngaspart + ndmpart + nstarpart;
+        npartinfile[n] = totpart;
+        printf ("file_index   %8d  ", n);
+        printf ("ndmpart      %8d  ", ndmpart);
+        printf ("nstarpart    %8d  ", nstarpart);
+        printf ("nghost       %8d\n", nghost);
+        allPart[n] = (Particle *) malloc (totpart * sizeof(Particle));
+
+
+        // Copy gas particles to array
+        m = 0;
+        for (k = myGrid[n].nlevelmax-1; k >= 9; k--)
+        {
+          for (i = 0; i < myGrid[n].level[k].num; i++)
+          {
+            for (j = 0; j < 8; j++)
+            {
+              if (myGrid[n].level[k].cell[i].okOct[j])
+              {
+                allPart[n][m].Pos[0] = lbox * myGrid[n].level[k].cell[i].octPos[j][0];
+                allPart[n][m].Pos[1] = lbox * myGrid[n].level[k].cell[i].octPos[j][1];
+                allPart[n][m].Pos[2] = lbox * myGrid[n].level[k].cell[i].octPos[j][2];
+                dx  = myGrid[n].level[k].cell[i].dx;
+                vol = dx * dx * dx;
+                allPart[n][m].Mass = unit_m * vol * myGrid[n].level[k].cell[i].octRho[j];
+                allPart[n][m].Id = m;
+                allPart[n][m].Type = 2;
+                m++;
+              }
+            }
+          }
+        }
+
+        // Copy dm + star particles to array
+        for (i = 0; i < opt.simulation.npartinfile[n]; i++)
+          if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
+            Particle_copy (&partbuffer[i], &allPart[n][m++]);
+
+        // Free memory for next file
+        ramses_amr_free (&myGrid[n]);
+        free (partbuffer);
+
+      } // If file to read
+    } // Loop over files to load particles
+
+    // Re-arrange Particle Arrays into a single one
+    totpart = 0;
+    for (n = 0; n < opt.simulation.archive.nfiles; n++)
+      if(files_to_read[n])
+        totpart += npartinfile[n];
+
+    partbuffer = (Particle *) malloc (totpart * sizeof(Particle));
+    for (n = 0, k = 0; n < opt.simulation.archive.nfiles; n++)
+      if(files_to_read[n])
+      {
+        for (i = 0; i < npartinfile[n]; i++)
+          Particle_copy (&allPart[n][i], &partbuffer[k++]);
+        free (allPart[n]);
+      }
+
+    if (k == totpart)
+      printf ("Total number of particles agrees\n");
+
+    // Calculate R200 for all centrals
+    prev[0] = 0.0;
+    prev[1] = 0.0;
+    prev[2] = 0.0;
+
+    printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
+    for (k = 1, n = 0; k <= opt.catalog.nstruct; k++)
+    {
+      if (strct_to_get[k])
+      {
+        strct1 = &opt.catalog.strctProps[k];
+        strct2 = &opt.catalog.strctProps[strct1->dummyi];
+
+        // Calculat R200
+        for (i = 0; i < totpart; i++)
+        {
+          partbuffer[i].Pos[0] += prev[0] - strct2->Pos[0];
+          partbuffer[i].Pos[1] += prev[1] - strct2->Pos[1];
+          partbuffer[i].Pos[2] += prev[2] - strct2->Pos[2];
+          partbuffer[i].dummyi  = 0;
+          Particle_get_radius (&partbuffer[i]);
+        }
+        prev[0] = strct2->Pos[0];
+        prev[1] = strct2->Pos[1];
+        prev[2] = strct2->Pos[2];
+        qsort (partbuffer, totpart, sizeof(Particle), Particle_rad_compare);
+
+        //
+        for (i = 0, msum = 0; i < totpart; i++)
+        {
+          msum += partbuffer[i].Mass;
+          rad = partbuffer[i].Radius;
+          rho = msum / (fac * rad * rad * rad);
+          if (rho < crit200)
+            break;
+          else
+          {
+            partbuffer[i].dummyi = 1;
+            ninR200++;
+          }
+        }
+        printf ("%6d   %6d   %e   %e   %e   %e   %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200);
+
+        partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
+        for (i = 0; i < ninR200; i++)
+        {
+          if (partbuffer[i].dummyi == 1)
+          {
+            Particle_copy (&partbuffer[i], &partinR200[i]);
+            //partinR200[i].Type = 1;
+          }
+        }
+        sprintf (opt.output.name, "halo_%03d", n);
+        gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
+        free (partinR200);
+        n++;
+      }
+    }
+    free (partbuffer);
+  } // Loop over tasks
+
+
   // Free memory
   Catalog_free (&opt.catalog);
-  ramses_amr_free (&myGrid);
+  free (myGrid);
+  free (strct_to_get);
+  free (npartinfile);
+  free (files_to_read);
+  free (allPart);
   return 0;
+
+
 
   // --------------------------------------------------- //
   // Diffuse stellar fraction
