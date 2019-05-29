@@ -137,10 +137,11 @@ int main (int argc, char ** argv)
              /  opt.simulation.cosmology.OmegaM * opt.simulation.unit_m;
 
   double lbox   = opt.simulation.Lbox;
+  double lbox_2 = lbox / 2.0;
   double unit_m = opt.simulation.unit_m;
   double dx;
   double vol;
-
+  int    ninbuffer;
 
   // Variables for R200 stuff
   double     pi      = acos(-1.0);
@@ -294,12 +295,10 @@ int main (int argc, char ** argv)
           }
         }
 
-
         // Copy dm + star particles to array
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
           if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
             Particle_copy (&partbuffer[i], &allPart[n][m++]);
-
 
         // Free memory for next file
         ramses_amr_free (&myGrid[n]);
@@ -308,35 +307,8 @@ int main (int argc, char ** argv)
       } // If file to read
     } // Loop over files to load particles
 
-    long Totpart;
-    long dummyl;
-
-    // Re-arrange Particle Arrays into a single one
-    Totpart = 0;
-    for (n = 0; n < opt.simulation.archive.nfiles; n++)
-      if(files_to_read[n])
-        Totpart += npartinfile[n];
-
-    if((partbuffer = (Particle *) malloc (totpart * sizeof(Particle))) == NULL)
-    {
-      printf ("Can't allocate %f Mbytes of memory\n", (totpart*sizeof(Particle)/1e6));
-      return 0;
-    }
-
-    for (n = 0, dummyl = 0; n < opt.simulation.archive.nfiles; n++)
-      if(files_to_read[n])
-      {
-        for (i = 0; i < npartinfile[n]; i++)
-          Particle_copy (&allPart[n][i], &partbuffer[dummyl++]);
-        free (allPart[n]);
-      }
-
-    if (dummyl == Totpart)
-      printf ("Total number of particles agrees\n");
-    else
-      printf ("Particle number doesnt agree\n");
+printf ("partbuffer  %p\n", partbuffer);
 return 0;
-
 
     // Calculate R200 for all centrals
     prev[0] = 0.0;
@@ -350,45 +322,76 @@ return 0;
       strct1 = &opt.catalog.strctProps[k];
       if (strct_to_get[k])
       {
-        //for (i = 1; i <= opt.catalog.nstruct; i++)
-        //  files_of_fof[i] = 0;
+        for (i = 1; i <= opt.catalog.nstruct; i++)
+          files_of_fof[i] = 0;
 
         // Tag index of files to look neighbouring particles
-        //for (i = 1; i <= opt.catalog.nstruct; i++)
-        //{
-        //  strct2 = &opt.catalog.strctProps[i];
-        //  if (strct2->HostID == strct1->ID && strct2->ID == strct1->ID)
-        //    for (j = 0; j < strct1->NumFile; j++)
-        //      files_of_fof[strct1->FilesOfGroup[j]] = 1;
-        //}
+        for (i = 1; i <= opt.catalog.nstruct; i++)
+        {
+          strct2 = &opt.catalog.strctProps[i];
+          if (strct2->HostID == strct1->ID && strct2->ID == strct1->ID)
+            for (j = 0; j < strct1->NumFiles; j++)
+              files_of_fof[strct1->FilesOfGroup[j]] = 1;
+        }
 
         // Centre of R200 is central galaxy
         strct2 = &opt.catalog.strctProps[strct1->dummyi];
 
-        //for (i = 0; i < opt.simulation.archive.nfiles; i++)
-        //{
-        //  if (files_of_fof[i])
-        //  {
-        //
-        //  }
-        //}
-
-        // Calculat R200
-        for (i = 0; i < Totpart; i++)
+        ninbuffer = 0;
+        for (n = 0; n < opt.simulation.archive.nfiles; n++)
         {
-          partbuffer[i].Pos[0] += prev[0] - strct2->Pos[0];
-          partbuffer[i].Pos[1] += prev[1] - strct2->Pos[1];
-          partbuffer[i].Pos[2] += prev[2] - strct2->Pos[2];
-          partbuffer[i].dummyi  = 0;
-          Particle_get_radius (&partbuffer[i]);
+          if (files_of_fof[n])
+          {
+            for (j = 0; j < npartinfile[n]; j++)
+            {
+              allPart[n][j].Pos[0] += prev[0] - strct2->Pos[0];
+              allPart[n][j].Pos[1] += prev[1] - strct2->Pos[1];
+              allPart[n][j].Pos[2] += prev[2] - strct2->Pos[2];
+
+              while (allPart[n][j].Pos[0] > lbox_2) allPart[n][j].Pos[0] -= lbox;
+              while (allPart[n][j].Pos[1] > lbox_2) allPart[n][j].Pos[1] -= lbox;
+              while (allPart[n][j].Pos[2] > lbox_2) allPart[n][j].Pos[2] -= lbox;
+
+              while (allPart[n][j].Pos[0] < -lbox_2) allPart[n][j].Pos[0] += lbox;
+              while (allPart[n][j].Pos[1] < -lbox_2) allPart[n][j].Pos[1] += lbox;
+              while (allPart[n][j].Pos[2] < -lbox_2) allPart[n][j].Pos[2] += lbox;
+
+              if (fabs(allPart[n][j].Pos[0]) < 3000.0)
+                if (fabs(allPart[n][j].Pos[1]) < 3000.0)
+                  if (fabs(allPart[n][j].Pos[2]) < 3000.0)
+                  {
+                    allPart[n][j].dummyi = 1;
+                    ninbuffer++;
+                  }
+            }
+          }
         }
+
+        partbuffer = (Particle *) malloc (ninbuffer * sizeof(Particle));
+
+        for (n = 0, i = 0; n < opt.simulation.archive.nfiles; n++)
+        {
+          if (files_of_fof[n])
+            for (j = 0; j < npartinfile[n]; j++)
+              if (allPart[n][j].dummyi)
+              {
+                Particle_copy (&allPart[n][j], &partbuffer[i]);
+                Particle_get_radius (&partbuffer[i]);
+                i++;
+              }
+        }
+        if (i == ninbuffer)
+          printf ("PArticles in buffer agree\n");
+        else
+          printf ("Something wrong is going on\n");
+
         prev[0] = strct2->Pos[0];
         prev[1] = strct2->Pos[1];
         prev[2] = strct2->Pos[2];
-        qsort (partbuffer, totpart, sizeof(Particle), Particle_rad_compare);
+        qsort (partbuffer, ninbuffer, sizeof(Particle), Particle_rad_compare);
 
         //
-        for (i = 0, msum = 0; i < totpart; i++)
+        for (i = 0, msum = 0, ninR200 = 0; i < ninbuffer; i++)
         {
           msum += partbuffer[i].Mass;
           rad = partbuffer[i].Radius;
@@ -409,9 +412,9 @@ return 0;
         sprintf (opt.output.name, "halo_%03d", strct1->ID);
         gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
         free (partinR200);
+        free (partbuffer);
       }
     }
-    free (partbuffer);
   } // Loop over tasks
   fclose (f);
 
