@@ -161,24 +161,24 @@ int main (int argc, char ** argv)
     // Reset array values
     for (i = 0; i <= opt.catalog.nstruct; i++)
       strct_to_get[i] = 0;
-  
+
     for (i = 0; i < opt.simulation.archive.nfiles; i++)
       files_to_read[i] = 0;
 
-  
+
     // Tag files to read
     sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
     f = fopen (fname, "r");
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
-  
+
       fgets  (buffer, NAME_LENGTH, f);
       sscanf (buffer, "%d  %d", &tmpid, &nfiles);
       fgets  (buffer, NAME_LENGTH, f);
-  
+
       get_n_num_from_string (buffer, nfiles, &files_of_strct);
-  
+
       // IHSC structures
       if ((strct1->oTask == itasks) && \
           (strct1->Type == 7)       && \
@@ -313,7 +313,7 @@ printf ("Totpart  %ld\n", Totpart);
 return 0;
 
     if((partbuffer = (Particle *) malloc (totpart * sizeof(Particle))) == NULL)
-    {  
+    {
       printf ("Can't allocate %f Mbytes of memory\n", (totpart*sizeof(Particle)/1e6));
       return 0;
     }
