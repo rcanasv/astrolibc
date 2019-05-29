@@ -74,9 +74,11 @@ int main (int argc, char ** argv)
 
   int     dummyi;
 
+
   // Read params
   calcSO_options (argc, argv, &opt);
   calcSO_params  (&opt);
+
 
   // Load sim and catalog information
   Simulation_init                 (&opt.simulation);
@@ -87,15 +89,12 @@ int main (int argc, char ** argv)
 
 
   // Tag central galaxy
-  for (i = 0; i < opt.nsnap; i++)
+  for (j = 1; j <= opt.catalog.nstruct; j++)
   {
-    for (j = 1; j <= opt.catalog.nstruct; j++)
-    {
-      strct1 = &opt.catalog.strctProps[j];
-      strct1->dummyd = 0.0;
-      strct1->dummyi = 0;
-      strct1->dummy  = 0;
-    }
+    strct1 = &opt.catalog.strctProps[j];
+    strct1->dummyd = 0.0;
+    strct1->dummyi = 0;
+    strct1->dummy  = 0;
   }
 
   for (j = 1; j <= opt.catalog.nstruct; j++)
@@ -137,6 +136,7 @@ int main (int argc, char ** argv)
   double dx;
   double vol;
 
+
   // Variables for R200 stuff
   double     pi      = acos(-1.0);
   double     fac     = 4.0 * pi / 3.0;
@@ -149,34 +149,37 @@ int main (int argc, char ** argv)
   double     rho;
   int        ninR200;
   double     galpos [3];
-  double     prev[3];
+  double     prev   [3];
   Particle * partinR200;
 
   //
   // Loop over tasks
   //
-  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = 0; itasks < 1; itasks++)
   {
     // Reset array values
-    for (i = 1; i <= opt.catalog.nstruct; i++)
+    for (i = 0; i <= opt.catalog.nstruct; i++)
       strct_to_get[i] = 0;
-
+  
     for (i = 0; i < opt.simulation.archive.nfiles; i++)
       files_to_read[i] = 0;
 
-
+  
     // Tag files to read
     sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
     f = fopen (fname, "r");
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
-
+  
       fgets  (buffer, NAME_LENGTH, f);
       sscanf (buffer, "%d  %d", &tmpid, &nfiles);
       fgets  (buffer, NAME_LENGTH, f);
-
+  
       get_n_num_from_string (buffer, nfiles, &files_of_strct);
+  
+      // IHSC structures
       if ((strct1->oTask == itasks) && \
           (strct1->Type == 7)       && \
           (strct1->NumSubs > 1))
@@ -185,6 +188,14 @@ int main (int argc, char ** argv)
         for (j = 0; j < nfiles; j++)
           files_to_read[files_of_strct[j]] = 1;
       }
+
+      // Centrals
+      if (strct_to_get[strct1->HostID])
+      {
+        for (j = 0; j < nfiles; j++)
+          files_to_read[files_of_strct[j]] = 1;
+      }
+
       free (files_of_strct);
     }
     fclose (f);
@@ -213,8 +224,9 @@ int main (int argc, char ** argv)
               if (myGrid[n].level[k].cell[i].okOct[j])
                 ngaspart++;
 
+
         // Load dark matter and star particles
-        ramses_load_particles   (&opt.simulation, n, &partbuffer);
+        ramses_load_particles (&opt.simulation, n, &partbuffer);
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
         {
           mratio = fabs(partbuffer[i].Mass/dmp_mass - 1);
@@ -238,15 +250,16 @@ int main (int argc, char ** argv)
           }
         } // Loop over particles in file
 
+
         // Add total particles in file(s) with index n
         totpart = ngaspart + ndmpart + nstarpart;
         npartinfile[n] = totpart;
         printf ("file_index   %8d  ", n);
         printf ("ndmpart      %8d  ", ndmpart);
         printf ("nstarpart    %8d  ", nstarpart);
-        printf ("nghost       %8d\n", nghost);
+        printf ("nghost       %8d  ", nghost);
+        printf ("nparttot     %8d\n", totpart);
         allPart[n] = (Particle *) malloc (totpart * sizeof(Particle));
-
 
         // Copy gas particles to array
         m = 0;
@@ -272,25 +285,39 @@ int main (int argc, char ** argv)
           }
         }
 
+
         // Copy dm + star particles to array
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
           if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
             Particle_copy (&partbuffer[i], &allPart[n][m++]);
 
+
         // Free memory for next file
         ramses_amr_free (&myGrid[n]);
         free (partbuffer);
 
+
       } // If file to read
     } // Loop over files to load particles
 
+
+    long Totpart;
+
     // Re-arrange Particle Arrays into a single one
-    totpart = 0;
+    Totpart = 0;
     for (n = 0; n < opt.simulation.archive.nfiles; n++)
       if(files_to_read[n])
-        totpart += npartinfile[n];
+        Totpart += npartinfile[n];
 
-    partbuffer = (Particle *) malloc (totpart * sizeof(Particle));
+printf ("Totpart  %ld\n", Totpart);
+return 0;
+
+    if((partbuffer = (Particle *) malloc (totpart * sizeof(Particle))) == NULL)
+    {  
+      printf ("Can't allocate %f Mbytes of memory\n", (totpart*sizeof(Particle)/1e6));
+      return 0;
+    }
+
     for (n = 0, k = 0; n < opt.simulation.archive.nfiles; n++)
       if(files_to_read[n])
       {
@@ -302,13 +329,14 @@ int main (int argc, char ** argv)
     if (k == totpart)
       printf ("Total number of particles agrees\n");
 
+
     // Calculate R200 for all centrals
     prev[0] = 0.0;
     prev[1] = 0.0;
     prev[2] = 0.0;
 
     printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
-    for (k = 1, n = 0; k <= opt.catalog.nstruct; k++)
+    for (k = 1; k <= opt.catalog.nstruct; k++)
     {
       if (strct_to_get[k])
       {
@@ -338,30 +366,24 @@ int main (int argc, char ** argv)
           if (rho < crit200)
             break;
           else
-          {
-            partbuffer[i].dummyi = 1;
             ninR200++;
-          }
         }
         printf ("%6d   %6d   %e   %e   %e   %e   %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200);
 
         partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
         for (i = 0; i < ninR200; i++)
         {
-          if (partbuffer[i].dummyi == 1)
-          {
-            Particle_copy (&partbuffer[i], &partinR200[i]);
-            //partinR200[i].Type = 1;
-          }
+          Particle_copy (&partbuffer[i], &partinR200[i]);
+          //partinR200[i].Type = 1;
         }
-        sprintf (opt.output.name, "halo_%03d", n);
+        sprintf (opt.output.name, "halo_%03d", strct1->ID);
         gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
         free (partinR200);
-        n++;
       }
     }
     free (partbuffer);
   } // Loop over tasks
+  fclose (f);
 
 
   // Free memory
