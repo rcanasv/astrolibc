@@ -302,6 +302,7 @@ int main (int argc, char ** argv)
 
 
     long Totpart;
+    long dummyl;
 
     // Re-arrange Particle Arrays into a single one
     Totpart = 0;
@@ -309,26 +310,25 @@ int main (int argc, char ** argv)
       if(files_to_read[n])
         Totpart += npartinfile[n];
 
-printf ("Totpart  %ld\n", Totpart);
-return 0;
-
     if((partbuffer = (Particle *) malloc (totpart * sizeof(Particle))) == NULL)
     {  
       printf ("Can't allocate %f Mbytes of memory\n", (totpart*sizeof(Particle)/1e6));
       return 0;
     }
 
-    for (n = 0, k = 0; n < opt.simulation.archive.nfiles; n++)
+    for (n = 0, dummyl = 0; n < opt.simulation.archive.nfiles; n++)
       if(files_to_read[n])
       {
         for (i = 0; i < npartinfile[n]; i++)
-          Particle_copy (&allPart[n][i], &partbuffer[k++]);
+          Particle_copy (&allPart[n][i], &partbuffer[dummyl++]);
         free (allPart[n]);
       }
 
-    if (k == totpart)
+    if (k == Totpart)
       printf ("Total number of particles agrees\n");
-
+    else
+      printf ("Particle number doesnt agree\n");
+return 0;
 
     // Calculate R200 for all centrals
     prev[0] = 0.0;
