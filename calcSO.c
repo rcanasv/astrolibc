@@ -53,9 +53,13 @@ int main (int argc, char ** argv)
   int     nfiles;
   int     numpart;
 
-  int       * strct_to_get   = NULL;
-  int       * files_to_read  = NULL;
-  int       * files_of_strct = NULL;
+  int  * strct_to_get   = NULL;
+  int  * files_to_read  = NULL;
+  int  * files_of_strct = NULL;
+
+  int  * strct_of_fof = NULL;
+  int  * files_of_fof = NULL
+
   int       * npartinfile    = NULL;
   Particle  * partbuffer     = NULL;
   Particle ** allPart        = NULL;
@@ -123,6 +127,7 @@ int main (int argc, char ** argv)
   // Allocate arrays
   strct_to_get  = (int *)       malloc ((opt.catalog.nstruct+1)        *sizeof(int));
   files_to_read = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
+  files_of_fof  = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
   npartinfile   = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
   myGrid        = (Grid *)      malloc ((opt.simulation.archive.nfiles)*sizeof(int));
   allPart       = (Particle **) malloc ((opt.simulation.archive.nfiles)*sizeof(int));
@@ -166,7 +171,7 @@ int main (int argc, char ** argv)
       files_to_read[i] = 0;
 
 
-    // Tag files to read
+    // Tag files to read of fof of interest
     sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
     f = fopen (fname, "r");
     for (i = 1; i <= opt.catalog.nstruct; i++)
@@ -179,26 +184,30 @@ int main (int argc, char ** argv)
 
       get_n_num_from_string (buffer, nfiles, &files_of_strct);
 
-      // IHSC structures
-      if ((strct1->oTask == itasks) && \
-          (strct1->Type == 7)       && \
-          (strct1->NumSubs > 1))
-      {
-        strct_to_get[i] = 1;
-        for (j = 0; j < nfiles; j++)
-          files_to_read[files_of_strct[j]] = 1;
-      }
+      strct1->NumFile = nfiles;
+      strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
+      for (j = 0; j < nfiles; j++)
+         strct1->FilesOfGroup[j] = files_of_strct[j];
 
-      // Centrals
-      if (strct_to_get[strct1->HostID])
-      {
-        for (j = 0; j < nfiles; j++)
-          files_to_read[files_of_strct[j]] = 1;
-      }
-
+       if ((strct1->oTask == itasks) && (strct1->Type == 7) && (strct1->NumSubs > 1))
+       {
+         strct_to_get[i] = 1;
+         for (j = 0; j < nfiles; j++)
+           files_to_read[files_of_strct[j]] = 1;
+       }
       free (files_of_strct);
     }
     fclose (f);
+
+
+    // Tag files to read of all
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      strct1 = &opt.catalog.strctProps[i];
+      if ((strct1->Type > 7) && (strct_to_get[strct1->HostID]))
+        for (j = 0; j < strct1->NumFile; j++)
+          files_to_read[strct1->FilesOfGroup[j]] = 1;
+    }
 
 
     // Load over files to read particles
@@ -296,10 +305,8 @@ int main (int argc, char ** argv)
         ramses_amr_free (&myGrid[n]);
         free (partbuffer);
 
-
       } // If file to read
     } // Loop over files to load particles
-
 
     long Totpart;
     long dummyl;
@@ -324,11 +331,12 @@ int main (int argc, char ** argv)
         free (allPart[n]);
       }
 
-    if (k == Totpart)
+    if (dummyl == Totpart)
       printf ("Total number of particles agrees\n");
     else
       printf ("Particle number doesnt agree\n");
 return 0;
+
 
     // Calculate R200 for all centrals
     prev[0] = 0.0;
@@ -336,15 +344,37 @@ return 0;
     prev[2] = 0.0;
 
     printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
+    // Loop over FOFs
     for (k = 1; k <= opt.catalog.nstruct; k++)
     {
+      strct1 = &opt.catalog.strctProps[k];
       if (strct_to_get[k])
       {
-        strct1 = &opt.catalog.strctProps[k];
+        //for (i = 1; i <= opt.catalog.nstruct; i++)
+        //  files_of_fof[i] = 0;
+
+        // Tag index of files to look neighbouring particles
+        //for (i = 1; i <= opt.catalog.nstruct; i++)
+        //{
+        //  strct2 = &opt.catalog.strctProps[i];
+        //  if (strct2->HostID == strct1->ID && strct2->ID == strct1->ID)
+        //    for (j = 0; j < strct1->NumFile; j++)
+        //      files_of_fof[strct1->FilesOfGroup[j]] = 1;
+        //}
+
+        // Centre of R200 is central galaxy
         strct2 = &opt.catalog.strctProps[strct1->dummyi];
 
+        //for (i = 0; i < opt.simulation.archive.nfiles; i++)
+        //{
+        //  if (files_of_fof[i])
+        //  {
+        //
+        //  }
+        //}
+
         // Calculat R200
-        for (i = 0; i < totpart; i++)
+        for (i = 0; i < Totpart; i++)
         {
           partbuffer[i].Pos[0] += prev[0] - strct2->Pos[0];
           partbuffer[i].Pos[1] += prev[1] - strct2->Pos[1];
