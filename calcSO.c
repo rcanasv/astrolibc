@@ -58,7 +58,7 @@ int main (int argc, char ** argv)
   int  * files_of_strct = NULL;
 
   int  * strct_of_fof = NULL;
-  int  * files_of_fof = NULL
+  int  * files_of_fof = NULL;
 
   int       * npartinfile    = NULL;
   Particle  * partbuffer     = NULL;
@@ -184,7 +184,7 @@ int main (int argc, char ** argv)
 
       get_n_num_from_string (buffer, nfiles, &files_of_strct);
 
-      strct1->NumFile = nfiles;
+      strct1->NumFiles = nfiles;
       strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
       for (j = 0; j < nfiles; j++)
          strct1->FilesOfGroup[j] = files_of_strct[j];
@@ -205,7 +205,7 @@ int main (int argc, char ** argv)
     {
       strct1 = &opt.catalog.strctProps[i];
       if ((strct1->Type > 7) && (strct_to_get[strct1->HostID]))
-        for (j = 0; j < strct1->NumFile; j++)
+        for (j = 0; j < strct1->NumFiles; j++)
           files_to_read[strct1->FilesOfGroup[j]] = 1;
     }
 
