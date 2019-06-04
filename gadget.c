@@ -367,7 +367,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
   offset = 0;
   if(dummy != 0)
   {
-   // printf("writing mass block\n");
+    //printf("writing mass block\n");
     fwrite(&dummy, sizeof(dummy), 1, snap_file);
     for(k = 0; k < 6; k++)
     {

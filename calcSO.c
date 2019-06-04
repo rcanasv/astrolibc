@@ -126,11 +126,11 @@ int main (int argc, char ** argv)
 
   // Allocate arrays
   strct_to_get  = (int *)       malloc ((opt.catalog.nstruct+1)        *sizeof(int));
-  files_to_read = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
-  files_of_fof  = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
-  npartinfile   = (int *)       malloc ((opt.simulation.archive.nfiles) *sizeof(int));
-  myGrid        = (Grid *)      malloc ((opt.simulation.archive.nfiles)*sizeof(int));
-  allPart       = (Particle **) malloc ((opt.simulation.archive.nfiles)*sizeof(int));
+  files_to_read = (int *)       malloc ((opt.simulation.archive.nfiles)*sizeof(int));
+  files_of_fof  = (int *)       malloc ((opt.simulation.archive.nfiles)*sizeof(int));
+  npartinfile   = (int *)       malloc ((opt.simulation.archive.nfiles)*sizeof(int));
+  myGrid        = (Grid *)      malloc ((opt.simulation.archive.nfiles)*sizeof(Grid));
+  allPart       = (Particle **) malloc ((opt.simulation.archive.nfiles)*sizeof(Particle *));
 
   dmp_mass = 1.0 / (1024.0*1024.0*1024.0) \
              * (opt.simulation.cosmology.OmegaM - opt.simulation.cosmology.OmegaB) \
@@ -161,8 +161,8 @@ int main (int argc, char ** argv)
   //
   // Loop over tasks
   //
-  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
-  for (itasks = 0; itasks < 1; itasks++)
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  //for (itasks = 0; itasks < 1; itasks++)
   {
     // Reset array values
     for (i = 0; i <= opt.catalog.nstruct; i++)
@@ -233,8 +233,7 @@ int main (int argc, char ** argv)
             for (j = 0; j < 8; j++)
               if (myGrid[n].level[k].cell[i].okOct[j])
                 ngaspart++;
-
-
+        
         // Load dark matter and star particles
         ramses_load_particles (&opt.simulation, n, &partbuffer);
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
@@ -264,11 +263,14 @@ int main (int argc, char ** argv)
         // Add total particles in file(s) with index n
         totpart = ngaspart + ndmpart + nstarpart;
         npartinfile[n] = totpart;
+        /*
         printf ("file_index   %8d  ", n);
+        printf ("ngaspart      %8d  ", ngaspart);
         printf ("ndmpart      %8d  ", ndmpart);
         printf ("nstarpart    %8d  ", nstarpart);
         printf ("nghost       %8d  ", nghost);
         printf ("nparttot     %8d\n", totpart);
+        */
         allPart[n] = (Particle *) malloc (totpart * sizeof(Particle));
 
         // Copy gas particles to array
@@ -294,7 +296,6 @@ int main (int argc, char ** argv)
             }
           }
         }
-
         // Copy dm + star particles to array
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
           if ((partbuffer[i].Type == 1) || (partbuffer[i].Type == 4))
@@ -303,27 +304,22 @@ int main (int argc, char ** argv)
         // Free memory for next file
         ramses_amr_free (&myGrid[n]);
         free (partbuffer);
-
       } // If file to read
     } // Loop over files to load particles
-
-printf ("partbuffer  %p\n", partbuffer);
 
     // Calculate R200 for all centrals
     prev[0] = 0.0;
     prev[1] = 0.0;
     prev[2] = 0.0;
 
-    printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
+    //printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
     // Loop over FOFs
-    //for (k = 1; k <= opt.catalog.nstruct; k++)
-    for (k = 1; k <= 5; k++)
+    for (k = 1; k <= opt.catalog.nstruct; k++)
     {
-printf ("INIT\n"); 
      strct1 = &opt.catalog.strctProps[k];
       if (strct_to_get[k])
       {
-        for (n = 0; n <= opt.simulation.archive.nfiles; n++)
+        for (n = 0; n < opt.simulation.archive.nfiles; n++)
           files_of_fof[n] = 0;
 
         // Tag index of files to look neighbouring particles
@@ -331,13 +327,12 @@ printf ("INIT\n");
         {
           strct2 = &opt.catalog.strctProps[i];
           if (strct2->HostID == strct1->ID || strct2->ID == strct1->ID)
-            for (j = 0; j < strct1->NumFiles; j++)
-              files_of_fof[strct1->FilesOfGroup[j]] = 1;
+            for (j = 0; j < strct2->NumFiles; j++)
+              files_of_fof[strct2->FilesOfGroup[j]] = 1;
         }
-
+        
         // Centre of R200 is central galaxy
         strct2 = &opt.catalog.strctProps[strct1->dummyi];
-printf("BEFORE\n");
         ninbuffer = 0;
         for (n = 0; n < opt.simulation.archive.nfiles; n++)
         {
@@ -345,6 +340,7 @@ printf("BEFORE\n");
           {
             for (j = 0; j < npartinfile[n]; j++)
             {
+
               allPart[n][j].Pos[0] -= strct2->Pos[0];
               allPart[n][j].Pos[1] -= strct2->Pos[1];
               allPart[n][j].Pos[2] -= strct2->Pos[2];
@@ -367,7 +363,6 @@ printf("BEFORE\n");
             }
           }
         }
-printf("AFTER\n");
         partbuffer = (Particle *) malloc (ninbuffer * sizeof(Particle));
 
         for (n = 0, i = 0; n < opt.simulation.archive.nfiles; n++)
@@ -384,12 +379,9 @@ printf("AFTER\n");
               allPart[n][j].Pos[0] += strct2->Pos[0];
               allPart[n][j].Pos[1] += strct2->Pos[1];
               allPart[n][j].Pos[2] += strct2->Pos[2];
+              allPart[n][j].dummyi = 0;
             }
         }
-        if (i == ninbuffer)
-          printf ("PArticles in buffer agree\n");
-        else
-          printf ("Something wrong is going on\n");
 
         prev[0] = strct2->Pos[0];
         prev[1] = strct2->Pos[1];
@@ -407,8 +399,9 @@ printf("AFTER\n");
           else
             ninR200++;
         }
-        printf ("%6d   %6d   %e   %e   %e   %e   %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200);
-
+        printf ("%6d   %6d   %e   %e   %e   %e   %d  %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200, ninbuffer);
+fflush(stdout);
+        /*
         partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
         for (i = 0; i < ninR200; i++)
         {
@@ -418,11 +411,10 @@ printf("AFTER\n");
         sprintf (opt.output.name, "halo_%03d", strct1->ID);
         gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
         free (partinR200);
+        */
         free (partbuffer);
-printf("END\n");
       }
     }
-return 0;;
   } // Loop over tasks
   fclose (f);
 
