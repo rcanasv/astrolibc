@@ -6,13 +6,12 @@
  *
  */
 
-
 #include "base.h"
 #include "typedef.h"
 #include "archive.h"
 #include "catalog.h"
 #include "simulation.h"
-
+#include <mpi.h>
 
 typedef struct Options
 {
@@ -34,6 +33,13 @@ void  calcSO_params  (Options * opt);
 
 int main (int argc, char ** argv)
 {
+  int myrank;
+  int nprocs;
+
+  MPI_Init (&argc, &argv);
+  MPI_Comm_size (MPI_COMM_WORLD, &nprocs);
+  MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
+
   int           i, j, k, l, n, m;
   Options       opt;
 
@@ -158,11 +164,14 @@ int main (int argc, char ** argv)
   double     prev   [3];
   Particle * partinR200;
 
+  sprintf (fname, "R200.txt.%d", myrank);
+  FILE * fout = fopen (fname, "w");
+
   //
   // Loop over tasks
   //
-  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
-  //for (itasks = 0; itasks < 1; itasks++)
+  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = myrank; itasks < myrank+1; itasks++)
   {
     // Reset array values
     for (i = 0; i <= opt.catalog.nstruct; i++)
@@ -233,7 +242,7 @@ int main (int argc, char ** argv)
             for (j = 0; j < 8; j++)
               if (myGrid[n].level[k].cell[i].okOct[j])
                 ngaspart++;
-        
+
         // Load dark matter and star particles
         ramses_load_particles (&opt.simulation, n, &partbuffer);
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
@@ -330,7 +339,7 @@ int main (int argc, char ** argv)
             for (j = 0; j < strct2->NumFiles; j++)
               files_of_fof[strct2->FilesOfGroup[j]] = 1;
         }
-        
+
         // Centre of R200 is central galaxy
         strct2 = &opt.catalog.strctProps[strct1->dummyi];
         ninbuffer = 0;
@@ -399,8 +408,8 @@ int main (int argc, char ** argv)
           else
             ninR200++;
         }
-        printf ("%6d   %6d   %e   %e   %e   %e   %d  %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200, ninbuffer);
-fflush(stdout);
+        fprintf (fout, "%6d   %6d   %e   %e   %e   %e   %d  %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200, ninbuffer);
+//fflush(stdout);
         /*
         partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
         for (i = 0; i < ninR200; i++)
@@ -416,7 +425,7 @@ fflush(stdout);
       }
     }
   } // Loop over tasks
-  fclose (f);
+  fclose (fout);
 
 
   // Free memory
@@ -426,6 +435,7 @@ fflush(stdout);
   free (npartinfile);
   free (files_to_read);
   free (allPart);
+  MPI_Finalize();
   return 0;
 
 
