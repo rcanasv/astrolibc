@@ -1,4 +1,10 @@
+ifeq ($(MPI),yes)
+CC          = mpicc
+else
 CC          = gcc
+MPI_INCL    =
+MPI_LIB     = 
+endif
 
 ifeq ($(MACHINE),horizon)
 HDF5_INCL   = -I//softs/hdf5/1.8.18-gcc4/include
@@ -8,6 +14,11 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/softs/hdf5/1.8.18-gcc4/l
 GSL_INCL    = -I/softs/gsl/2.3/include
 GSL_LIB     = -L/softs/gsl/2.3/lib
 GSL_FLAGS   = -lgsl -lgslcblas
+
+ifeq ($(MPI),yes)
+MPI_INCL    = -I//softs/openmpi/1.6.3-ifort-12.1-torque-CentOS6/include
+MPI_LIB     = -L/softs/openmpi/1.6.3-ifort-12.1-torque-CentOS6/lib
+endif
 endif
 
 ifeq ($(MACHINE),raijin)
@@ -48,8 +59,8 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home/rcanas/opt/gcc/6.3.
 endif
 
 
-INC         = $(HDF5_INCL) $(GSL_INCL)
-LIB         = $(HDF5_LIB) $(GSL_LIB)
+INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
+LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
 FLAGS       = -lm  $(HDF5_FLAGS) $(GSL_FLAGS)
 
 

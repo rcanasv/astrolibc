@@ -12,6 +12,8 @@
 #include "catalog.h"
 #include "simulation.h"
 #include <mpi.h>
+#include <time.h>
+
 
 typedef struct Options
 {
@@ -83,6 +85,8 @@ int main (int argc, char ** argv)
   int    ifiles;
 
   int     dummyi;
+
+  clock_t  start_t, end_t;
 
 
   // Read params
@@ -163,16 +167,21 @@ int main (int argc, char ** argv)
   double     galpos [3];
   double     prev   [3];
   Particle * partinR200;
-
-  sprintf (fname, "R200.txt.%d", myrank);
-  FILE * fout = fopen (fname, "w");
+  FILE * fout;
 
   //
   // Loop over tasks
   //
   //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
-  for (itasks = myrank; itasks < myrank+1; itasks++)
+  //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
+  for (itasks = myrank; itasks <= myrank; itasks++)
   {
+    start_t = clock();
+    printf ("%d  opening catalog file %d\n", myrank, itasks);
+    fflush (stdout);
+    sprintf (fname, "R200.txt.%d", itasks);
+    fout = fopen (fname, "w");
+
     // Reset array values
     for (i = 0; i <= opt.catalog.nstruct; i++)
       strct_to_get[i] = 0;
@@ -199,7 +208,7 @@ int main (int argc, char ** argv)
       for (j = 0; j < nfiles; j++)
          strct1->FilesOfGroup[j] = files_of_strct[j];
 
-       if ((strct1->oTask == itasks) && (strct1->Type == 7) && (strct1->NumSubs > 1))
+       if ((strct1->oTask == itasks) && (strct1->Type == 7) && (strct1->NumSubs > 0))
        {
          strct_to_get[i] = 1;
          for (j = 0; j < nfiles; j++)
@@ -321,11 +330,14 @@ int main (int argc, char ** argv)
     prev[1] = 0.0;
     prev[2] = 0.0;
 
+printf ("%d  Checkpoint\n", myrank);
+fflush (stdout);
+
     //printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
     // Loop over FOFs
     for (k = 1; k <= opt.catalog.nstruct; k++)
     {
-     strct1 = &opt.catalog.strctProps[k];
+      strct1 = &opt.catalog.strctProps[k];
       if (strct_to_get[k])
       {
         for (n = 0; n < opt.simulation.archive.nfiles; n++)
@@ -409,7 +421,7 @@ int main (int argc, char ** argv)
             ninR200++;
         }
         fprintf (fout, "%6d   %6d   %e   %e   %e   %e   %d  %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200, ninbuffer);
-//fflush(stdout);
+fflush (fout);
         /*
         partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
         for (i = 0; i < ninR200; i++)
@@ -424,8 +436,14 @@ int main (int argc, char ** argv)
         free (partbuffer);
       }
     }
+    fclose (fout);
+    end_t = clock();
+    printf ("%d  took %f minutes\n", myrank, (end_t - start_t)/CLOCKS_PER_SEC/60.0);
+    fflush (stdout);
+    for (i = 0; i < opt.simulation.archive.nfiles; i++)
+      if (files_to_read[i])
+        free(allPart[i]);
   } // Loop over tasks
-  fclose (fout);
 
 
   // Free memory
