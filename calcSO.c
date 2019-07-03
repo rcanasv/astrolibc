@@ -11,7 +11,7 @@
 #include "archive.h"
 #include "catalog.h"
 #include "simulation.h"
-#include <mpi.h>
+//#include <mpi.h>
 #include <time.h>
 
 
@@ -35,12 +35,12 @@ void  calcSO_params  (Options * opt);
 
 int main (int argc, char ** argv)
 {
-  int myrank;
-  int nprocs;
+  int myrank = 0;
+  int nprocs = 1;
 
-  MPI_Init (&argc, &argv);
-  MPI_Comm_size (MPI_COMM_WORLD, &nprocs);
-  MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
+  //MPI_Init (&argc, &argv);
+  //MPI_Comm_size (MPI_COMM_WORLD, &nprocs);
+  //MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
 
   int           i, j, k, l, n, m;
   Options       opt;
@@ -134,6 +134,29 @@ int main (int argc, char ** argv)
   }
 
 
+    sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
+    f = fopen (fname, "r");
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      strct1 = &opt.catalog.strctProps[i];
+
+      fgets  (buffer, NAME_LENGTH, f);
+      sscanf (buffer, "%d  %d", &tmpid, &nfiles);
+      fgets  (buffer, NAME_LENGTH, f);
+
+      get_n_num_from_string (buffer, nfiles, &files_of_strct);
+
+      strct1->NumFiles = nfiles;
+      strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
+      for (j = 0; j < nfiles; j++)
+         strct1->FilesOfGroup[j] = files_of_strct[j];
+      free (files_of_strct);
+    }
+    fclose (f);
+
+
+
+
   // Allocate arrays
   strct_to_get  = (int *)       malloc ((opt.catalog.nstruct+1)        *sizeof(int));
   files_to_read = (int *)       malloc ((opt.simulation.archive.nfiles)*sizeof(int));
@@ -168,20 +191,18 @@ int main (int argc, char ** argv)
   double     prev   [3];
   Particle * partinR200;
   FILE * fout;
-
+int chkpnt;
   //
   // Loop over tasks
   //
-  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
-  for (itasks = myrank; itasks <= myrank; itasks++)
+  //for (itasks = 0; itasks <= 0; itasks++)
   {
+chkpnt = 0;
     start_t = clock();
     printf ("%d  opening catalog file %d\n", myrank, itasks);
-    fflush (stdout);
-    sprintf (fname, "R200.txt.%d", itasks);
-    fout = fopen (fname, "w");
-
+fflush (stdout);
     // Reset array values
     for (i = 0; i <= opt.catalog.nstruct; i++)
       strct_to_get[i] = 0;
@@ -191,34 +212,24 @@ int main (int argc, char ** argv)
 
 
     // Tag files to read of fof of interest
-    sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
-    f = fopen (fname, "r");
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
-
-      fgets  (buffer, NAME_LENGTH, f);
-      sscanf (buffer, "%d  %d", &tmpid, &nfiles);
-      fgets  (buffer, NAME_LENGTH, f);
-
-      get_n_num_from_string (buffer, nfiles, &files_of_strct);
-
-      strct1->NumFiles = nfiles;
-      strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
-      for (j = 0; j < nfiles; j++)
-         strct1->FilesOfGroup[j] = files_of_strct[j];
-
-       if ((strct1->oTask == itasks) && (strct1->Type == 7) && (strct1->NumSubs > 0))
-       {
-         strct_to_get[i] = 1;
-         for (j = 0; j < nfiles; j++)
-           files_to_read[files_of_strct[j]] = 1;
-       }
-      free (files_of_strct);
+      if ((strct1->oTask == itasks) && \
+          (strct1->Type == 7)       && \
+          (strct1->NumSubs > 0))
+      {
+        strct2 = &opt.catalog.strctProps[strct1->dummyi];
+        if (strct2->dummyd >= 1e10)
+        {
+          strct_to_get[i] = 1;
+          for (j = 0; j < strct1->NumFiles; j++)
+            files_to_read[strct1->FilesOfGroup[j]] = 1;
+        }
+      }
     }
-    fclose (f);
 
-
+printf ("chkpnt %d\n", chkpnt++); fflush(stdout);
     // Tag files to read of all
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
@@ -234,6 +245,8 @@ int main (int argc, char ** argv)
     {
       if(files_to_read[n])
       {
+
+printf ("reading files %d\n", n); fflush (stdout);
         // Reset particle counters
         ngaspart  = 0;
         ndmpart   = 0;
@@ -324,22 +337,21 @@ int main (int argc, char ** argv)
         free (partbuffer);
       } // If file to read
     } // Loop over files to load particles
+printf ("chkpnt %d\n", chkpnt++); fflush(stdout);
 
     // Calculate R200 for all centrals
     prev[0] = 0.0;
     prev[1] = 0.0;
     prev[2] = 0.0;
 
-printf ("%d  Checkpoint\n", myrank);
-fflush (stdout);
-
-    //printf ("IHSC_ID  Ctrl_ID   R200          M200             Rho          Mc/Mvir\n");
     // Loop over FOFs
     for (k = 1; k <= opt.catalog.nstruct; k++)
     {
       strct1 = &opt.catalog.strctProps[k];
       if (strct_to_get[k])
       {
+printf ("calculating struct  %d ...", k);
+fflush (stdout);
         for (n = 0; n < opt.simulation.archive.nfiles; n++)
           files_of_fof[n] = 0;
 
@@ -420,9 +432,9 @@ fflush (stdout);
           else
             ninR200++;
         }
-        fprintf (fout, "%6d   %6d   %e   %e   %e   %e   %d  %d\n", strct1->ID, strct2->ID, rad, msum, rho, log10(strct2->TotMass/msum), ninR200, ninbuffer);
-fflush (fout);
-        /*
+        strct1->R200 = rad;
+        strct1->M200 = msum;
+       /*
         partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
         for (i = 0; i < ninR200; i++)
         {
@@ -433,13 +445,27 @@ fflush (fout);
         gadget_write_snapshot (partinR200, ninR200, &header, &opt.output);
         free (partinR200);
         */
+printf ("done\n");
+fflush (stdout);
         free (partbuffer);
+      }
+    }
+    sprintf (fname, "R200.txt.%d", itasks);
+    fout = fopen (fname, "w");
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    {
+      strct1 = &opt.catalog.strctProps[i];
+      if (strct_to_get[i] && strct1->Type == 7)
+      {
+        strct2 = &opt.catalog.strctProps[strct1->dummyi];
+        fprintf (fout, "%6d   %6d   %e   %e   %e \n", strct1->ID, strct2->ID, strct1->R200, strct1->M200,log10(strct2->TotMass/strct1->M200));
       }
     }
     fclose (fout);
     end_t = clock();
     printf ("%d  took %f minutes\n", myrank, (end_t - start_t)/CLOCKS_PER_SEC/60.0);
     fflush (stdout);
+    
     for (i = 0; i < opt.simulation.archive.nfiles; i++)
       if (files_to_read[i])
         free(allPart[i]);
@@ -453,7 +479,7 @@ fflush (fout);
   free (npartinfile);
   free (files_to_read);
   free (allPart);
-  MPI_Finalize();
+  //MPI_Finalize();
   return 0;
 
 

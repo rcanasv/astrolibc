@@ -90,6 +90,9 @@ typedef struct Structure
   double     sigmaVelEval[3];
   double     j[4];
   double     sigma;
+  double     R200;
+  double     M200;
+  
 
   // Isolation
   char       Isolated;

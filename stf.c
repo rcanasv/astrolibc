@@ -611,9 +611,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     }
   }
 
-  printf ("Memory allocated for particles\n");
-
-
   //
   //  Load particles to structures
   //
@@ -624,9 +621,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     //
     // Go through every file of simulation/extendedOutput
     //
-
-    //FILE * fff=fopen("gal","w");
-
     for (i = 0; i < sim->archive.nfiles; i++)
     {
       if (files_to_read[i])
@@ -646,13 +640,9 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
             id    = xtndd[j].IdStruct;
             indx  = xtndd[j].oIndex;
 
-//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf\n", part[j].Pos[0],part[j].Pos[1],part[j].Pos[2]);
-
-            if (strcts_to_get[id])
+            if ((strcts_to_get[id]) && (id > 0))
             {
               strct = &stf->strctProps[id];
-
-//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf  %ld  %ld  %ld\n", part[indx].Pos[0],part[indx].Pos[1],part[indx].Pos[2], indx, id, i);
 
               Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
               strct->dummyi++;
@@ -663,7 +653,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
         }
       }
     }
-  //  fclose(fff);
   }
   else
   {
@@ -671,7 +660,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     exit (0);
   }
   free (files_to_read);
-
   return;
 }
 
@@ -738,9 +726,7 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
   }
   else
   {
-
     f = fopen(fname, "r");
-
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
     rewind(f);
@@ -758,6 +744,8 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
     else
       extended = NULL;
     fclose (f);
+
+
   }
 
   return nparts;
