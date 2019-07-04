@@ -43,6 +43,8 @@ typedef struct Particle
   float       Chem;
   int         Type;
   int         dummyi;
+  int         HostID;
+  int         DirectHostID;
   float       Radius;
 } Particle;
 
@@ -92,7 +94,11 @@ typedef struct Structure
   double     sigma;
   double     R200;
   double     M200;
-  
+
+  double     Mstar200;
+  double     Mnogal200;
+  int        Nstar200;
+  int        Nnogal200;
 
   // Isolation
   char       Isolated;
