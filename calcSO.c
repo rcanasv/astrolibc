@@ -184,6 +184,7 @@ int main (int argc, char ** argv)
   double     crit200 = 200.0 * crit;
   double     msum;
   double     msum2;
+  double     msum3;
   double     rad;
   double     rho;
   int        ninR200;
@@ -201,14 +202,13 @@ int main (int argc, char ** argv)
 
 
 
-  opt.catalog.nstruct = 4;
 
   //
   // Loop over tasks
   //
-  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
-  for (itasks = 0; itasks <= 0; itasks++)
+  //for (itasks = 0; itasks <= 0; itasks++)
   {
 
 
@@ -230,6 +230,7 @@ int main (int argc, char ** argv)
 
     // Tag files to read of fof of interest
     for (i = 1; i <= opt.catalog.nstruct; i++)
+    //for (i = 1; i <= 5; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
       if ((strct1->oTask == itasks) && \
@@ -286,6 +287,10 @@ int main (int argc, char ** argv)
         totpart   = 0;
         nghost    = 0;
 
+
+    printf ("Loading  amr  %d\n", chkpnt++);
+    fflush(stdout);
+
         // Load AMR + gas particles
         ramses_amr_init   (&myGrid[n]);
         ramses_amr_load   (&opt.simulation, n, &myGrid[n]);
@@ -297,17 +302,27 @@ int main (int argc, char ** argv)
               if (myGrid[n].level[k].cell[i].okOct[j])
                 ngaspart++;
 
+
+    printf ("Loading extended  %d\n", chkpnt++);
+    fflush(stdout);
+
+
         // Load dark matter and star particles
         xtndd = NULL;
         ninextended = 0;
-        ninextended = stf_load_extended_output (&opt.catalog, i, &xtndd);
+        ninextended = stf_load_extended_output (&opt.catalog, n, &xtndd);
         ramses_load_particles (&opt.simulation, n, &partbuffer);
+
+
+   printf ("CHeck ghost   %d\n", chkpnt++);
+    fflush(stdout);
 
         // Check wether particles are true stars or ghost stars
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
         {
           mratio = fabs(partbuffer[i].Mass/dmp_mass - 1);
           partbuffer[i].HostID = 0;
+          partbuffer[i].DirectHostID = 0;
           if (mratio < 1e-4 && partbuffer[i].Age == 0)
           {
             partbuffer[i].Type = 1;
@@ -329,16 +344,23 @@ int main (int argc, char ** argv)
         } // Loop over particles in file
 
 
+      printf ("Achkpnt %d\n", chkpnt++);
+    fflush(stdout);
+
+
         // Tag particles host ID
         for (j = 0; j < ninextended; j++)
         {
           id    = xtndd[j].IdStruct;
           indx  = xtndd[j].oIndex;
-
+//printf ("%d  %d  %d  %d\n", j, id, indx, opt.simulation.npartinfile[n]);fflush(stdout);
           if (id > 0)
           {
             strct1 = &opt.catalog.strctProps[id];
             partbuffer[indx].HostID = strct1->HostID;
+            if (strct1->Type == 7)
+              partbuffer[indx].HostID = strct1->ID;
+            partbuffer[indx].DirectHostID = strct1->ID;
           }
         }
         free (xtndd);
@@ -348,7 +370,8 @@ int main (int argc, char ** argv)
         // Add total particles in file(s) with index n
         totpart = ngaspart + ndmpart + nstarpart;
         npartinfile[n] = totpart;
-        /*
+
+        /* 
         printf ("file_index   %8d  ", n);
         printf ("ngaspart      %8d  ", ngaspart);
         printf ("ndmpart      %8d  ", ndmpart);
@@ -356,6 +379,7 @@ int main (int argc, char ** argv)
         printf ("nghost       %8d  ", nghost);
         printf ("nparttot     %8d\n", totpart);
         */
+
         allPart[n] = (Particle *) malloc (totpart * sizeof(Particle));
 
         // Copy gas particles to array
@@ -395,7 +419,7 @@ int main (int argc, char ** argv)
     } // Loop over files to load particles
 
 
-    printf ("chkpnt %d\n", chkpnt++);
+    printf ("Achkpnt %d\n", chkpnt++);
     fflush(stdout);
 
     //-------------
@@ -463,7 +487,7 @@ int main (int argc, char ** argv)
         qsort (partbuffer, ntot, sizeof(Particle), Particle_rad_compare);
 
         //-------------
-        for (i = 0, msum = 0, ninR200 = 0; i < ninbuffer; i++)
+        for (i = 0, msum = 0, ninR200 = 0; i < ntot; i++)
         {
           msum += partbuffer[i].Mass;
           rad = partbuffer[i].Radius;
@@ -476,39 +500,109 @@ int main (int argc, char ** argv)
         strct1->Rvir = rad;
         strct1->Mvir = msum;
 
-        for (i = 0, msum = 0, msum2 = 0, j = 0, m = 0; i < ninR200; i++)
+        for (i = 0, msum = 0, msum2 = 0, msum3 = 0, j = 0, m = 0, n = 0; i < ninR200; i++)
         {
           if (partbuffer[i].Type == 4)
           {
             msum += partbuffer[i].Mass;
             j++;
-            if (partbuffer[i].HostID == 0 || partbuffer[i].HostID == strct1->ID)
+            if (partbuffer[i].HostID == 0 || partbuffer[i].DirectHostID == strct1->ID)
             {
               msum2 += partbuffer[i].Mass;
               m++;
             }
+
+            if (partbuffer[i].DirectHostID == strct2->ID)
+            {
+              msum3 += partbuffer[i].Mass;
+              n++;
+            }
+
+            if (partbuffer[i].Radius < 30.0)
+              strct1->M30 = msum2 + msum3;
+            if (partbuffer[i].Radius < 100.0)
+              strct1->M100 = msum2 + msum3;
           }
         }
         strct1->Mstar200  = msum;
         strct1->Mnogal200 = msum2;
         strct1->Nstar200  = j;
         strct1->Nnogal200 = m;
-        //-------------
+
+        for (i = 0, msum = 0; i < ninR200; i++)
+        {
+          if (partbuffer[i].Type == 4)
+          {
+            msum += partbuffer[i].Mass;
+            if (msum < 0.5*(strct1->Mnogal200+strct2->TotMass))
+              strct1->Rx = partbuffer[i].Radius;
+          }
+        }
 
 
+        for (i = 0, msum = 0; i < ninR200; i++)
+        {
+          if (partbuffer[i].Type   == 4              && \
+              partbuffer[i].Radius <  2*strct1->Rx      \
+             )
+            msum += partbuffer[i].Mass;
+        }
+        strct1->M2R50 = msum;
+
+        /*
         //-------------
-        //partinR200 = (Particle *) malloc (ninR200 * sizeof(Particle));
-        //for (i = 0; i < ninR200; i++)
-        //{
-        //  Particle_copy (&partbuffer[i], &partinR200[i]);
-        //  //partinR200[i].Type = 1;
-        //}
-        sprintf (opt.output.name, "ihscid_%d_.gdt_000", strct1->ID);
+        //
+        // Write all particles inside R200
+        //
+        sprintf (opt.output.name, "ihscid_%d.gdt_000", strct1->ID);
         gadget_write_snapshot (partbuffer, ninR200, &header, &opt.output);
-        //free (partinR200);
-        //-------------
 
-        for (i = 0, n3dfof = 0; i < ninbuffer; i++)
+
+        //
+        // Write ctrl + ihsc stars in R200
+        //
+        for (i = 0, n3dfof = 0; i < ninR200; i++)
+        {
+          if ((partbuffer[i].DirectHostID == strct1->ID || \
+               partbuffer[i].DirectHostID == strct2->ID || \
+               partbuffer[i].HostID       == 0)         && \
+               partbuffer[i].Type         == 4             \
+             )
+          {
+            partbuffer[i].Radius = -1;
+            n3dfof++;
+          }
+        }
+        qsort (partbuffer, ninR200, sizeof(Particle), Particle_rad_compare);
+        sprintf (opt.output.name, "ihscid_%d.gdt_001", strct1->ID);
+        printf ("ihsc+ctrl star in R200  %d\n", n3dfof);
+        gadget_write_snapshot (partbuffer, n3dfof, &header, &opt.output);
+
+
+        //
+        // Write ihsc stars in R200
+        //
+        for (i = 0, n3dfof = 0; i < ninR200; i++)
+        {
+          if ((partbuffer[i].DirectHostID == strct1->ID || \
+               partbuffer[i].HostID       == 0)         && \
+               partbuffer[i].Type         == 4             \
+             )
+          {
+            partbuffer[i].Radius = -2;
+            n3dfof++;
+          }
+        }
+        qsort (partbuffer, ninR200, sizeof(Particle), Particle_rad_compare);
+        sprintf (opt.output.name, "ihscid_%d.gdt_002", strct1->ID);
+        printf ("ihsc star in R200  %d\n", n3dfof);
+        gadget_write_snapshot (partbuffer, n3dfof, &header, &opt.output);
+
+
+        //
+        // Write all star particles in 3DFOF
+        //
+        for (i = 0, n3dfof = 0; i < ntot; i++)
         {
           if (partbuffer[i].HostID == strct1->ID)
           {
@@ -519,10 +613,57 @@ int main (int argc, char ** argv)
             partbuffer[i].Radius = lbox + i;
         }
         qsort (partbuffer, ntot, sizeof(Particle), Particle_rad_compare);
-        sprintf (opt.output.name, "ihscid_%d_.gdt_001", strct1->ID);
+        sprintf (opt.output.name, "ihscid_%d.gdt_003", strct1->ID);
+        printf ("stars in 3dfof  %d\n", n3dfof);
         gadget_write_snapshot (partbuffer, n3dfof, &header, &opt.output);
 
 
+        //
+        // Write star particle in ihsc+central in 3DFOF
+        //
+        for (i = 0, n = 0; i < ntot; i++)
+        {
+          if (partbuffer[i].DirectHostID == strct1->ID  || \
+              partbuffer[i].DirectHostID == strct2->ID     \
+             )
+          {
+            partbuffer[i].Radius = 0;
+            n++;
+          }
+        }
+        qsort (partbuffer, n3dfof, sizeof(Particle), Particle_rad_compare);
+        sprintf (opt.output.name, "ihscid_%d.gdt_004", strct1->ID);
+        printf ("stars in 3dfof  %d\n", n);
+        gadget_write_snapshot (partbuffer, n, &header, &opt.output);
+
+
+        //
+        // Write all ihsc stars in 3DFOF
+        //
+        for (i = 0, n = 0; i < n3dfof; i++)
+        {
+          if (partbuffer[i].DirectHostID == strct1->ID)
+          {
+            partbuffer[i].Radius = -1;
+            n++;
+          }
+        }
+        qsort (partbuffer, n3dfof, sizeof(Particle), Particle_rad_compare);
+        sprintf (opt.output.name, "ihscid_%d.gdt_005", strct1->ID);
+        printf ("n3dfof  %d\n", n);
+        gadget_write_snapshot (partbuffer, n, &header, &opt.output);
+        
+        */
+
+        for (j = 0; j < ntot; j++)
+        {
+          partbuffer[j].Pos[0] += strct2->Pos[0];
+          partbuffer[j].Pos[1] += strct2->Pos[1];
+          partbuffer[j].Pos[2] += strct2->Pos[2];
+          partbuffer[j].Radius  = 0;
+        }
+        //-------------
+ 
         printf ("done\n");
         fflush (stdout);
 
@@ -553,6 +694,12 @@ int main (int argc, char ** argv)
         fprintf (fout, "%e  ", strct1->Mnogal200);
         fprintf (fout, "%7d  ", strct1->Nstar200);
         fprintf (fout, "%7d  ", strct1->Nnogal200);
+        fprintf (fout, "%7d  ", strct1->NumPart);
+        fprintf (fout, "%e  ", strct1->M30);
+        fprintf (fout, "%e  ", strct1->M100);
+        fprintf (fout, "%e  ", strct1->Rx);
+        fprintf (fout, "%e  ", strct1->M2R50);
+        fprintf (fout, "\n");
       }
     }
     fclose (fout);
@@ -568,7 +715,7 @@ int main (int argc, char ** argv)
   free (strct_to_get);
   free (npartinfile);
   free (files_to_read);
-  free (allPart);
+  //free (allPart);
   //MPI_Finalize();
   return 0;
 

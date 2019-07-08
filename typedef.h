@@ -94,6 +94,9 @@ typedef struct Structure
   double     sigma;
   double     R200;
   double     M200;
+  double     M30;
+  double     M100;
+  double     M2R50;
 
   double     Mstar200;
   double     Mnogal200;
