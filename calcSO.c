@@ -206,9 +206,9 @@ int main (int argc, char ** argv)
   //
   // Loop over tasks
   //
-  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
-  //for (itasks = 0; itasks <= 0; itasks++)
+  for (itasks = 0; itasks <= 0; itasks++)
   {
 
 
@@ -229,8 +229,8 @@ int main (int argc, char ** argv)
     }
 
     // Tag files to read of fof of interest
-    for (i = 1; i <= opt.catalog.nstruct; i++)
-    //for (i = 1; i <= 5; i++)
+    //for (i = 1; i <= opt.catalog.nstruct; i++)
+    for (i = 1; i <= 5; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
       if ((strct1->oTask == itasks) && \
@@ -371,7 +371,7 @@ int main (int argc, char ** argv)
         totpart = ngaspart + ndmpart + nstarpart;
         npartinfile[n] = totpart;
 
-        /* 
+        /*
         printf ("file_index   %8d  ", n);
         printf ("ngaspart      %8d  ", ngaspart);
         printf ("ndmpart      %8d  ", ndmpart);
@@ -423,6 +423,7 @@ int main (int argc, char ** argv)
     fflush(stdout);
 
     //-------------
+    /*
     long ntot = 0;
     for (n = 0; n < opt.simulation.archive.nfiles; n++)
       ntot += npartinfile[n];
@@ -438,8 +439,14 @@ int main (int argc, char ** argv)
       }
     }
     free (allPart);
+    */
     //-------------
 
+    //-------------
+    long ntot = 1000000000;
+    partbuffer = NULL;
+    partbuffer = (Particle *) malloc (ntot * sizeof(Particle));
+    //-------------
 
     printf ("chkpnt %d\n", chkpnt++);
     fflush(stdout);
@@ -460,9 +467,32 @@ int main (int argc, char ** argv)
         printf ("calculating struct  %d ...", k);
         fflush (stdout);
 
-        strct2 = &opt.catalog.strctProps[strct1->dummyi];
+        for (n = 0; n < opt.simulation.archive.nfiles; n++)
+          files_of_fof[n] = 0;
 
-        for (j = 0; j < ntot; j++)
+
+        // Tag index of files to look neighbouring particles
+        for (i = 1; i <= opt.catalog.nstruct; i++)
+        {
+          strct2 = &opt.catalog.strctProps[i];
+          if (strct2->HostID == strct1->ID || strct2->ID == strct1->ID)
+            for (j = 0; j < strct2->NumFiles; j++)
+              files_of_fof[strct2->FilesOfGroup[j]] = 1;
+        }
+
+
+        // Centre of R200 is central galaxy
+        strct2 = &opt.catalog.strctProps[strct1->dummyi];
+        ninbuffer = 0;
+        for (n = 0, m = 0; n < opt.simulation.archive.nfiles; n++)
+        {
+          if (files_of_fof[n])
+            for (i = 0; i < npartinfile[n]; i++)
+              Particle_copy (&allPart[n][i], &partbuffer[m++]);
+        }
+        long nlocal = m;
+
+        for (j = 0; j < nlocal; j++)
         {
           partbuffer[j].Pos[0] -= strct2->Pos[0];
           partbuffer[j].Pos[1] -= strct2->Pos[1];
@@ -484,7 +514,7 @@ int main (int argc, char ** argv)
             partbuffer[j].Radius = lbox + j;
         }
 
-        qsort (partbuffer, ntot, sizeof(Particle), Particle_rad_compare);
+        qsort (partbuffer, nlocal, sizeof(Particle), Particle_rad_compare);
 
         //-------------
         for (i = 0, msum = 0, ninR200 = 0; i < ntot; i++)
@@ -652,9 +682,10 @@ int main (int argc, char ** argv)
         sprintf (opt.output.name, "ihscid_%d.gdt_005", strct1->ID);
         printf ("n3dfof  %d\n", n);
         gadget_write_snapshot (partbuffer, n, &header, &opt.output);
-        
+
         */
 
+        /*
         for (j = 0; j < ntot; j++)
         {
           partbuffer[j].Pos[0] += strct2->Pos[0];
@@ -662,8 +693,9 @@ int main (int argc, char ** argv)
           partbuffer[j].Pos[2] += strct2->Pos[2];
           partbuffer[j].Radius  = 0;
         }
+        */
         //-------------
- 
+
         printf ("done\n");
         fflush (stdout);
 
@@ -715,7 +747,10 @@ int main (int argc, char ** argv)
   free (strct_to_get);
   free (npartinfile);
   free (files_to_read);
-  //free (allPart);
+  for (n = 0; n < opt.simulation.archive.nfiles; n++)
+    if (npartinfile[n])
+      free (allPart[n]);
+  free (allPart);
   //MPI_Finalize();
   return 0;
 

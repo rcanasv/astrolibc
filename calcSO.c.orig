@@ -195,7 +195,7 @@ int chkpnt;
   //
   // Loop over tasks
   //
-  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)z
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
   //for (itasks = 0; itasks <= 0; itasks++)
   {
