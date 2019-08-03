@@ -209,7 +209,7 @@ int main (int argc, char ** argv)
           minsat_m10 = 0.0;
           minsat_m11 = 0.0;
 
-          for (k = 1; k < strct1->NumSubs; k++)
+          for (k = 0; k < (strct1->NumSubs-1); k++)
           {
             strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
 

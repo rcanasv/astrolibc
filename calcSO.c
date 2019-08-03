@@ -109,6 +109,7 @@ int main (int argc, char ** argv)
     strct1->dummyd = 0.0;
     strct1->dummyi = 0;
     strct1->dummy  = 0;
+    strct1->inR200 = 0;
   }
 
   for (j = 1; j <= opt.catalog.nstruct; j++)
@@ -208,7 +209,7 @@ int main (int argc, char ** argv)
   //
   //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
-  for (itasks = 0; itasks <= 0; itasks++)
+  for (itasks = 18; itasks < opt.catalog.archive.nfiles; itasks++)
   {
 
 
@@ -229,8 +230,8 @@ int main (int argc, char ** argv)
     }
 
     // Tag files to read of fof of interest
-    //for (i = 1; i <= opt.catalog.nstruct; i++)
-    for (i = 1; i <= 5; i++)
+    for (i = 1; i <= opt.catalog.nstruct; i++)
+    //for (i = 1; i <= 5; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
       if ((strct1->oTask == itasks) && \
@@ -247,9 +248,6 @@ int main (int argc, char ** argv)
       }
     }
 
-
-    printf ("chkpnt %d\n", chkpnt++);
-    fflush(stdout);
 
 
     // Tag files to read of all
@@ -288,8 +286,6 @@ int main (int argc, char ** argv)
         nghost    = 0;
 
 
-    printf ("Loading  amr  %d\n", chkpnt++);
-    fflush(stdout);
 
         // Load AMR + gas particles
         ramses_amr_init   (&myGrid[n]);
@@ -303,9 +299,6 @@ int main (int argc, char ** argv)
                 ngaspart++;
 
 
-    printf ("Loading extended  %d\n", chkpnt++);
-    fflush(stdout);
-
 
         // Load dark matter and star particles
         xtndd = NULL;
@@ -314,8 +307,6 @@ int main (int argc, char ** argv)
         ramses_load_particles (&opt.simulation, n, &partbuffer);
 
 
-   printf ("CHeck ghost   %d\n", chkpnt++);
-    fflush(stdout);
 
         // Check wether particles are true stars or ghost stars
         for (i = 0; i < opt.simulation.npartinfile[n]; i++)
@@ -343,9 +334,6 @@ int main (int argc, char ** argv)
           }
         } // Loop over particles in file
 
-
-      printf ("Achkpnt %d\n", chkpnt++);
-    fflush(stdout);
 
 
         // Tag particles host ID
@@ -419,8 +407,6 @@ int main (int argc, char ** argv)
     } // Loop over files to load particles
 
 
-    printf ("Achkpnt %d\n", chkpnt++);
-    fflush(stdout);
 
     //-------------
     /*
@@ -443,13 +429,14 @@ int main (int argc, char ** argv)
     //-------------
 
     //-------------
-    long ntot = 1000000000;
+    long ntot = 10000000;
     partbuffer = NULL;
-    partbuffer = (Particle *) malloc (ntot * sizeof(Particle));
+    if ((partbuffer = (Particle *) malloc (ntot * sizeof(Particle)))==NULL)
+    {
+     printf ("couldnt allocate memory %ld", ntot*sizeof(Particle));
+     exit(0);
+    }
     //-------------
-
-    printf ("chkpnt %d\n", chkpnt++);
-    fflush(stdout);
 
 
     // Calculate R200 for all centrals
@@ -461,7 +448,7 @@ int main (int argc, char ** argv)
     for (k = 1; k <= opt.catalog.nstruct; k++)
     {
       strct1 = &opt.catalog.strctProps[k];
-      if (strct_to_get[k])
+      if (strct_to_get[k] && strct1->inR200 == 0)
       {
 
         printf ("calculating struct  %d ...", k);
@@ -476,21 +463,38 @@ int main (int argc, char ** argv)
         {
           strct2 = &opt.catalog.strctProps[i];
           if (strct2->HostID == strct1->ID || strct2->ID == strct1->ID)
+          {
             for (j = 0; j < strct2->NumFiles; j++)
               files_of_fof[strct2->FilesOfGroup[j]] = 1;
+          }
         }
-
 
         // Centre of R200 is central galaxy
         strct2 = &opt.catalog.strctProps[strct1->dummyi];
         ninbuffer = 0;
+        long nlocal = 0;
+        for (n = 0; n < opt.simulation.archive.nfiles; n++)
+        {
+          if (files_of_fof[n])
+            nlocal += npartinfile[n];
+        }
+
+       if (nlocal > ntot)
+       {
+         free(partbuffer);
+         ntot = nlocal;
+         partbuffer = (Particle *) malloc (ntot * sizeof(Particle));
+       }
+
+
         for (n = 0, m = 0; n < opt.simulation.archive.nfiles; n++)
         {
           if (files_of_fof[n])
+          {
             for (i = 0; i < npartinfile[n]; i++)
               Particle_copy (&allPart[n][i], &partbuffer[m++]);
+          }
         }
-        long nlocal = m;
 
         for (j = 0; j < nlocal; j++)
         {
@@ -561,7 +565,11 @@ int main (int argc, char ** argv)
 
         for (i = 0, msum = 0; i < ninR200; i++)
         {
-          if (partbuffer[i].Type == 4)
+          if ((partbuffer[i].Type         == 4)         && \
+              (partbuffer[i].HostID       == 0          || \ 
+               partbuffer[i].DirectHostID == strct1->ID || \
+               partbuffer[i].DirectHostID == strct2->ID )  \
+             )
           {
             msum += partbuffer[i].Mass;
             if (msum < 0.5*(strct1->Mnogal200+strct2->TotMass))
@@ -572,12 +580,24 @@ int main (int argc, char ** argv)
 
         for (i = 0, msum = 0; i < ninR200; i++)
         {
-          if (partbuffer[i].Type   == 4              && \
-              partbuffer[i].Radius <  2*strct1->Rx      \
+          if ((partbuffer[i].Type         == 4)            && \
+              (partbuffer[i].HostID       == 0             || \      
+               partbuffer[i].DirectHostID == strct1->ID    || \
+               partbuffer[i].DirectHostID == strct2->ID)   && \
+              (partbuffer[i].Radius       <  2*strct1->Rx)    \
              )
             msum += partbuffer[i].Mass;
         }
         strct1->M2R50 = msum;
+
+        for (i = 0; i < ninR200; i++)
+        {
+          if (partbuffer[i].Type   == 4                          && \
+              partbuffer[i].HostID >  0                          && \
+              partbuffer[i].HostID != partbuffer[i].DirectHostID    \
+             )
+            opt.catalog.strctProps[partbuffer[i].HostID].inR200 = 1;
+        }
 
         /*
         //-------------
