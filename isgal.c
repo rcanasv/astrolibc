@@ -109,7 +109,7 @@ int main (int argc, char ** argv)
     strct1->dummyd = 0.0;
     strct1->dummyi = 0;
     strct1->dummy  = 0;
-    strct1->flg_CorrectedPeriodicitt = 0;
+    strct1->flg_CorrectedPeriodicity = 0;
   }
 
   for (j = 1; j <= opt.catalog.nstruct; j++)
@@ -133,28 +133,6 @@ int main (int argc, char ** argv)
       strct3->dummyd += strct1->TotMass;
     }
   }
-
-
-  sprintf (fname, "%s/%s.filesofgroup", opt.catalog.archive.path, opt.catalog.archive.name);
-  f = fopen (fname, "r");
-  for (i = 1; i <= opt.catalog.nstruct; i++)
-  {
-    strct1 = &opt.catalog.strctProps[i];
-
-    fgets  (buffer, NAME_LENGTH, f);
-    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
-    fgets  (buffer, NAME_LENGTH, f);
-
-    get_n_num_from_string (buffer, nfiles, &files_of_strct);
-
-    strct1->NumFiles = nfiles;
-    strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
-    for (j = 0; j < nfiles; j++)
-       strct1->FilesOfGroup[j] = files_of_strct[j];
-    free (files_of_strct);
-  }
-  fclose (f);
-
 
 
   // Allocate arrays
@@ -202,13 +180,12 @@ int main (int argc, char ** argv)
   int                 id;
 
 
-
   //
   // Loop over tasks
   //
   //for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   //for (itasks = myrank*2; itasks < ((myrank+1)*2); itasks++)
-  for (itasks = 18; itasks < opt.catalog.archive.nfiles; itasks++)
+  for (itasks = 0; itasks < opt.catalog.archive.nfiles; itasks++)
   {
     chkpnt = 0;
     start_t = clock();
@@ -231,59 +208,41 @@ int main (int argc, char ** argv)
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
       strct1 = &opt.catalog.strctProps[i];
-      if ((strct1->oTask == itasks) && (strct1->Type == 10))
+      //if ((strct1->oTask == itasks) && (strct1->Type == 10))
+      if ((strct1->oTask == itasks) && (strct1->Type >= 10))
           strct_to_get[i] = 1;
     }
 
-    Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct2get);    
+    Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);    
     
-    // Loop over FOFs
-    for (k = 1; k <= opt.catalog.nstruct; k++)
-    {
-      strct1 = &opt.catalog.strctProps[k];
-      if (strct_to_get[k])
-      {
+    // No need to shift to CM or correct periodicity
+    // this is done on the functions
 
-        printf ("calculating struct  %d ...", k);
-        fflush (stdout);
-
-        printf ("done\n");
-        fflush (stdout);
-
-      }
-    }
-    
+    // Calculate Pos Sigma Tensor
+    Structure_calculate_disp_tensor_pos (&opt.catalog, &opt.simulation, strct_to_get);
+        
+    // Calculate Vel Sigma Tensor
+    Structure_calculate_disp_tensor_vel (&opt.catalog, &opt.simulation, strct_to_get);
+ 
     //
-    sprintf (fname, "isgal.txt.%d", itasks);
+    sprintf (fname, "isgal_subs.txt.%d", itasks);
     fout = fopen (fname, "w");
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
-      strct1 = &opt.catalog.strctProps[i];              // IHSC
-      if (strct_to_get[i] && strct1->Type == 7 && strct1->NumSubs > 0)
+      strct1 = &opt.catalog.strctProps[i];              
+      if (strct_to_get[i])
       {
-        strct2 = &opt.catalog.strctProps[strct1->dummyi]; // Central
-        strct3 = &opt.catalog.strctProps[strct1->SubIDs[strct1->NumSubs-2]]; // Scnd
-
-        fprintf (fout, "%e  ", strct2->dummyd);      // Total Stellar Mass
-        fprintf (fout, "%e  ", strct1->TotMass);     // Mass IHSC
-        fprintf (fout, "%e  ", strct2->TotMass);     // Mass Central
-        fprintf (fout, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
-        fprintf (fout, "%5d ", strct1->NumSubs);     // NumSubs
-        fprintf (fout, "%5d ", strct2->Central);     // Is Central central?
-        fprintf (fout, "%5d ", strct1->ID);          // ID IHSC
-        fprintf (fout, "%5d ", strct2->ID);          // ID Central
-        fprintf (fout, "%5d ", strct3->ID);          // ID Second most
-        fprintf (fout, "%e  ", strct1->Rvir);
-        fprintf (fout, "%e  ", strct1->Mvir);
-        fprintf (fout, "%e  ", strct1->Mstar200);
-        fprintf (fout, "%e  ", strct1->Mnogal200);
-        fprintf (fout, "%7d  ", strct1->Nstar200);
-        fprintf (fout, "%7d  ", strct1->Nnogal200);
-        fprintf (fout, "%7d  ", strct1->NumPart);
-        fprintf (fout, "%e  ", strct1->M30);
-        fprintf (fout, "%e  ", strct1->M100);
-        fprintf (fout, "%e  ", strct1->Rx);
-        fprintf (fout, "%e  ", strct1->M2R50);
+        strct2 = &opt.catalog.strctProps[strct1->HostID]; // Central
+        fprintf (fout, "%5d ", strct1->ID);               // ID gal
+        fprintf (fout, "%5d ", strct2->ID);               // ID ihsc
+        fprintf (fout, "%e  ", strct1->TotMass);          // Mass IHSC
+        fprintf (fout, "%e  ", strct1->Efrac);            // Efrac
+        fprintf (fout, "%e  ", strct1->sigmaPosEval[0]);   // Pos XX 
+        fprintf (fout, "%e  ", strct1->sigmaPosEval[1]);   // Pos YY 
+        fprintf (fout, "%e  ", strct1->sigmaPosEval[2]);   // Pos ZZ 
+        fprintf (fout, "%e  ", strct1->sigmaVelEval[0]);   // Vel XX 
+        fprintf (fout, "%e  ", strct1->sigmaVelEval[1]);   // Vel YY 
+        fprintf (fout, "%e  ", strct1->sigmaVelEval[2]);   // Vel ZZ 
         fprintf (fout, "\n");
       }
     }
@@ -296,161 +255,25 @@ int main (int argc, char ** argv)
 
   // Free memory
   Catalog_free (&opt.catalog);
-  free (myGrid);
   free (strct_to_get);
-  free (npartinfile);
   free (files_to_read);
-  for (n = 0; n < opt.simulation.archive.nfiles; n++)
-    if (npartinfile[n])
-      free (allPart[n]);
-  free (allPart);
-  //MPI_Finalize();
   return 0;
 
-
-
-  // --------------------------------------------------- //
-  // Diffuse stellar fraction
-  //FILE * f;
-  //char buffer [NAME_LENGTH];
-
-  if (opt.iSO)
-  {
-    int     nsat_m09;
-    int     nsat_m10;
-    int     nsat_m11;
-    double  fmass;
-    double  radius;
-    double  minsat_m08;
-    double  minsat_m09;
-    double  minsat_m10;
-    double  minsat_m11;
-
-      sprintf (buffer, "%s.ihsc", opt.catalog.archive.prefix);
-      f = fopen (buffer, "w");
-      for (j = 1; j <= opt.catalog.nstruct; j++)
-      {
-        strct1 = &opt.catalog.strctProps[j];              // IHSC
-        strct2 = &opt.catalog.strctProps[strct1->dummyi]; // Central
-        if (strct1->Type == 7 && strct1->NumSubs > 0)
-        {
-          nsat_m09 = 0;
-          nsat_m10 = 0;
-          nsat_m11 = 0;
-          minsat_m08 = 0.0;
-          minsat_m09 = 0.0;
-          minsat_m10 = 0.0;
-          minsat_m11 = 0.0;
-
-          for (k = 1; k < strct1->NumSubs; k++)
-          {
-            strct3 = &opt.catalog.strctProps[strct1->SubIDs[k]];
-
-            if (strct3->TotMass >= 1e8)
-              minsat_m08 += strct3->TotMass;
-            if (strct3->TotMass >= 1e9)
-              minsat_m09 += strct3->TotMass;
-            if (strct3->TotMass >= 1e10)
-              minsat_m10 += strct3->TotMass;
-            if (strct3->TotMass >= 1e11)
-              minsat_m11 += strct3->TotMass;
-
-            if (strct3->TotMass >= 1e9  && strct3->TotMass < 1e10)
-              nsat_m09++;
-            if (strct3->TotMass >= 1e10 && strct3->TotMass < 1e11)
-              nsat_m10++;
-            if (strct3->TotMass >= 1e11)
-              nsat_m11++;
-          }
-
-          /*
-          radius = 2.0 * strct2->Rx;
-          Structure_calculate_j_r       (strct2, radius);
-          Structure_calculate_sigma_v_r (strct2, radius);
-          Structure_calculate_sfr       (strct2);
-          */
-
-          strct3 = &opt.catalog.strctProps[strct1->SubIDs[strct1->NumSubs-2]];
-
-          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
-          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
-          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
-          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
-          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
-          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
-          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
-          fprintf (f, "%5d ", strct2->ID);          // ID Central
-          fprintf (f, "%5d ", strct3->ID);          // ID Second most
-          fprintf (f, "%5d ", nsat_m09);            // Num sats 1e9  <= M < 1e10
-          fprintf (f, "%5d ", nsat_m10);            // Num sats 1e10 <= M < 1e11
-          fprintf (f, "%5d ", nsat_m11);            // Num sats 1e11 <= M
-          /*
-          fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
-          fprintf (f, "%e ",  strct2->j[3]);        // j(r)
-          fprintf (f, "%e ",  radius);              // r
-          fprintf (f, "%e ",  strct2->SFR20);       // SFR20
-          fprintf (f, "%e ",  strct2->SFR50);       // SFR50
-          fprintf (f, "%e ",  strct2->SFR100);      // SFR100
-          */
-          fprintf (f, "%e ", minsat_m08);            // Mass in sats M > 1e8
-          fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
-          fprintf (f, "%e ", minsat_m10);            // Mass in sats M > 1e10
-          fprintf (f, "%e ", minsat_m11);            // Mass in sats M > 1e11
-
-          fprintf (f, "%10.5lf ", strct2->Pos[0]);   // Pos
-          fprintf (f, "%10.5lf ", strct2->Pos[1]);   // Pos
-          fprintf (f, "%10.5lf ", strct2->Pos[2]);   // Pos
-          fprintf (f, "\n");
-        }
-      }
-      fclose (f);
-    }
-  // --------------------------------------------------- //
-
-  /*
-  // --------------------------------------------------- //
-  // Write snapshots for visualization
-  if (opt.iExtract)
-  {
-    strct_to_get = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
-    for (j = 1; j <= opt.catalog.nstruct; j++)
-      strct_to_get[j] = 0;
-
-    // Load Particles
-    Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
-
-    // Write Gadget Snapshots
-    for (i = opt.catalog.nstruct, k = 0; ((k < top)&&(i >=1)); i--)
-    {
-      printf ("boxsize %e\n", opt.simulation[0].Lbox);
-      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
-      sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, 0);
-      gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
-    }
-
-    free (strct_to_get);
-  }
-  // --------------------------------------------------- //
-  */
-
-  // Free memory
-  Catalog_free (&opt.catalog);
-
-  return (0);
 }
 
 
 // --------------------------------------------------- //
 //  Parameters
 // --------------------------------------------------- //
-void calcSO_params (Options * opt)
+void isgal_params (Options * opt)
 {
   int   i;
   int   dummy;
-  char  buffer   [NAME_LENGTH];
-  char  namebuff [NAME_LENGTH];
-  char  frmtbuff [NAME_LENGTH];
-  char  pathbuff [NAME_LENGTH];
+  char  buffer     [NAME_LENGTH];
+  char  namebuff   [NAME_LENGTH];
+  char  prefixbuff [NAME_LENGTH];
+  char  frmtbuff   [NAME_LENGTH];
+  char  pathbuff   [NAME_LENGTH];
   int   nflsbuff;
 
   opt->param.file = fopen (opt->param.name, "r");
@@ -462,25 +285,25 @@ void calcSO_params (Options * opt)
   }
 
   // Output
-  fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", namebuff, prefixbuff, frmtbuff, pathbuff, &nflsbuff);
   Archive_name   (&opt->output, namebuff);
-  Archive_prefix (&opt->output, namebuff);
+  Archive_prefix (&opt->output, prefixbuff);
   Archive_format (&opt->output, frmtbuff);
   Archive_path   (&opt->output, pathbuff);
   Archive_nfiles (&opt->output, nflsbuff);
 
   // Catalogues
-  fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", namebuff, prefixbuff, frmtbuff, pathbuff, &nflsbuff);
   Archive_name   (&opt->catalog.archive, namebuff);
-  Archive_prefix (&opt->catalog.archive, namebuff);
+  Archive_prefix (&opt->catalog.archive, prefixbuff);
   Archive_format (&opt->catalog.archive, frmtbuff);
   Archive_path   (&opt->catalog.archive, pathbuff);
   Archive_nfiles (&opt->catalog.archive, nflsbuff);
 
   // Simulation
-  fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", namebuff, prefixbuff, frmtbuff, pathbuff, &nflsbuff);
   Archive_name   (&opt->simulation.archive, namebuff);
-  Archive_prefix (&opt->simulation.archive, namebuff);
+  Archive_prefix (&opt->simulation.archive, prefixbuff);
   Archive_format (&opt->simulation.archive, frmtbuff);
   Archive_path   (&opt->simulation.archive, pathbuff);
   Archive_nfiles (&opt->simulation.archive, nflsbuff);
@@ -492,7 +315,7 @@ void calcSO_params (Options * opt)
 // --------------------------------------------------- //
 //  Options
 // --------------------------------------------------- //
-int calcSO_options (int argc, char ** argv, Options * opt)
+int isgal_options (int argc, char ** argv, Options * opt)
 {
   int   myopt;
   int   index;
@@ -506,8 +329,6 @@ int calcSO_options (int argc, char ** argv, Options * opt)
     {"help",      0, NULL, 'h'},
     {"verbose",   0, NULL, 'v'},
     {"param",     0, NULL, 'p'},
-    {"so",        0, NULL, 's'},
-    {"extract",   0, NULL, 'x'},
     {0,           0, NULL, 0}
   };
 
@@ -520,32 +341,24 @@ int calcSO_options (int argc, char ** argv, Options * opt)
         flag++;
         break;
 
-      case 'f':
-      	opt->iSO = 1;
-      	break;
-
-      case 'x':
-      	opt->iExtract = 1;
-      	break;
-
       case 'h':
-      	calcSO_usage (0, argv);
+      	isgal_usage (0, argv);
         break;
 
       default:
-      	calcSO_usage (1, argv);
+      	isgal_usage (1, argv);
     }
   }
 
   if (flag == 0)
-    calcSO_usage (1, argv);
+    isgal_usage (1, argv);
 }
 
 
 // --------------------------------------------------- //
 //  Usage
 // --------------------------------------------------- //
-void calcSO_usage (int opt, char ** argv)
+void isgal_usage (int opt, char ** argv)
 {
   if (opt == 0)
   {
