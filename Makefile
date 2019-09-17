@@ -3,7 +3,7 @@ CC          = mpicc
 else
 CC          = gcc
 MPI_INCL    =
-MPI_LIB     = 
+MPI_LIB     =
 endif
 
 ifeq ($(MACHINE),horizon)
@@ -61,7 +61,7 @@ endif
 
 INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
-FLAGS       = -lm -O2 $(HDF5_FLAGS) $(GSL_FLAGS)
+FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
@@ -87,6 +87,9 @@ sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c h
 
 surface_density: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/surface_density $(FLAGS)
+
+density: density.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) density.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/density $(FLAGS)
 
 ihsc: ihsc.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) ihsc.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/ihsc $(FLAGS)
