@@ -48,7 +48,7 @@ int main (int argc, char ** argv)
   Simulation_init                 (&opt.simulation);
   Catalog_init                    (&opt.catalog);
   Catalog_load_properties         (&opt.catalog);
-  Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
+  //Catalog_get_particle_properties (&opt.catalog, &opt.simulation);
   Catalog_fill_isolated           (&opt.catalog);
 
 
@@ -84,7 +84,10 @@ int main (int argc, char ** argv)
     if (strct1->Type > 7 && strct1->HostID == opt.id)
     {
       if (strct1->Central)
+      {
         strct_to_get[i] = 1;
+        strct3 = &opt.catalog.strctProps[i];
+      }
       else
         strct_to_get[i] = 2;
     }
@@ -99,6 +102,7 @@ int main (int argc, char ** argv)
   //
   // Merge central with IHSM and fill 3DFOF
   //
+printf ("here\n");  fflush(stdout);
   int totpart = 0;
   int n;
   for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
@@ -107,23 +111,29 @@ int main (int argc, char ** argv)
     if (strct_to_get[i])
       totpart += strct1->NumPart;
   }
-
-  // Allocate memory for structure
-  strct1 = &opt.catalog.strctProps[opt.id];
+  strct_to_get[0] = 1;
   strct2 = &opt.catalog.strctProps[0];
   strct2->NumPart = totpart;
+  strct2->Part = (Particle *) malloc (totpart * sizeof(Particle));
   for (i = 0; i < 3; i++)
   {
-    strct2->Pos[i] = strct1->Pos[i];
-    strct2->Vel[i] = strct1->Vel[i];
+    strct2->Pos[i] = strct3->Pos[i];
+    strct2->Vel[i] = strct3->Vel[i];
   }
-  strct2->Part = (Particle *) malloc (totpart * sizeof(Particle));
-  strct_to_get[0] = 1;
 
-  // Copy particles to
+  strct2 = &opt.catalog.strctProps[opt.id];
+  for (i = 0; i < 3; i++)
+  {
+    strct2->Pos[i] = strct3->Pos[i];
+    strct2->Vel[i] = strct3->Vel[i];
+  }
+
+
+  Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
+printf ("here\n");  fflush(stdout);
+
   for (i = 1, n = 0; i <= opt.catalog.nstruct; i++)
   {
-
     strct1 = &opt.catalog.strctProps[i];
     if (strct_to_get[i])
     {
@@ -132,6 +142,7 @@ int main (int argc, char ** argv)
     }
   }
 
+
   //
   for (i = 0; i <= opt.catalog.nstruct; i++)
   {
@@ -139,6 +150,8 @@ int main (int argc, char ** argv)
     if (strct_to_get[i] == 1)
       Structure_correct_periodicity (strct1, &opt.simulation);
   }
+
+printf ("here\n");  fflush(stdout);
 
   //
   //  Calculate Surface density and create files
@@ -150,7 +163,7 @@ int main (int argc, char ** argv)
   int         bob;
   int         nbins = 200;
   double      rmin = 0.0;
-  double      rmax = 400.0;
+  double      rmax = 1000.0;
 
 
   for (i = 0, k = 0; i <= opt.catalog.nstruct; i++)
@@ -158,16 +171,19 @@ int main (int argc, char ** argv)
     strct1 = &opt.catalog.strctProps[i];
     if (strct_to_get[i] == 1)
     {
+      Structure_get_particle_radius (strct1);
+   //   Structure_sort_by_radius (strct1);
+
       // Density profile
       Structure_calculate_spherical_density (strct1, rmin, rmax, nbins, 0, &r, &Rho);
-      sprintf (buffer, "rho_density_%07d_%02d.dat", opt.id, k);
+      sprintf (buffer, "rho_density_%07d_%03d.dat", opt.id, k);
       f = fopen (buffer, "w");
       for (j = 0; j < nbins; j++)
         fprintf (f, "%e  %e\n", r[j], Rho[j]);
       fclose (f);
 
       // Visualization
-      sprintf (opt.output.name, "strct_%07d.gdt_%02d", opt.id, k);
+      sprintf (opt.output.name, "strct_%07d.gdt_%03d", opt.id, k);
       gadget_write_snapshot (strct1->Part, strct1->NumPart, &header, &opt.output);
       k++;
     }
