@@ -43,6 +43,16 @@ HDF5_LIB    = -L/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib /home/rcanas/opt/gcc/
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home/rcanas/opt/gcc/6.3.0/hdf5/1.8.18/lib
 endif
 
+ifeq ($(MACHINE),cosma)
+HDF5_INCL   = -I/cosma/local/hdf5/intel_2018/1.8.20/include
+HDF5_LIB    = -L/cosma/local/hdf5/intel_2018/1.8.20/lib /cosma/local/hdf5/intel_2018/1.8.20/lib/libhdf5_hl.a /cosma/local/hdf5/intel_2018/1.8.20/lib/libhdf5.a
+HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/cosma/local/hdf5/intel_2018/1.8.20/lib
+
+GSL_INCL    = -I/cosma/local/gsl/2.4/include 
+GSL_LIB     = -L/cosma/local/gsl/2.4/lib
+GSL_FLAGS   = -lgsl -lgslcblas
+endif
+
 
 INC         = $(HDF5_INCL) $(GSL_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB)

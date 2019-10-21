@@ -123,6 +123,8 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
   Structure * strct;
   Structure * sorted;
 
+
+printf("HERE\n");
   for (i = 1; i <= ctlg->nstruct; i++)
   {
     strct = &ctlg->strctProps[i];
@@ -135,6 +137,8 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
     }
     strct->dummy = 0;
   }
+printf("HERE\n");
+
   //
   // HostIDs
   //
@@ -151,9 +155,11 @@ void Catalog_fill_SubIDS (Catalog * ctlg)
         tmp = ctlg->strctProps[bob].dummy++;
         ctlg->strctProps[bob].SubIDs[tmp] = i;
       }
-      while (ctlg->strctProps[bob].HostID != -1);
+      while ((ctlg->strctProps[bob].HostID != -1) &&
+             (ctlg->strctProps[bob].HostID != ctlg->strctProps[bob].ID));
     }
   }
+printf("HERE\n");
     
   //
   // Now sort by mass

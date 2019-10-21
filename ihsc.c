@@ -78,11 +78,16 @@ int main (int argc, char ** argv)
 
   for (i = 0; i < opt.nsnap; i++)
   {
+    printf("%d\n",i);
     Simulation_init                 (&opt.simulation[i]);
+    printf("%d\n",i);
     Catalog_init                    (&opt.catalog[i]);
+    printf("%d\n",i);
     Catalog_load_properties         (&opt.catalog[i]);
     //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
+    printf("%d\n",i);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
+    printf("%d\n",i);
     Catalog_fill_isolated           (&opt.catalog[i]);
     if (opt.iTrack)
       if (i < (opt.nsnap - 1))
@@ -149,7 +154,7 @@ int main (int argc, char ** argv)
   //qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
 
-
+/*
   int * strct2get;
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -168,7 +173,7 @@ int main (int argc, char ** argv)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct2get);
     free (strct2get);
   }
-
+*/
 
   // --------------------------------------------------- //
 
@@ -260,11 +265,12 @@ int main (int argc, char ** argv)
             }
           }
 
+          /*
           radius = 2.0 * strct2->Rx;
           Structure_calculate_j_r       (strct2, radius);
           Structure_calculate_sigma_v_r (strct2, radius);
           Structure_calculate_sfr       (strct2);
-
+          */
 
           strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]];
 
@@ -286,19 +292,22 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
-
+          /*
           fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
           fprintf (f, "%e ",  strct2->j[3]);        // j(r)
           fprintf (f, "%e ",  radius);              // r
           fprintf (f, "%e ",  strct2->SFR20);       // SFR20
           fprintf (f, "%e ",  strct2->SFR50);       // SFR50
           fprintf (f, "%e ",  strct2->SFR100);      // SFR100
-
+          */
           fprintf (f, "%e ", minsat_m08);            // Mass in sats M > 1e8
           fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
           fprintf (f, "%e ", minsat_m10);            // Mass in sats M > 1e10
           fprintf (f, "%e ", minsat_m11);            // Mass in sats M > 1e11
 
+          fprintf (f, "%10.5lf ", strct2->Pos[0]);   // Pos
+          fprintf (f, "%10.5lf ", strct2->Pos[1]);   // Pos
+          fprintf (f, "%10.5lf ", strct2->Pos[2]);   // Pos
           fprintf (f, "\n");
         }
       }

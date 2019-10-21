@@ -135,6 +135,8 @@ void hdf5_sim_init (Simulation * snapshot)
     exit (0);
   }
 
+printf ("Opening file  %s\n", fname);
+
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
   hdf5_get_attribute (id_group, header.Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
   hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->h,                     sizeof(snapshot->cosmology.HubbleParam));
@@ -160,7 +162,7 @@ void hdf5_sim_init (Simulation * snapshot)
   //
   // Display header values
   //
-  /*
+  
   printf ("BoxSize          %g\n", snapshot->Lbox);
   printf ("HubbleParam      %g\n", snapshot->cosmology.HubbleParam);
   printf ("Om0              %g\n", snapshot->cosmology.OmegaM);
@@ -174,7 +176,7 @@ void hdf5_sim_init (Simulation * snapshot)
     printf ("NumPartTot       %u\n", snapshot->NpartTot[i]);
   for (i = 0; i < 6; i++)
     printf ("Mass             %g\n", snapshot->MassTable[i]);
-  */
+ 
 }
 
 

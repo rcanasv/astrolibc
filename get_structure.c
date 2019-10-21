@@ -41,6 +41,7 @@ int main (int argc, char ** argv)
   int          i, j, k;
   Options      opt;
   Structure *  strct;
+  Structure *  strct2;
   gheader      header;
   int       *  strct_to_get;
 
@@ -73,22 +74,36 @@ int main (int argc, char ** argv)
     strct_to_get[i] = 0;
   strct_to_get[opt.id[0]] = 1;
 
-
-  if ((opt.i3dfof == 1)              || \
-      (opt.iallinfof_single ==  1) || \
-      (opt.iallinfof_multiple == 1))
+  int tmpid;
+  if (opt.i3dfof == 1)
   {
     for (i = 1; i <= opt.catalog.nstruct; i++)
-      if (opt.catalog.strctProps[i].HostID == opt.id[0])
-        strct_to_get[i] = 1;
+    {
+      strct = &opt.catalog.strctProps[i];
+      tmpid = strct->ID;
+      if (strct->Type > 7)
+      {
+        strct2 = &opt.catalog.strctProps[strct->DirectHostID];
+        while (strct2->Type != 7 && strct2->ID != 0 && strct2->ID != tmpid)
+        {
+          strct2 = &opt.catalog.strctProps[strct2->DirectHostID];
+          tmpid = strct2->ID;
+        }
+        if (strct2->ID == opt.id[0])
+        {
+          strct_to_get[i] = 1;
+          printf ("strct_to_get   %d   %d\n", i, opt.catalog.strctProps[i].HostID);
+        }
+      }
+    }
   }
 
-
-  /*
+//printf("HERE\n");
+  
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
-  */
+  
 
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
@@ -96,7 +111,7 @@ int main (int argc, char ** argv)
   int numpart = 0;
 
 
-
+  Structure * strctt =&opt.catalog.strctProps[opt.id[0]];
   if (opt.i3dfof == 1)
   {
     numpart = 0;
@@ -108,18 +123,38 @@ int main (int argc, char ** argv)
 
     P = (Particle *) malloc (numpart * sizeof(Particle));
     k = 0;
+//    FILE * fff=fopen("gal","w");
+
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {
       if (strct_to_get[i] == 1)
       {
         for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
         {
+//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf\n", \
+//opt.catalog.strctProps[i].Part[j].Pos[0],\
+//opt.catalog.strctProps[i].Part[j].Pos[1],\
+//opt.catalog.strctProps[i].Part[j].Pos[2]);
           Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
+
+          P[k].Pos[0] -= strctt->Pos[0]*1000.0;
+          P[k].Pos[1] -= strctt->Pos[1]*1000.0;
+          P[k].Pos[2] -= strctt->Pos[2]*1000.0;
+          P[k].Vel[0] -= strctt->Vel[0];
+          P[k].Vel[1] -= strctt->Vel[1];
+          P[k].Vel[2] -= strctt->Vel[2];
+          
           P[k].Type = 1;
         }
       }
     }
     gadget_write_snapshot (P, numpart, &header, &opt.output);
+
+//    FILE * fff=fopen("gal","w");
+//    for (i=0;i<numpart;i++)
+//    fprintf(fff, "%10.3lf  %10.3lf  %10.3lf\n", P[i].Pos[0], P[i].Pos[1], P[i].Pos[2]);
+//    fclose (fff);
+
     free (P);
   }
 
@@ -163,7 +198,16 @@ int main (int argc, char ** argv)
       {
         strct = &opt.catalog.strctProps[i];
         for (j = 0; j < strct->NumPart; j++)
+        {
+          strct->Part[j].Pos[0] -= strctt->Pos[0]*1000.0;
+          strct->Part[j].Pos[1] -= strctt->Pos[1]*1000.0;
+          strct->Part[j].Pos[2] -= strctt->Pos[2]*1000.0;
+          strct->Part[j].Vel[0] -= strctt->Vel[0];
+          strct->Part[j].Vel[1] -= strctt->Vel[1];
+          strct->Part[j].Vel[2] -= strctt->Vel[2];
+
           strct->Part[j].Type = 1;
+        }
         sprintf (opt.output.name, "%s.gdt_%03d", opt.output.prefix, k);
 
         gadget_write_snapshot (strct->Part, strct->NumPart, &header, &opt.output);
