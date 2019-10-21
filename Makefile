@@ -1,4 +1,10 @@
+ifeq ($(MPI),yes)
+CC          = mpicc
+else
 CC          = gcc
+MPI_INCL    =
+MPI_LIB     =
+endif
 
 ifeq ($(MACHINE),horizon)
 HDF5_INCL   = -I//softs/hdf5/1.8.18-gcc4/include
@@ -8,12 +14,21 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/softs/hdf5/1.8.18-gcc4/l
 GSL_INCL    = -I/softs/gsl/2.3/include
 GSL_LIB     = -L/softs/gsl/2.3/lib
 GSL_FLAGS   = -lgsl -lgslcblas
+
+ifeq ($(MPI),yes)
+MPI_INCL    = -I//softs/openmpi/1.6.3-ifort-12.1-torque-CentOS6/include
+MPI_LIB     = -L/softs/openmpi/1.6.3-ifort-12.1-torque-CentOS6/lib
+endif
 endif
 
 ifeq ($(MACHINE),raijin)
 HDF5_INCL   = -I/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/include
 HDF5_LIB    = -L/home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib  /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5_hl.a /home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib/libhdf5.a
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,//home/571/rac571/opt/gcc-5.2.0/hdf5-1.8.18/lib
+
+GSL_INCL    = -I//apps/gsl/2.3/include
+GSL_LIB     = -L/apps/gsl/2.3/lib
+GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
 ifeq ($(MACHINE),icrar)
@@ -54,16 +69,19 @@ GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
 
-INC         = $(HDF5_INCL) $(GSL_INCL)
-LIB         = $(HDF5_LIB) $(GSL_LIB)
+INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
+LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
 FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
 		gcc analyze_galaxy_catalog.c -lm -o bin/analyze_galaxy_catalog
 
-ctlgMatch: ctlgmatch.c archive.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
-		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/ctlgMatch $(FLAGS)
+ctlgMatch: ctlgmatch.c archive.c gadget.c catalog.c stf.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
+		$(CC) $(INC) $(LIB) ctlgmatch.c archive.c gadget.c catalog.c stf.c  halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/ctlgMatch $(FLAGS)
+
+find: find.c archive.c catalog.c stf.c gadget.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c
+		$(CC) $(INC) $(LIB) find.c archive.c catalog.c stf.c gadget.c halomaker.c simulation.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c misc.c -o bin/find $(FLAGS)
 
 convert: convert.c archive.c catalog.c stf.c halomaker.c
 		gcc convert.c archive.c catalog.c stf.c  halomaker.c -lm -o bin/convert
@@ -80,5 +98,14 @@ sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c h
 surface_density: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/surface_density $(FLAGS)
 
+density: density.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) density.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/density $(FLAGS)
+
 ihsc: ihsc.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) ihsc.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/ihsc $(FLAGS)
+
+isgal: isgal.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+	$(CC) $(INC) $(LIB) isgal.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/isgal $(FLAGS)
+
+calcSO: calcSO.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+	$(CC) $(INC) $(LIB) calcSO.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/calcSO $(FLAGS)

@@ -148,13 +148,18 @@ int main (int argc, char ** argv)
       }
     }
   }
+  
+  sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
+  memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
+  qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
+
 
   //sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
   //memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   //qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
 
 
-/*
+  /*
   int * strct2get;
   for (i = 0; i < opt.nsnap; i++)
   {
@@ -173,10 +178,11 @@ int main (int argc, char ** argv)
       ramses_structure_calculate_star_age (&opt.simulation[i], &opt.catalog[i], strct2get);
     free (strct2get);
   }
-*/
+  */
+
+
 
   // --------------------------------------------------- //
-
 
   // --------------------------------------------------- //
   //
@@ -187,15 +193,10 @@ int main (int argc, char ** argv)
 
   if (opt.iFraction)
   {
+    int     nsat_m08;
     int     nsat_m09;
     int     nsat_m10;
     int     nsat_m11;
-    int     nsat_f0p001_0p05;
-    int     nsat_f0p05_0p30;
-    int     nsat_f0p30_1p0;
-    double  minsat_f0p001_0p05;
-    double  minsat_f0p05_0p30;
-    double  minsat_f0p30_1p0;
     double  fmass;
     double  radius;
     double  minsat_m08;
@@ -213,21 +214,16 @@ int main (int argc, char ** argv)
         strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
         if (strct1->Type == 7 && strct1->NumSubs > 0)
         {
+          nsat_m08 = 0;
           nsat_m09 = 0;
           nsat_m10 = 0;
           nsat_m11 = 0;
-          nsat_f0p001_0p05 = 0;
-          nsat_f0p05_0p30  = 0;
-          nsat_f0p30_1p0   = 0;
-          minsat_f0p001_0p05 = 0.0;
-          minsat_f0p05_0p30  = 0.0;
-          minsat_f0p30_1p0   = 0.0;
           minsat_m08 = 0.0;
           minsat_m09 = 0.0;
           minsat_m10 = 0.0;
           minsat_m11 = 0.0;
 
-          for (k = 1; k < strct1->NumSubs; k++)
+          for (k = 0; k < (strct1->NumSubs-1); k++)
           {
             strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
 
@@ -240,13 +236,16 @@ int main (int argc, char ** argv)
             if (strct3->TotMass >= 1e11)
               minsat_m11 += strct3->TotMass;
 
+            if (strct3->TotMass >= 1e8  && strct3->TotMass < 1e9)
+              nsat_m08++;
             if (strct3->TotMass >= 1e9  && strct3->TotMass < 1e10)
               nsat_m09++;
             if (strct3->TotMass >= 1e10 && strct3->TotMass < 1e11)
               nsat_m10++;
             if (strct3->TotMass >= 1e11)
               nsat_m11++;
-
+                 
+            /*
             fmass = strct3->TotMass/strct2->TotMass;
             if (fmass >= 0.001 && fmass < 0.05)
             {
@@ -263,6 +262,7 @@ int main (int argc, char ** argv)
               nsat_f0p30_1p0++;
               minsat_f0p30_1p0 += strct3->TotMass;
             }
+            */
           }
 
           /*
@@ -283,15 +283,20 @@ int main (int argc, char ** argv)
           fprintf (f, "%5d ", strct1->ID);          // ID IHSC
           fprintf (f, "%5d ", strct2->ID);          // ID Central
           fprintf (f, "%5d ", strct3->ID);          // ID Second most
+          fprintf (f, "%5d ", nsat_m08);            // Num sats 1e8  <= M < 1e9
           fprintf (f, "%5d ", nsat_m09);            // Num sats 1e9  <= M < 1e10
           fprintf (f, "%5d ", nsat_m10);            // Num sats 1e10 <= M < 1e11
           fprintf (f, "%5d ", nsat_m11);            // Num sats 1e11 <= M
+
+          /*
           fprintf (f, "%5d ", nsat_f0p001_0p05);    // Num sats 0.001  <= f < 0.05
           fprintf (f, "%5d ", nsat_f0p05_0p30);     // Num sats 0.05   <= f < 0.3
           fprintf (f, "%5d ", nsat_f0p30_1p0);      // Num sats 0.3    <= f
           fprintf (f, "%e ",  minsat_f0p001_0p05);  // Min sats 0.001  <= f < 0.05
           fprintf (f, "%e ",  minsat_f0p05_0p30);   // Min sats 0.05   <= f < 0.3
           fprintf (f, "%e ",  minsat_f0p30_1p0);    // Min sats 0.3    <= f
+          */
+
           /*
           fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
           fprintf (f, "%e ",  strct2->j[3]);        // j(r)
@@ -325,28 +330,13 @@ int main (int argc, char ** argv)
   FILE * f2;
   FILE * f3;
   FILE * f4;
-//  FILE * f5;
-//  FILE * f6;
-//  FILE * f7;
-//  FILE * f8;
-//  FILE * f9;
-//  FILE * f10;
-//  FILE * f11;
-
+  FILE * f5;
+  
   char   buffer1  [NAME_LENGTH];
   char   buffer2  [NAME_LENGTH];
   char   buffer3  [NAME_LENGTH];
   char   buffer4  [NAME_LENGTH];
-//  char   buffer5  [NAME_LENGTH];
-//  char   buffer6  [NAME_LENGTH];
-//  char   buffer7  [NAME_LENGTH];
-//  char   buffer8  [NAME_LENGTH];
-//  char   buffer9  [NAME_LENGTH];
-//  char   buffer10 [NAME_LENGTH];
-//  char   buffer11 [NAME_LENGTH];
-//  char   buffer12 [NAME_LENGTH];
-//  char   buffer13 [NAME_LENGTH];
-//  char   buffer14 [NAME_LENGTH];
+  char   buffer5  [NAME_LENGTH];
 
   Structure * ihsc;
   Structure * ctrl;
@@ -354,38 +344,11 @@ int main (int argc, char ** argv)
   Structure * ctrlp;
   Structure * ihscpctrl;
 
+  int ok = 0;
+
+
   if (opt.iTrack)
   {
-    sprintf (buffer1,  "%s.track_mihsc",       opt.output.prefix);
-    sprintf (buffer2,  "%s.track_mctrl",       opt.output.prefix);
-    sprintf (buffer3,  "%s.track_mstot",       opt.output.prefix);
-    sprintf (buffer4,  "%s.track_idctrl",      opt.output.prefix);
-//    sprintf (buffer5,  "%s.track_mmsub",       opt.output.prefix);
-//    sprintf (buffer6,  "%s.track_subs_m09",    opt.output.prefix);
-//    sprintf (buffer7,  "%s.track_subs_m10",    opt.output.prefix);
-//    sprintf (buffer8,  "%s.track_subs_m11",    opt.output.prefix);
-//    sprintf (buffer9,  "%s.track_gmerger_m09", opt.output.prefix);
-//    sprintf (buffer10, "%s.track_gmerger_m10", opt.output.prefix);
-//    sprintf (buffer11, "%s.track_gmerger_m11", opt.output.prefix);
-//    sprintf (buffer12, "%s.track_smerger_m09", opt.output.prefix);
-//    sprintf (buffer13, "%s.track_smerger_m10", opt.output.prefix);
-//    sprintf (buffer14, "%s.track_smerger_m11", opt.output.prefix);
-
-    f1  = fopen (buffer1,  "w");
-    f2  = fopen (buffer2,  "w");
-    f3  = fopen (buffer3,  "w");
-    f4  = fopen (buffer4,  "w");
-//    f5  = fopen (buffer5,  "w");
-//    f6  = fopen (buffer6,  "w");
-//    f7  = fopen (buffer7,  "w");
-//    f8  = fopen (buffer8,  "w");
-//    f9  = fopen (buffer9,  "w");
-//    f10 = fopen (buffer10, "w");
-//    f11 = fopen (buffer11, "w");
-//    f12 = fopen (buffer12, "w");
-//    f13 = fopen (buffer13, "w");
-//    f14 = fopen (buffer14, "w");
-
     for (i = opt.catalog[0].nstruct, k = 0; ((k < top)&&(i >=1)); i--)
     {
       ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
@@ -399,10 +362,75 @@ int main (int argc, char ** argv)
           (mstot > mass_min) && \
           (mstot < mass_max))
       {
+        printf ("%d  %d\n", k, sorted[i].ID);
+        fflush (stdout);
+        for (j = 1; j < opt.nsnap; j++)
+        {
+        
+printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
+fflush (stdout);
+          if (ctrl->NumMatch)
+            ctrlp     = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
+          else
+            break;
+
+
+          if (ctrlp->HostID != ctrlp->ID)
+            ihscp     = &opt.catalog[j].strctProps[ctrlp->HostID];
+          else
+            break;
+          ihscpctrl = &opt.catalog[j].strctProps[ihscp->dummyi];
+
+          ihsc = ihscp;
+          ctrl = ctrlp;
+        }
+
+        ctrl = &opt.catalog[0].strctProps[sorted[i].ID];    
+        if (j == opt.nsnap)
+        {
+          ctrl->dummyi = 1;
+          k++;
+        }
+        else
+        {
+          ctrl->dummyi = 0; 
+        }
+
+      }
+    }
+
+    sprintf (buffer1,  "%s.track_mihsc",       opt.output.prefix);
+    sprintf (buffer2,  "%s.track_mctrl",       opt.output.prefix);
+    sprintf (buffer3,  "%s.track_mstot",       opt.output.prefix);
+    sprintf (buffer4,  "%s.track_idctrl",      opt.output.prefix);
+    sprintf (buffer5,  "%s.track_idihsc",      opt.output.prefix);
+
+    f1  = fopen (buffer1,  "w");
+    f2  = fopen (buffer2,  "w");
+    f3  = fopen (buffer3,  "w");
+    f4  = fopen (buffer4,  "w");
+    f5  = fopen (buffer5,  "w");
+
+    for (i = opt.catalog[0].nstruct, k = 0; ((k < top)&&(i >=1)); i--)
+    {
+      ok = 1;
+      ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
+      ihsc = &opt.catalog[0].strctProps[ctrl->HostID];
+
+      fihsc = ihsc->TotMass/ctrl->dummyd;
+      mstot = ctrl->dummyd;
+
+      if (ctrl->dummyi)
+      {
+        printf ("%d  %d\n", k, sorted[i].ID);
+        fflush (stdout);
+
         fprintf (f1, "%e  ",  ihsc->TotMass);
         fprintf (f2, "%e  ",  ctrl->TotMass);
         fprintf (f3, "%e  ",  ctrl->dummyd);
         fprintf (f4, "%7d  ", ctrl->ID);
+        fprintf (f5, "%7d  ", ihsc->ID);
+        
 
         for (j = 1; j < opt.nsnap; j++)
         {
@@ -411,6 +439,7 @@ int main (int argc, char ** argv)
           ihscpctrl = &opt.catalog[j].strctProps[ihscp->dummyi];
 
           fprintf (f1, "%e  ", ihscp->TotMass);
+          fprintf (f5, "%7d  ", ihscp->ID);
           fprintf (f2, "%e  ", ctrlp->TotMass);
           fprintf (f3, "%e  ", ihscpctrl->dummyd);
           if (ctrlp->ID == ihscpctrl->ID)
@@ -422,11 +451,12 @@ int main (int argc, char ** argv)
           ctrl = ctrlp;
         }
 
-        fprintf (f1, "\n");
-        fprintf (f2, "\n");
-        fprintf (f3, "\n");
-        fprintf (f4, "\n");
 
+        fprintf (f1, "\n"); fflush (f1);
+        fprintf (f2, "\n"); fflush (f2);
+        fprintf (f3, "\n"); fflush (f3);
+        fprintf (f4, "\n"); fflush (f4);
+        fprintf (f5, "\n"); fflush (f5);
         k++;
       }
     }
@@ -434,11 +464,13 @@ int main (int argc, char ** argv)
     fclose (f2);
     fclose (f3);
     fclose (f4);
+    fclose (f5);
   }
   printf ("%d\n", k);
   // --------------------------------------------------- //
 
 
+  /*
   // --------------------------------------------------- //
   //
   // Create System merger trees
@@ -458,10 +490,7 @@ int main (int argc, char ** argv)
       fihsc = ihsc->TotMass/ctrl->dummyd;
       mstot = ctrl->dummyd;
 
-      if ((fihsc > frac_min) && \
-          (fihsc < frac_max) && \
-          (mstot > mass_min) && \
-          (mstot < mass_max))
+      if (ctrl->dummyi)
       {
         //ihsc_prog_tree (opt.catalog, ihsc->ID, 0, opt.nsnap, mainbuff, brnchbuff, ftree);
         ihsc_prog_tree (opt.catalog, ctrl->ID, 0, opt.nsnap, mainbuff, brnchbuff, ftree, 0);
@@ -471,6 +500,7 @@ int main (int argc, char ** argv)
     fclose (ftree);
   }
   // --------------------------------------------------- //
+  */
 
 
   // --------------------------------------------------- //
@@ -503,10 +533,7 @@ int main (int argc, char ** argv)
       fihsc = ihsc->TotMass/ctrl->dummyd;
       mstot = ctrl->dummyd;
 
-      if ((fihsc > frac_min) && \
-          (fihsc < frac_max) && \
-          (mstot > mass_min) && \
-          (mstot < mass_max))
+      if (ctrl->dummyi)
       {
         numpart = 0;
         ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
@@ -520,7 +547,7 @@ int main (int argc, char ** argv)
           strct1 = &opt.catalog[0].strctProps[ihsc->SubIDs[n]];
           if (strct1->ID != ctrl->ID)
           {
-            strct_to_get[0][strct1->ID] = 3;
+            strct_to_get[0][strct1->ID] = 1;
             numpart += strct1->NumPart;
           }
         }
@@ -528,7 +555,7 @@ int main (int argc, char ** argv)
         numpart += ctrl->NumPart;
         strct_to_get[0][ctrl->ID] = numpart;
 
-        for (j = 1; j < opt.ntrees; j++)
+        for (j = 1; j < opt.nsnap; j++)
         {
           numpart = 0;
 
@@ -543,7 +570,7 @@ int main (int argc, char ** argv)
             strct1 = &opt.catalog[j].strctProps[ihscp->SubIDs[n]];
             if (strct1->ID != ctrlp->ID)
             {
-              strct_to_get[j][strct1->ID] = 3;
+              strct_to_get[j][strct1->ID] = 1;
               numpart += strct1->NumPart;
             }
           }
@@ -571,10 +598,7 @@ int main (int argc, char ** argv)
       fihsc = ihsc->TotMass/ctrl->dummyd;
       mstot = ctrl->dummyd;
 
-      if ((fihsc > frac_min) && \
-          (fihsc < frac_max) && \
-          (mstot > mass_min) && \
-          (mstot < mass_max))
+      if (ctrl->dummyi)
       {
         m = 0;
         numpart = strct_to_get[0][sorted[i].ID];
@@ -600,7 +624,7 @@ int main (int argc, char ** argv)
             for (l = 0; l < strct1->NumPart; l++, m++)
             {
               Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
-              tmpstrct.Part[m].Type = 3;
+              tmpstrct.Part[m].Type = 1;
             }
           }
         }
@@ -627,7 +651,7 @@ int main (int argc, char ** argv)
           printf ("Error in total number of particles\n");
         free (tmpstrct.Part);
 
-        for (j = 1; j < opt.ntrees; j++)
+        for (j = 1; j < opt.nsnap; j++)
         {
           ctrlp = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
           ihscp = &opt.catalog[j].strctProps[ctrlp->HostID];
@@ -655,7 +679,7 @@ int main (int argc, char ** argv)
                 for (l = 0; l < strct1->NumPart; l++, m++)
                 {
                   Particle_copy (&strct1->Part[l], &tmpstrct.Part[m]);
-                  tmpstrct.Part[m].Type = 3;
+                  tmpstrct.Part[m].Type = 1;
                 }
               }
               else
@@ -679,6 +703,7 @@ int main (int argc, char ** argv)
           tmpstrct.Pos[0] = ctrlp->Pos[0];
           tmpstrct.Pos[1] = ctrlp->Pos[1];
           tmpstrct.Pos[2] = ctrlp->Pos[2];
+          tmpstrct.flg_CorrectedPeriodicity = 0;
           printf ("boxsize %e\n", opt.simulation[j].Lbox);
           Structure_correct_periodicity (&tmpstrct, &opt.simulation[j]);
 
@@ -754,6 +779,8 @@ void ihsc_prog_tree (Catalog * ctlgs, int pid, int plevel, int maxlvls, char * m
     ihsc = &ctlgs[plevel].strctProps[pid];
   }
 
+printf ("branch  %d  ihsc_id  %d  type   %d  plvel  %d\n", branch, ihsc->ID, ihsc->Type, plevel);
+fflush(stdout);
   if (plevel == 0)
   {
     sprintf (mainbuff,   "% 7d  % 7d  ", ihsc->ID, ihsc->ID);
@@ -828,6 +855,7 @@ void test_params (Options * opt)
   int   i;
   int   dummy;
   char  buffer   [NAME_LENGTH];
+  char  prefixbuff [NAME_LENGTH];
   char  namebuff [NAME_LENGTH];
   char  frmtbuff [NAME_LENGTH];
   char  pathbuff [NAME_LENGTH];
@@ -842,9 +870,9 @@ void test_params (Options * opt)
   }
 
   // Output
-  fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
   Archive_name   (&opt->output, namebuff);
-  Archive_prefix (&opt->output, namebuff);
+  Archive_prefix (&opt->output, prefixbuff);
   Archive_format (&opt->output, frmtbuff);
   Archive_path   (&opt->output, pathbuff);
   Archive_nfiles (&opt->output, nflsbuff);
@@ -871,9 +899,9 @@ void test_params (Options * opt)
   // Catalogues
   for (i = 0; i < opt->nsnap; i++)
   {
-    fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
     Archive_name   (&opt->catalog[i].archive, namebuff);
-    Archive_prefix (&opt->catalog[i].archive, namebuff);
+    Archive_prefix (&opt->catalog[i].archive, prefixbuff);
     Archive_format (&opt->catalog[i].archive, frmtbuff);
     Archive_path   (&opt->catalog[i].archive, pathbuff);
     Archive_nfiles (&opt->catalog[i].archive, nflsbuff);
@@ -883,9 +911,9 @@ void test_params (Options * opt)
   // Simulation
   for (i = 0; i < opt->nsnap; i++)
   {
-    fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
     Archive_name   (&opt->simulation[i].archive, namebuff);
-    Archive_prefix (&opt->simulation[i].archive, namebuff);
+    Archive_prefix (&opt->simulation[i].archive, prefixbuff);
     Archive_format (&opt->simulation[i].archive, frmtbuff);
     Archive_path   (&opt->simulation[i].archive, pathbuff);
     Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
@@ -897,9 +925,9 @@ void test_params (Options * opt)
     // Trees
     for (i = 0; i < opt->ntrees; i++)
     {
-      fscanf (opt->param.file, "%s  %s  %s  %d", namebuff, frmtbuff, pathbuff, &nflsbuff);
+      fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
       Archive_name   (&opt->tree[i], namebuff);
-      Archive_prefix (&opt->tree[i], namebuff);
+      Archive_prefix (&opt->tree[i], prefixbuff);
       Archive_format (&opt->tree[i], frmtbuff);
       Archive_path   (&opt->tree[i], pathbuff);
       Archive_nfiles (&opt->tree[i], nflsbuff);
@@ -1006,6 +1034,16 @@ void test_usage (int opt, char ** argv)
 }
 
 /*
+void ihsc_prog_tree (Catalog * ctlgs, int pihscid, int plevel, int maxlvls, char * mainbuff, char * brnchbuff, FILE * file)
+{
+  int          i, j;
+  int          level;
+  char         lvl_mainbuff   [3000];
+  char         lvl_brnchbuff  [3000];
+  char         strctbuff      [3000];
+  Structure  * ctrl;
+  Structure  * ihsc;
+  Structure  * strct;
 void ihsc_prog_tree (Catalog * ctlgs, int pihscid, int plevel, int maxlvls, char * mainbuff, char * brnchbuff, FILE * file)
 {
   int          i, j;

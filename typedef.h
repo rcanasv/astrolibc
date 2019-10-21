@@ -33,15 +33,18 @@ typedef struct Cosmology
 
 typedef struct Particle
 {
-  float       Pos[3];
-  float       Vel[3];
-  float       Mass;
+  double      Pos[3];
+  double      Vel[3];
+  double      Mass;
   int         Id;
   int         Level;
   float       Age;
   float       Metal;
   float       Chem;
   int         Type;
+  int         dummyi;
+  int         HostID;
+  int         DirectHostID;
   float       Radius;
 } Particle;
 
@@ -89,6 +92,17 @@ typedef struct Structure
   double     sigmaVelEval[3];
   double     j[4];
   double     sigma;
+  double     R200;
+  double     M200;
+  double     M30;
+  double     M100;
+  double     M2R50;
+  int        inR200;
+ 
+  double     Mstar200;
+  double     Mnogal200;
+  int        Nstar200;
+  int        Nnogal200;
 
   // Isolation
   char       Isolated;
@@ -136,6 +150,9 @@ typedef struct Structure
   char flg_SortedByRadius;
   char flg_CorrectedPeriodicity;
   char flg_ShiftedCM;
+
+  // oTask
+  int oTask;
 } Structure;
 
 
@@ -190,6 +207,7 @@ typedef struct Simulation
   double     mstarTot;
   double     mstarLst;
   int        nsink;
+  int      * npartinfile;
 
   // For GADGET
   double     Ez;
@@ -208,6 +226,46 @@ typedef struct Simulation
   int        NpartTotHW    [6];
   char       RunLabel      [NAME_LENGTH];
 } Simulation;
+
+// Specifically for RAMSES
+//
+// May also be aplicable for nonRamses AMR codes
+// no need to change this for the moment
+//
+typedef struct
+{
+  int     myIndex;
+  int     nextIndex;
+  int     prevIndex;
+  double  Pos       [3];
+  int     fatherIndex;
+  int     nborIndex [6];
+  int     sonIndex  [8];
+  int     cpuMap    [8];
+  int     refMap    [8];
+  double  octRho    [8];
+  double  octPos    [8][3];
+  double  dx;
+  int     okOct     [8];
+} Cell;
+
+typedef struct
+{
+  Cell * cell;
+  int    num;
+} Level;
+
+typedef struct
+{
+  int     alloc_ngrid;
+  int     alloc_level;
+  int     nlevelmax;
+  int     ncpu;
+  int  ** ngrid;
+  Level * level;
+} Grid;
+
+
 
 
 #endif    /*  TYPEDEF_H  */

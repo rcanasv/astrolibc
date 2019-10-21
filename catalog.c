@@ -155,7 +155,7 @@ printf("HERE\n");
         tmp = ctlg->strctProps[bob].dummy++;
         ctlg->strctProps[bob].SubIDs[tmp] = i;
       }
-      while ((ctlg->strctProps[bob].HostID != -1) &&
+      while ((ctlg->strctProps[bob].HostID != -1) && \
              (ctlg->strctProps[bob].HostID != ctlg->strctProps[bob].ID));
     }
   }

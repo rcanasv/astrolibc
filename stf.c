@@ -36,6 +36,8 @@ void stf_read_properties (Catalog * stf)
   char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
+  int    oTask;
+
   //
   // Open properties file to read total number of structures
   // and number of processors if stf was run with MPI
@@ -250,6 +252,7 @@ void stf_read_properties (Catalog * stf)
       }
 
       fgets  (longbuffer, NAME_LENGTH, f);
+      sscanf (longbuffer, "%d  %d", &oTask, &dummyi);
       fgets  (longbuffer, NAME_LENGTH, f);
       sscanf (longbuffer, "%d  %d", &mystructs, &dummyi);
       fgets  (longbuffer, 3000, f);
@@ -257,7 +260,7 @@ void stf_read_properties (Catalog * stf)
       for (j = 0; j < mystructs; j++)
       {
         fgets (longbuffer, 3000, f);
-
+        stf->strctProps[j+offst].oTask = oTask;
         sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
@@ -608,9 +611,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     }
   }
 
-  printf ("Memory allocated for particles\n");
-
-
   //
   //  Load particles to structures
   //
@@ -626,6 +626,9 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
       if (files_to_read[i])
       {
 
+        xtndd = NULL;
+        part = NULL;
+        ninextended = 0;
         ninextended = stf_load_extended_output (stf, i, &xtndd);
 
         if (ninextended)
@@ -637,9 +640,10 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
             id    = xtndd[j].IdStruct;
             indx  = xtndd[j].oIndex;
 
-            if (strcts_to_get[id])
+            if ((strcts_to_get[id]) && (id > 0))
             {
               strct = &stf->strctProps[id];
+
               Particle_copy (&part[indx], &strct->Part[strct->dummyi]);
               strct->dummyi++;
             }
@@ -656,7 +660,6 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
     exit (0);
   }
   free (files_to_read);
-
   return;
 }
 
@@ -723,9 +726,7 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
   }
   else
   {
-
     f = fopen(fname, "r");
-
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
     rewind(f);
@@ -743,6 +744,8 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
     else
       extended = NULL;
     fclose (f);
+
+
   }
 
   return nparts;

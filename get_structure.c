@@ -72,8 +72,17 @@ int main (int argc, char ** argv)
   strct_to_get = (int *) malloc ((opt.catalog.nstruct+1) * sizeof(int));
   for (i = 1; i <= opt.catalog.nstruct; i++)
     strct_to_get[i] = 0;
-  strct_to_get[opt.id[0]] = 1;
 
+
+  if (opt.ilist)
+  {
+    for (i = 0; i < opt.nstruct; i++)
+      strct_to_get[opt.id[i]] = 1; 
+  }
+  else
+    strct_to_get[opt.id[0]] = 1;
+
+  
   int tmpid;
   if (opt.i3dfof == 1)
   {
@@ -100,6 +109,7 @@ int main (int argc, char ** argv)
 
 //printf("HERE\n");
   
+  
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
@@ -124,6 +134,7 @@ int main (int argc, char ** argv)
     P = (Particle *) malloc (numpart * sizeof(Particle));
     k = 0;
 //    FILE * fff=fopen("gal","w");
+
 
     for (i = 1; i <= opt.catalog.nstruct; i++)
     {

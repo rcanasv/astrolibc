@@ -134,6 +134,8 @@ void hdf5_sim_init (Simulation * snapshot)
     printf ("Couldn't open file %s\n", fname);
     exit (0);
   }
+  printf("Opening file  %s\n",fname);
+
 
 printf ("Opening file  %s\n", fname);
 
@@ -163,6 +165,7 @@ printf ("Opening file  %s\n", fname);
   // Display header values
   //
   
+    
   printf ("BoxSize          %g\n", snapshot->Lbox);
   printf ("HubbleParam      %g\n", snapshot->cosmology.HubbleParam);
   printf ("Om0              %g\n", snapshot->cosmology.OmegaM);
@@ -177,6 +180,7 @@ printf ("Opening file  %s\n", fname);
   for (i = 0; i < 6; i++)
     printf ("Mass             %g\n", snapshot->MassTable[i]);
  
+  
 }
 
 
@@ -250,6 +254,7 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     exit(0);
   }
 
+printf ("npartthisfile  %d\n", snapshot->NpartThisFile[4]); 
 
   id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
   hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));
@@ -259,14 +264,24 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
+   printf ("%10.5lf   %10.5lf  %10.5lf\n", posbuff[0], posbuff[1], posbuff[2]);
 
+
+  for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
+  {
+    posbuff[j]   *= 1000.0;
+    posbuff[j+1] *= 1000.0;
+    posbuff[j+2] *= 1000.0;
+  }
+
+   printf ("%10.5lf   %10.5lf  %10.5lf\n", posbuff[0], posbuff[1], posbuff[2]);
   P = *(part);
 
   for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
   {
-    P[i].Pos[0] = posbuff  [j];
-    P[i].Pos[1] = posbuff  [j+1];
-    P[i].Pos[2] = posbuff  [j+2];
+    P[i].Pos[0] = posbuff[j];
+    P[i].Pos[1] = posbuff[j+1];
+    P[i].Pos[2] = posbuff[j+2];
     P[i].Vel[0] = velbuff  [j];
     P[i].Vel[1] = velbuff  [j+1];
     P[i].Vel[2] = velbuff  [j+2];
@@ -274,10 +289,14 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     P[i].Id     = idbuff   [i];
   }
 
+  printf("%10.5lf  %10.5lf  %10.5lf\n", P[0].Pos[0], P[0].Pos[1], P[0].Pos[2]);
+  printf("%10.5lf  %10.5lf  %10.5lf\n", P[0].Vel[0], P[0].Vel[1], P[0].Vel[2]);
+
   free (posbuff);
   free (velbuff);
   free (idbuff);
   free (massbuff);
+
 
   //
   // Convert to human readable units
@@ -287,9 +306,9 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
 
   for (i = 0; i < snapshot->NpartThisFile[4]; i++)
   {
-    P[i].Pos[0] *= 1000.0 * a / h;
-    P[i].Pos[1] *= 1000.0 * a / h;
-    P[i].Pos[2] *= 1000.0 * a / h;
+    P[i].Pos[0] *= a / h;
+    P[i].Pos[1] *= a / h;
+    P[i].Pos[2] *= a / h;
     P[i].Mass   *= 1.0        / h;
   }
 }

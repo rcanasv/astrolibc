@@ -16,8 +16,10 @@
 #include "stf.h"
 #include "halomaker.h"
 #include "ramses.h"
+#include "gadget.h"
+#include "simulation.h"
 
-
+/*
 typedef struct Options
 {
   int            verbose;
@@ -34,6 +36,6 @@ typedef struct Options
 int   ctlgMatch_options (int argc, char ** argv, Options * opt);
 void  ctlgMatch_usage   (int opt, char ** argv);
 void  ctlgMatch_params  (Options * opt);
-
+*/
 
 #endif    /*  CTLGMATCH_H  */

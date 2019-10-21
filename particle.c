@@ -37,6 +37,8 @@ void Particle_copy (Particle * src, Particle * dst)
   dst->Chem   = src->Chem;
   dst->Type   = src->Type;
   dst->Radius = src->Radius;
+  dst->HostID = src->HostID;
+  dst->DirectHostID = src->DirectHostID;
 }
 
 

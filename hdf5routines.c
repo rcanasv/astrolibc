@@ -165,18 +165,22 @@ void hdf5_get_attribute (hid_t obj_id, char * attr_name, void * buffer, size_t v
            H5Aread (attr_id, type_id, dummydarr);
 
            if (vsize == sizeof(float))
+           {
              for (i = 0; i < sizearr; i++)
              {
                *(float*) buffer = (float) dummydarr[i];
                buffer = (char *) buffer + sizeof(float);
              }
+           }
 
            if (vsize == sizeof(double))
+           {
              for (i = 0; i < sizearr; i++)
              {
                *(double*) buffer = (double) dummydarr[i];
                buffer = (char *) buffer + sizeof(double);
              }
+           }
            free (dummydarr);
          }
        }
