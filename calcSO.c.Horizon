@@ -761,7 +761,6 @@ int main (int argc, char ** argv)
   } // Loop over tasks
 
 
-
   // Free memory
   Catalog_free (&opt.catalog);
   free (myGrid);
@@ -775,6 +774,131 @@ int main (int argc, char ** argv)
   //MPI_Finalize();
   return 0;
 
+
+
+  // --------------------------------------------------- //
+  // Diffuse stellar fraction
+  //FILE * f;
+  //char buffer [NAME_LENGTH];
+
+  if (opt.iSO)
+  {
+    int     nsat_m09;
+    int     nsat_m10;
+    int     nsat_m11;
+    double  fmass;
+    double  radius;
+    double  minsat_m08;
+    double  minsat_m09;
+    double  minsat_m10;
+    double  minsat_m11;
+
+      sprintf (buffer, "%s.ihsc", opt.catalog.archive.prefix);
+      f = fopen (buffer, "w");
+      for (j = 1; j <= opt.catalog.nstruct; j++)
+      {
+        strct1 = &opt.catalog.strctProps[j];              // IHSC
+        strct2 = &opt.catalog.strctProps[strct1->dummyi]; // Central
+        if (strct1->Type == 7 && strct1->NumSubs > 0)
+        {
+          nsat_m09 = 0;
+          nsat_m10 = 0;
+          nsat_m11 = 0;
+          minsat_m08 = 0.0;
+          minsat_m09 = 0.0;
+          minsat_m10 = 0.0;
+          minsat_m11 = 0.0;
+
+          for (k = 1; k < strct1->NumSubs; k++)
+          {
+            strct3 = &opt.catalog.strctProps[strct1->SubIDs[k]];
+
+            if (strct3->TotMass >= 1e8)
+              minsat_m08 += strct3->TotMass;
+            if (strct3->TotMass >= 1e9)
+              minsat_m09 += strct3->TotMass;
+            if (strct3->TotMass >= 1e10)
+              minsat_m10 += strct3->TotMass;
+            if (strct3->TotMass >= 1e11)
+              minsat_m11 += strct3->TotMass;
+
+            if (strct3->TotMass >= 1e9  && strct3->TotMass < 1e10)
+              nsat_m09++;
+            if (strct3->TotMass >= 1e10 && strct3->TotMass < 1e11)
+              nsat_m10++;
+            if (strct3->TotMass >= 1e11)
+              nsat_m11++;
+          }
+
+          /*
+          radius = 2.0 * strct2->Rx;
+          Structure_calculate_j_r       (strct2, radius);
+          Structure_calculate_sigma_v_r (strct2, radius);
+          Structure_calculate_sfr       (strct2);
+          */
+
+          strct3 = &opt.catalog.strctProps[strct1->SubIDs[strct1->NumSubs-2]];
+
+          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
+          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
+          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
+          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
+          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
+          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
+          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
+          fprintf (f, "%5d ", strct2->ID);          // ID Central
+          fprintf (f, "%5d ", strct3->ID);          // ID Second most
+          fprintf (f, "%5d ", nsat_m09);            // Num sats 1e9  <= M < 1e10
+          fprintf (f, "%5d ", nsat_m10);            // Num sats 1e10 <= M < 1e11
+          fprintf (f, "%5d ", nsat_m11);            // Num sats 1e11 <= M
+          /*
+          fprintf (f, "%e ",  strct2->sigma);       // sigma_v(r)
+          fprintf (f, "%e ",  strct2->j[3]);        // j(r)
+          fprintf (f, "%e ",  radius);              // r
+          fprintf (f, "%e ",  strct2->SFR20);       // SFR20
+          fprintf (f, "%e ",  strct2->SFR50);       // SFR50
+          fprintf (f, "%e ",  strct2->SFR100);      // SFR100
+          */
+          fprintf (f, "%e ", minsat_m08);            // Mass in sats M > 1e8
+          fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
+          fprintf (f, "%e ", minsat_m10);            // Mass in sats M > 1e10
+          fprintf (f, "%e ", minsat_m11);            // Mass in sats M > 1e11
+
+          fprintf (f, "%10.5lf ", strct2->Pos[0]);   // Pos
+          fprintf (f, "%10.5lf ", strct2->Pos[1]);   // Pos
+          fprintf (f, "%10.5lf ", strct2->Pos[2]);   // Pos
+          fprintf (f, "\n");
+        }
+      }
+      fclose (f);
+    }
+  // --------------------------------------------------- //
+
+  /*
+  // --------------------------------------------------- //
+  // Write snapshots for visualization
+  if (opt.iExtract)
+  {
+    strct_to_get = (int *) malloc ((opt.catalog.nstruct+1)*sizeof(int));
+    for (j = 1; j <= opt.catalog.nstruct; j++)
+      strct_to_get[j] = 0;
+
+    // Load Particles
+    Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
+
+    // Write Gadget Snapshots
+    for (i = opt.catalog.nstruct, k = 0; ((k < top)&&(i >=1)); i--)
+    {
+      printf ("boxsize %e\n", opt.simulation[0].Lbox);
+      Structure_correct_periodicity (&tmpstrct, &opt.simulation);
+      sprintf (opt.output.name, "%s_%d.gdt_%03d",opt.output.prefix, k, 0);
+      gadget_write_snapshot (tmpstrct.Part, m, &header, &opt.output);
+    }
+
+    free (strct_to_get);
+  }
+  // --------------------------------------------------- //
+  */
 
   // Free memory
   Catalog_free (&opt.catalog);

@@ -148,7 +148,7 @@ int main (int argc, char ** argv)
       }
     }
   }
-  
+
   sorted = (Structure *) malloc ((opt.catalog[0].nstruct+1) * sizeof(Structure));
   memcpy (sorted, &opt.catalog[0].strctProps[0], (opt.catalog[0].nstruct+1) * sizeof(Structure));
   qsort (&sorted[1], opt.catalog[0].nstruct, sizeof(Structure), Structure_dummyd_compare);
@@ -244,7 +244,7 @@ int main (int argc, char ** argv)
               nsat_m10++;
             if (strct3->TotMass >= 1e11)
               nsat_m11++;
-                 
+
             /*
             fmass = strct3->TotMass/strct2->TotMass;
             if (fmass >= 0.001 && fmass < 0.05)
@@ -317,6 +317,33 @@ int main (int argc, char ** argv)
         }
       }
       fclose (f);
+
+      // --------------------------------------------------- //
+
+      sprintf (buffer, "%s.sats", opt.catalog[i].archive.prefix);
+      f = fopen (buffer, "w");
+      for (j = 1; j <= 1; j++)
+      {
+        strct1 = &opt.catalog[i].strctProps[j];              // IHSC
+        strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
+        if (strct1->Type == 7 && strct1->NumSubs > 0)
+        {
+          for (k = 0; k < (strct1->NumSubs-1); k++)
+          {
+            strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[k]];
+            fprintf (f, "%5d  ", strct3->ID);         // Total Stellar Mass
+            fprintf (f, "%e  ", strct3->TotMass);     // Mass IHSC
+            fprintf (f, "%e  ", strct3->Pos[0]-strct2->Pos[0]);     // Delta x
+            fprintf (f, "%e  ", strct3->Pos[1]-strct2->Pos[1]);     // Delta y
+            fprintf (f, "%e  ", strct3->Pos[2]-strct2->Pos[2]);     // Delta z
+            fprintf (f, "%e  ", strct3->Pos[0]-strct2->Pos[0]);     // Vx
+            fprintf (f, "%e  ", strct3->Pos[1]-strct2->Pos[1]);     // Vy
+            fprintf (f, "%e  ", strct3->Pos[2]-strct2->Pos[2]);     // Vz
+            fprintf (f, "\n");
+          }
+        }
+      }
+      fclose (f);
     }
   }
   // --------------------------------------------------- //
@@ -331,7 +358,7 @@ int main (int argc, char ** argv)
   FILE * f3;
   FILE * f4;
   FILE * f5;
-  
+
   char   buffer1  [NAME_LENGTH];
   char   buffer2  [NAME_LENGTH];
   char   buffer3  [NAME_LENGTH];
@@ -366,7 +393,7 @@ int main (int argc, char ** argv)
         fflush (stdout);
         for (j = 1; j < opt.nsnap; j++)
         {
-        
+
 printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
 fflush (stdout);
           if (ctrl->NumMatch)
@@ -385,7 +412,7 @@ fflush (stdout);
           ctrl = ctrlp;
         }
 
-        ctrl = &opt.catalog[0].strctProps[sorted[i].ID];    
+        ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
         if (j == opt.nsnap)
         {
           ctrl->dummyi = 1;
@@ -393,7 +420,7 @@ fflush (stdout);
         }
         else
         {
-          ctrl->dummyi = 0; 
+          ctrl->dummyi = 0;
         }
 
       }
@@ -430,7 +457,7 @@ fflush (stdout);
         fprintf (f3, "%e  ",  ctrl->dummyd);
         fprintf (f4, "%7d  ", ctrl->ID);
         fprintf (f5, "%7d  ", ihsc->ID);
-        
+
 
         for (j = 1; j < opt.nsnap; j++)
         {
