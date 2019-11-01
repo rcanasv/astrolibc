@@ -336,9 +336,9 @@ int main (int argc, char ** argv)
             fprintf (f, "%e  ", strct3->Pos[0]-strct2->Pos[0]);     // Delta x
             fprintf (f, "%e  ", strct3->Pos[1]-strct2->Pos[1]);     // Delta y
             fprintf (f, "%e  ", strct3->Pos[2]-strct2->Pos[2]);     // Delta z
-            fprintf (f, "%e  ", strct3->Pos[0]-strct2->Pos[0]);     // Vx
-            fprintf (f, "%e  ", strct3->Pos[1]-strct2->Pos[1]);     // Vy
-            fprintf (f, "%e  ", strct3->Pos[2]-strct2->Pos[2]);     // Vz
+            fprintf (f, "%e  ", strct3->Vel[0]-strct2->Vel[0]);     // Vx
+            fprintf (f, "%e  ", strct3->Vel[1]-strct2->Vel[1]);     // Vy
+            fprintf (f, "%e  ", strct3->Vel[2]-strct2->Vel[2]);     // Vz
             fprintf (f, "\n");
           }
         }
