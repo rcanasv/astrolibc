@@ -161,10 +161,7 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       //fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
       fread(&ftmp3[0], sizeof(float), 3, fd);
       for (i = 0; i < 3; i++)
-         P[pc_new].Pos[i] = ftmp3[i];
-
-      if (n < 10)
-        printf("%e\n", P[pc_new].Pos[0]);
+         P[pc_new].Pos[i] = ftmp3[i] / header1.HubbleParam;
       pc_new++;
     }
   fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
@@ -234,10 +231,10 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       {
         //fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
         fread(&ftmp, sizeof(float), 1, fd);
-        P[pc_new].Mass = ftmp;
+        P[pc_new].Mass = ftmp / header1.HubbleParam;
       }
       else
-        P[pc_new].Mass= header1.mass[k];
+        P[pc_new].Mass= header1.mass[k] / header1.HubbleParam;
       pc_new++;
     }
   }
