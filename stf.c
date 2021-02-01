@@ -667,7 +667,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
 // Returns ALL particles in a simulation box on a 2D array with N number of
 // files and M particles per file
 //
-void  stf_simulation_get_particle_properties (Catalog * stf, Simulation * sim, int * file_to_read, Particle ** Part)
+void  stf_simulation_get_particle_properties (Catalog * stf, Simulation * sim, int * files_to_read, Particle ** Part)
 {
   int    i, j, k;
   FILE * f;

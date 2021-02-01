@@ -77,12 +77,12 @@ int main (int argc, char ** argv)
   if (opt.ilist)
   {
     for (i = 0; i < opt.nstruct; i++)
-      strct_to_get[opt.id[i]] = 1; 
+      strct_to_get[opt.id[i]] = 1;
   }
   else
     strct_to_get[opt.id[0]] = 1;
 
-  
+
   int tmpid;
   if (opt.i3dfof == 1)
   {
@@ -108,15 +108,17 @@ int main (int argc, char ** argv)
   }
 
 //printf("HERE\n");
-  
-  
+
+
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
-  
+
 
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
+
+
   Particle * P;
   int numpart = 0;
 
@@ -131,7 +133,10 @@ int main (int argc, char ** argv)
         numpart += opt.catalog.strctProps[i].NumPart;
     }
 
-    P = (Particle *) malloc (numpart * sizeof(Particle));
+
+    if (P = (Particle *) malloc (numpart * sizeof(Particle)) == NULL)
+      printf("Unable to allocate memory\n");
+    printf("Memory allocated\n");
     k = 0;
 //    FILE * fff=fopen("gal","w");
 
@@ -142,10 +147,12 @@ int main (int argc, char ** argv)
       {
         for (j = 0; j < opt.catalog.strctProps[i].NumPart; j++, k++)
         {
-//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf\n", \
-//opt.catalog.strctProps[i].Part[j].Pos[0],\
-//opt.catalog.strctProps[i].Part[j].Pos[1],\
-//opt.catalog.strctProps[i].Part[j].Pos[2]);
+//fprintf(fff, "%10.3lf  %10.3lf  %10.3lf\n",
+if (j < 10)
+printf("%e %e  %e\n", \
+opt.catalog.strctProps[i].Part[j].Pos[0],\
+opt.catalog.strctProps[i].Part[j].Pos[1],\
+opt.catalog.strctProps[i].Part[j].Pos[2]);
           Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
 
           P[k].Pos[0] -= strctt->Pos[0]*1000.0;
@@ -154,7 +161,7 @@ int main (int argc, char ** argv)
           P[k].Vel[0] -= strctt->Vel[0];
           P[k].Vel[1] -= strctt->Vel[1];
           P[k].Vel[2] -= strctt->Vel[2];
-          
+
           P[k].Type = 1;
         }
       }

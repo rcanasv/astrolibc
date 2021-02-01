@@ -82,6 +82,10 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   char    fname [NAME_LENGTH];
   char    hname [4];
 
+  int     i;
+  float   ftmp3 [3];
+  float   ftmp;
+
   Particle * P;
   gheader    header1;
 
@@ -154,7 +158,13 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   for(k = 0, pc_new = pc; k < 6; k++)
     for(n = 0; n < header1.npart[k]; n++)
     {
-      fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
+      //fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
+      fread(&ftmp3[0], sizeof(float), 3, fd);
+      for (i = 0; i < 3; i++)
+         P[pc_new].Pos[i] = ftmp3[i];
+
+      if (n < 10)
+        printf("%e\n", P[pc_new].Pos[0]);
       pc_new++;
     }
   fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
@@ -174,7 +184,10 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   for(k = 0, pc_new = pc; k < 6; k++)
     for(n = 0; n < header1.npart[k]; n++)
     {
-      fread(&P[pc_new].Vel[0], sizeof(float), 3, fd);
+      //fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
+      fread(&ftmp3[0], sizeof(float), 3, fd);
+      for (i = 0; i < 3; i++)
+         P[pc_new].Vel[i] = ftmp3[i];
       pc_new++;
     }
   fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
@@ -218,14 +231,19 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
     {
       P[pc_new].Type = k;
       if(header1.mass[k] == 0)
-       	fread(&P[pc_new].Mass, sizeof(float), 1, fd);
+      {
+        //fread(&P[pc_new].Pos[0], sizeof(float), 3, fd);
+        fread(&ftmp, sizeof(float), 1, fd);
+        P[pc_new].Mass = ftmp;
+      }
       else
-       	P[pc_new].Mass= header1.mass[k];
+        P[pc_new].Mass= header1.mass[k];
       pc_new++;
     }
   }
   if(ntot_withmasses>0)
     fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+
 
   //
   // Need to add here gas and star properties

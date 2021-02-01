@@ -29,7 +29,8 @@
 #define  HDF5        60
 #define  EAGLE       61
 #define  ILLUSTRIS   62
-#define  GIZMO       63
+#define  TNG         63
+#define  GIZMO       64
 
 
 #endif    /*  FORMAT_H */

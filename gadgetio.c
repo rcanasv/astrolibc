@@ -30,7 +30,7 @@ void read_gadget_snapshot(char * snapshot)
   }
 
   fflush(stdout);
-
+z
   fread(&dummy, sizeof(dummy), 1, fd);
   fread(&header1, sizeof(header1), 1, fd);
   fread(&dummy, sizeof(dummy), 1, fd);
