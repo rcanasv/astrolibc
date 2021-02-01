@@ -10,37 +10,19 @@
 
 void hdf5_sim_init_groups (Simulation * sim, HDF5_SimGroup * group)
 {
-  switch (sim->format)
+
+  // Particle types names
+  if ((sim->format % 10) < 5)
   {
-    case EAGLE:
-      strcpy (group->Header,     "Header");
-      strcpy (group->GasPart,    "PartType0");
-      strcpy (group->DarkPart,   "PartType1");
-      strcpy (group->ExtraPart,  "PartType2");
-      strcpy (group->TracerPart, "PartType3");
-      strcpy (group->StarPart,   "PartType4");
-      strcpy (group->BHPart,     "PartType5");
-      break;
-
-    case ILLUSTRIS:
-      strcpy (group->Header,     "Header");
-      strcpy (group->GasPart,    "PartType0");
-      strcpy (group->DarkPart,   "PartType1");
-      strcpy (group->ExtraPart,  "PartType2");
-      strcpy (group->TracerPart, "PartType3");
-      strcpy (group->StarPart,   "PartType4");
-      strcpy (group->BHPart,     "PartType5");
-      break;
-
-    case GIZMO:
-      strcpy (group->Header,     "Header");
-      strcpy (group->GasPart,    "PartType0");
-      strcpy (group->DarkPart,   "PartType1");
-      strcpy (group->ExtraPart,  "PartType2");
-      strcpy (group->TracerPart, "PartType3");
-      strcpy (group->StarPart,   "PartType4");
-      strcpy (group->BHPart,     "PartType5");
-      break;
+    // Convention for EAGLE, Illustris,
+    // TNG, SIMBA, and MUFASA
+    strcpy (group->Header,     "Header");
+    strcpy (group->GasPart,    "PartType0");
+    strcpy (group->DarkPart,   "PartType1");
+    strcpy (group->ExtraPart,  "PartType2");
+    strcpy (group->TracerPart, "PartType3");
+    strcpy (group->StarPart,   "PartType4");
+    strcpy (group->BHPart,     "PartType5");
   }
 }
 
@@ -86,20 +68,17 @@ void hdf5_sim_init_header (Simulation * sim, HDF5_SimHeader * header)
 
 void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
 {
-  switch (sim->format)
+  strcpy (dataset->Position, "Coordinates");
+  strcpy (dataset->Velocity, "Velocity");
+  strcpy (dataset->ID,       "ParticleIDs");
+  strcpy (dataset->Mass,     "Mass");
+
+  if (sim->format == ILLUSTRIS ||
+      sim->format == TNG       ||
+      sim->format == GIZMO)
   {
-    case EAGLE:
-      strcpy (dataset->Position, "Coordinates");
-      strcpy (dataset->Velocity, "Velocity");
-      strcpy (dataset->ID,       "ParticleIDs");
-      strcpy (dataset->Mass,     "Mass");
-      break;
-
-    case ILLUSTRIS:
-      break;
-
-    case GIZMO:
-      break;
+    strcpy (dataset->Velocity, "Velocities");
+    strcpy (dataset->Mass,     "Masses");
   }
 }
 
@@ -137,8 +116,6 @@ void hdf5_sim_init (Simulation * snapshot)
   printf("Opening file  %s\n",fname);
 
 
-printf ("Opening file  %s\n", fname);
-
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
   hdf5_get_attribute (id_group, header.Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
   hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->h,                     sizeof(snapshot->cosmology.HubbleParam));
@@ -164,8 +141,6 @@ printf ("Opening file  %s\n", fname);
   //
   // Display header values
   //
-  
-    
   printf ("BoxSize          %g\n", snapshot->Lbox);
   printf ("HubbleParam      %g\n", snapshot->cosmology.HubbleParam);
   printf ("Om0              %g\n", snapshot->cosmology.OmegaM);
@@ -179,14 +154,11 @@ printf ("Opening file  %s\n", fname);
     printf ("NumPartTot       %u\n", snapshot->NpartTot[i]);
   for (i = 0; i < 6; i++)
     printf ("Mass             %g\n", snapshot->MassTable[i]);
- 
-  
 }
 
 
 void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** part)
 {
-
   int      i, j;
   char     fname  [NAME_LENGTH];
   char     buffer [NAME_LENGTH];
@@ -235,8 +207,10 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // Update local number of particles
   //
+
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
   hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile, sizeof(snapshot->NpartThisFile[0]));
+  hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,     sizeof(snapshot->MassTable[0]));
   status = H5Gclose  (id_group);
 
 
@@ -254,7 +228,8 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     exit(0);
   }
 
-printf ("npartthisfile  %d\n", snapshot->NpartThisFile[4]); 
+  printf ("npartthisfile  %d\n", snapshot->NpartThisFile[4]);
+
 
   id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
   hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));

@@ -663,6 +663,41 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
   return;
 }
 
+//
+// Returns ALL particles in a simulation box on a 2D array with N number of
+// files and M particles per file
+//
+void  stf_simulation_get_particle_properties (Catalog * stf, Simulation * sim, int * file_to_read, Particle ** Part)
+{
+  int    i, j, k;
+  FILE * f;
+  char   fname  [NAME_LENGTH];
+  char   buffer [NAME_LENGTH];
+  Particle  * part;
+
+  //
+  //  Load particles to structures
+  //
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.prefix);
+  if ((f = fopen(fname,"r")) != NULL)
+  {
+    fclose (f);
+    for (i = 0; i < sim->archive.nfiles; i++)
+      if (files_to_read[i])
+      {
+          Simulation_load_particles (sim, i, &Part[i]);
+          for (j = 0; j < 10; j++)
+            printf ("%d  %d  %lf  %lf  %lf\n", i, j, Part[i][j].Pos[0], Part[i][j].Vel[0], Part[i][j].Mass);
+      }
+  }
+  else
+  {
+    printf ("Couldn't open file %s\n", fname);
+    exit (0);
+  }
+  return;
+}
+
 
 
 int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** xtndd)
