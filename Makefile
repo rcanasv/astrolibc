@@ -89,8 +89,15 @@ convert: convert.c archive.c catalog.c stf.c halomaker.c
 test: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
 
-get_structure: get_structure.c archive.c catalog.c stf.c gadget.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c stf.c gadget.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
+SRC = $(wildcard src/*.c)
+
+#
+#  get_structure
+#
+get_structure: tools/get_structure.c $(SRC)
+		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
+#get_structure: get_structure.c archive.c catalog.c stf.c gadget.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+#		$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c stf.c gadget.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
 
 sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) sizemass_eagle.c archive.c catalog.c stf.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/sizemass_eagle $(FLAGS)

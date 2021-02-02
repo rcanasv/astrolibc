@@ -7,11 +7,11 @@
  */
 
 
-#include "base.h"
-#include "typedef.h"
-#include "archive.h"
-#include "catalog.h"
-#include "simulation.h"
+#include "../src/base.h"
+#include "../src/typedef.h"
+#include "../src/archive.h"
+#include "../src/catalog.h"
+#include "../src/simulation.h"
 
 
 typedef struct Options
