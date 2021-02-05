@@ -98,7 +98,7 @@ typedef struct Structure
   double     M100;
   double     M2R50;
   int        inR200;
- 
+
   double     Mstar200;
   double     Mnogal200;
   int        Nstar200;
@@ -192,6 +192,8 @@ typedef struct Simulation
   double     Lbox;
   double     Time;
   double     LookBackTime;
+
+  double     to_kpc;
 
   // For RAMSES files
   double     unit_l;

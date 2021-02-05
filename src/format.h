@@ -30,7 +30,7 @@
 #define  EAGLE       61
 #define  ILLUSTRIS   62
 #define  TNG         63
-#define  GIZMO       64
+#define  GIZMO_SIMBA 64
 
 
 #endif    /*  FORMAT_H */

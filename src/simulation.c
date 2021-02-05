@@ -65,6 +65,14 @@ void Simulation_init (Simulation * sim)
     sim->format = ILLUSTRIS;
   }
   else
+  if ((!strcmp(sim->archive.format, "gizmo-simba")) ||  \
+      (!strcmp(sim->archive.format, "Gizmo-Simba")) ||  \
+      (!strcmp(sim->archive.format, "GIZMO-SIMBA")))
+  {
+    sim->format = GIZMO_SIMBA;
+    hdf5_sim_init (sim);
+  }
+  else
   {
     printf ("Format %s not supported\n", sim->archive.format);
     printf ("Exiting...\n");
@@ -79,5 +87,6 @@ void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part)
   if (sim->format == RAMSES)      ramses_load_particles   (sim, filenum, part);
   if (sim->format == RAMSES_STAR) ramses_load_particles   (sim, filenum, part);
   if (sim->format == EAGLE)       hdf5_sim_load_particles (sim, filenum, part);
+  if (sim->format == GIZMO_SIMBA) hdf5_sim_load_particles (sim, filenum, part);
   //if (sim->format == GADGET) gadget_load_particles (sim, filenum, part);
 }

@@ -63,7 +63,7 @@ HDF5_INCL   = -I/cosma/local/hdf5/intel_2018/1.8.20/include
 HDF5_LIB    = -L/cosma/local/hdf5/intel_2018/1.8.20/lib /cosma/local/hdf5/intel_2018/1.8.20/lib/libhdf5_hl.a /cosma/local/hdf5/intel_2018/1.8.20/lib/libhdf5.a
 HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/cosma/local/hdf5/intel_2018/1.8.20/lib
 
-GSL_INCL    = -I/cosma/local/gsl/2.4/include 
+GSL_INCL    = -I/cosma/local/gsl/2.4/include
 GSL_LIB     = -L/cosma/local/gsl/2.4/lib
 GSL_FLAGS   = -lgsl -lgslcblas
 endif
@@ -72,6 +72,47 @@ endif
 INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
 FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
+
+
+SRC = $(wildcard src/*.c)
+
+#
+#		get_structure
+#				Extract structure(s) from simulations as a Gadget-2 binay file.
+#				Either to visualize only or to do postprocessing.
+#
+get_structure: tools/get_structure.c $(SRC)
+		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
+
+
+#
+#		ihsc
+#				Calculate IHSC mass fraction, and other relevant properties of 3DFOF
+#				objects.
+#
+ihsc: tools/ihsc.c $(SRC)
+		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
+
+
+#---------------------------------------------
+#---------------------------------------------
+#---------------------------------------------
+#---------------------------------------------
+sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) sizemass_eagle.c archive.c catalog.c stf.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/sizemass_eagle $(FLAGS)
+
+surface_density: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/surface_density $(FLAGS)
+
+density: density.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+		$(CC) $(INC) $(LIB) density.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/density $(FLAGS)
+
+
+isgal: isgal.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+	$(CC) $(INC) $(LIB) isgal.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/isgal $(FLAGS)
+
+calcSO: calcSO.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
+	$(CC) $(INC) $(LIB) calcSO.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/calcSO $(FLAGS)
 
 
 analyze_galaxy_catalog: analyze_galaxy_catalog.c
@@ -88,31 +129,3 @@ convert: convert.c archive.c catalog.c stf.c halomaker.c
 
 test: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
 		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/test $(FLAGS)
-
-SRC = $(wildcard src/*.c)
-
-#
-#  get_structure
-#
-get_structure: tools/get_structure.c $(SRC)
-		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
-#get_structure: get_structure.c archive.c catalog.c stf.c gadget.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-#		$(CC) $(INC) $(LIB) get_structure.c archive.c catalog.c stf.c gadget.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/get_structure $(FLAGS)
-
-sizemass_eagle: sizemass_eagle.c archive.c catalog.c stf.c simulation.c misc.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) sizemass_eagle.c archive.c catalog.c stf.c halomaker.c misc.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/sizemass_eagle $(FLAGS)
-
-surface_density: test.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) test.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/surface_density $(FLAGS)
-
-density: density.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) density.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/density $(FLAGS)
-
-ihsc: ihsc.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-		$(CC) $(INC) $(LIB) ihsc.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/ihsc $(FLAGS)
-
-isgal: isgal.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-	$(CC) $(INC) $(LIB) isgal.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/isgal $(FLAGS)
-
-calcSO: calcSO.c archive.c catalog.c misc.c stf.c simulation.c gadget.c halomaker.c particle.c ramses.c structure.c hdf5routines.c hdf5sim.c
-	$(CC) $(INC) $(LIB) calcSO.c archive.c catalog.c misc.c stf.c halomaker.c gadget.c ramses.c simulation.c particle.c structure.c hdf5routines.c hdf5sim.c -o bin/calcSO $(FLAGS)

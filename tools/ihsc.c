@@ -7,11 +7,11 @@
  */
 
 
-#include "base.h"
-#include "typedef.h"
-#include "archive.h"
-#include "catalog.h"
-#include "simulation.h"
+#include "../src/base.h"
+#include "../src/typedef.h"
+#include "../src/archive.h"
+#include "../src/catalog.h"
+#include "../src/simulation.h"
 
 
 typedef struct Options
@@ -35,11 +35,11 @@ typedef struct Options
 } Options;
 
 
-void  test_usage   (int opt,  char ** argv);
-int   test_options (int argc, char ** argv, Options * opt);
-void  test_params  (Options * opt);
+void  ihsc_usage   (int opt,  char ** argv);
+int   ihsc_options (int argc, char ** argv, Options * opt);
+void  ihsc_params  (Options * opt);
+void  ihsc_prog_tree (Catalog * ctlgs, int pid, int plevel, int maxlvls, char * mainbuff, char * brnchbuff, FILE * file, int branch);
 
-void ihsc_prog_tree (Catalog * ctlgs, int pid, int plevel, int maxlvls, char * mainbuff, char * brnchbuff, FILE * file, int branch);
 
 int main (int argc, char ** argv)
 {
@@ -59,8 +59,8 @@ int main (int argc, char ** argv)
   double        frac_min, frac_max;
   int           top;
 
-  test_options (argc, argv, &opt);
-  test_params  (&opt);
+  ihsc_options (argc, argv, &opt);
+  ihsc_params  (&opt);
 
   //
   //  Load catalogs and simulation details
@@ -78,17 +78,15 @@ int main (int argc, char ** argv)
 
   for (i = 0; i < opt.nsnap; i++)
   {
-    printf("%d\n",i);
-    Simulation_init                 (&opt.simulation[i]);
-    printf("%d\n",i);
+    if (opt.iExtract)
+      Simulation_init                 (&opt.simulation[i]);
+
     Catalog_init                    (&opt.catalog[i]);
-    printf("%d\n",i);
     Catalog_load_properties         (&opt.catalog[i]);
     //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
-    printf("%d\n",i);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
-    printf("%d\n",i);
     Catalog_fill_isolated           (&opt.catalog[i]);
+
     if (opt.iTrack)
       if (i < (opt.nsnap - 1))
         stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
@@ -100,13 +98,15 @@ int main (int argc, char ** argv)
   frac_max = pow(10.0, opt.frac_max);
   top      = opt.top;
 
-  printf ("frac min  %e\n", frac_min);
-  printf ("frac max  %e\n", frac_max);
-  printf ("mass min  %e\n", mass_min);
-  printf ("mass max  %e\n", mass_max);
+  if (opt.iVerbose)
+  {
+    printf ("frac min  %e\n", frac_min);
+    printf ("frac max  %e\n", frac_max);
+    printf ("mass min  %e\n", mass_min);
+    printf ("mass max  %e\n", mass_max);
+  }
 
 
-  // --------------------------------------------------- //
   //
   // Tag central galaxy and add stellar mass
   //
@@ -806,8 +806,9 @@ void ihsc_prog_tree (Catalog * ctlgs, int pid, int plevel, int maxlvls, char * m
     ihsc = &ctlgs[plevel].strctProps[pid];
   }
 
-printf ("branch  %d  ihsc_id  %d  type   %d  plvel  %d\n", branch, ihsc->ID, ihsc->Type, plevel);
-fflush(stdout);
+  printf ("branch  %d  ihsc_id  %d  type   %d  plvel  %d\n", branch, ihsc->ID, ihsc->Type, plevel);
+  fflush(stdout);
+
   if (plevel == 0)
   {
     sprintf (mainbuff,   "% 7d  % 7d  ", ihsc->ID, ihsc->ID);
@@ -877,7 +878,7 @@ fflush(stdout);
 //
 //  Parameters
 //
-void test_params (Options * opt)
+void ihsc_params (Options * opt)
 {
   int   i;
   int   dummy;
@@ -904,12 +905,13 @@ void test_params (Options * opt)
   Archive_path   (&opt->output, pathbuff);
   Archive_nfiles (&opt->output, nflsbuff);
 
+
   // Limits
   //   - Mass
-  fscanf (opt->param.file, "%lf  %lf", &opt->mass_min, &opt->mass_max);
   //   - Fraction
-  fscanf (opt->param.file, "%lf  %lf", &opt->frac_min, &opt->frac_max);
   //   - Number
+  fscanf (opt->param.file, "%lf  %lf", &opt->mass_min, &opt->mass_max);
+  fscanf (opt->param.file, "%lf  %lf", &opt->frac_min, &opt->frac_max);
   fscanf (opt->param.file, "%d", &opt->top);
 
 
@@ -917,8 +919,11 @@ void test_params (Options * opt)
   fscanf (opt->param.file, "%d", &opt->nsnap);
   opt->ntrees = opt->nsnap - 1;
 
+
+  // Allocate memory
   opt->catalog    = (Catalog    *) malloc (opt->nsnap * sizeof(Catalog));
-  opt->simulation = (Simulation *) malloc (opt->nsnap * sizeof(Simulation));
+  if (opt->iExtract)
+    opt->simulation = (Simulation *) malloc (opt->nsnap * sizeof(Simulation));
   if (opt->iTrack)
     opt->tree     = (Archive    *) malloc (opt->nsnap * sizeof(Archive));
 
@@ -936,20 +941,22 @@ void test_params (Options * opt)
 
 
   // Simulation
-  for (i = 0; i < opt->nsnap; i++)
+  if (opt->iExtract)
   {
-    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
-    Archive_name   (&opt->simulation[i].archive, namebuff);
-    Archive_prefix (&opt->simulation[i].archive, prefixbuff);
-    Archive_format (&opt->simulation[i].archive, frmtbuff);
-    Archive_path   (&opt->simulation[i].archive, pathbuff);
-    Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
+    for (i = 0; i < opt->nsnap; i++)
+    {
+      fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
+      Archive_name   (&opt->simulation[i].archive, namebuff);
+      Archive_prefix (&opt->simulation[i].archive, prefixbuff);
+      Archive_format (&opt->simulation[i].archive, frmtbuff);
+      Archive_path   (&opt->simulation[i].archive, pathbuff);
+      Archive_nfiles (&opt->simulation[i].archive, nflsbuff);
+    }
   }
 
   // Trees
   if (opt->iTrack)
   {
-    // Trees
     for (i = 0; i < opt->ntrees; i++)
     {
       fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
@@ -961,7 +968,6 @@ void test_params (Options * opt)
     }
   }
 
-
   // Close
   fclose (opt->param.file);
 }
@@ -969,7 +975,7 @@ void test_params (Options * opt)
 //
 //  Options
 //
-int test_options (int argc, char ** argv, Options * opt)
+int ihsc_options (int argc, char ** argv, Options * opt)
 {
   int   myopt;
   int   index;
@@ -1011,23 +1017,23 @@ int test_options (int argc, char ** argv, Options * opt)
       	break;
 
       case 'h':
-      	test_usage (0, argv);
+      	ihsc_usage (0, argv);
         break;
 
       default:
-      	test_usage (1, argv);
+      	ihsc_usage (1, argv);
     }
   }
 
   if (flag == 0)
-    test_usage (1, argv);
+    ihsc_usage (1, argv);
 }
 
 
 //
 //  Usage
 //
-void test_usage (int opt, char ** argv)
+void ihsc_usage (int opt, char ** argv)
 {
   if (opt == 0)
   {
@@ -1036,7 +1042,7 @@ void test_usage (int opt, char ** argv)
     printf ("                                                                         \n");
     printf ("  Author:            Rodrigo Can\\~as                                    \n");
     printf ("                                                                         \n");
-    printf ("  Last edition:      25 - 06 - 2018                                      \n");
+    printf ("  Last edition:      03 - 02 - 2021                                      \n");
     printf ("                                                                         \n");
     printf ("                                                                         \n");
     printf ("  Usage:             %s [Option] [Parameter [argument]] ...\n",      argv[0]);

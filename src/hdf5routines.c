@@ -39,7 +39,6 @@ void hdf5_get_attribute (hid_t obj_id, char * attr_name, void * buffer, size_t v
  H5T_class_t   type_class;  /* H5T_INTEGER, H5T_FLOAT, H5T_STRING */
  H5T_order_t   type_order;  /* H5T_ORDER_LE, H5T_ORDER_BE */
 
-
  if (H5Aexists (obj_id, attr_name) > 0)
  {
    attr_id     = H5Aopen      (obj_id, attr_name, H5P_DEFAULT);

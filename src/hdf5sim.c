@@ -55,12 +55,25 @@ void hdf5_sim_init_header (Simulation * sim, HDF5_SimHeader * header)
       strcpy (header->z,                 "Redshift");
       strcpy (header->RunLabel,          "RunLabel");
       strcpy (header->Time,              "Time");
+      sim->to_kpc = 1000.0;
       break;
 
     case ILLUSTRIS:
       break;
 
-    case GIZMO:
+    case GIZMO_SIMBA:
+      strcpy (header->Lbox,              "BoxSize");
+      strcpy (header->MassTable,         "MassTable");
+      strcpy (header->NpartThisFile,     "NumPart_ThisFile");
+      strcpy (header->NpartTot,          "NumPart_Total");
+      strcpy (header->NpartTotHW,        "NumPart_Total_HighWord");
+      strcpy (header->OmegaM,            "Omega0");
+      strcpy (header->OmegaL,            "OmegaLambda");
+      strcpy (header->z,                 "Redshift");
+      strcpy (header->Time,              "Time");
+      strcpy (header->HubbleParam,       "HubbleParam");
+      strcpy (header->NfilesPerSnapshot, "NumFilesPerSnapshot");
+      sim->to_kpc = 1.0;
       break;
   }
 }
@@ -73,9 +86,9 @@ void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
   strcpy (dataset->ID,       "ParticleIDs");
   strcpy (dataset->Mass,     "Mass");
 
-  if (sim->format == ILLUSTRIS ||
-      sim->format == TNG       ||
-      sim->format == GIZMO)
+  if (sim->format == ILLUSTRIS    ||
+      sim->format == TNG          ||
+      sim->format == GIZMO_SIMBA)
   {
     strcpy (dataset->Velocity, "Velocities");
     strcpy (dataset->Mass,     "Masses");
@@ -107,11 +120,15 @@ void hdf5_sim_init (Simulation * snapshot)
   //
   // Read Header
   //
-  sprintf (fname, "%s/%s.0.hdf5", snapshot->archive.path, snapshot->archive.prefix);
+  sprintf (fname, "%s/%s.hdf5", snapshot->archive.path, snapshot->archive.prefix);
   if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
-    printf ("Couldn't open file %s\n", fname);
-    exit (0);
+    sprintf (fname, "%s/%s.0.hdf5", snapshot->archive.path, snapshot->archive.prefix);
+    if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+    {
+      printf ("Couldn't open file %s\n", fname);
+      exit (0);
+    }
   }
   printf("Opening file  %s\n",fname);
 
@@ -120,16 +137,20 @@ void hdf5_sim_init (Simulation * snapshot)
   hdf5_get_attribute (id_group, header.Lbox,          &snapshot->Lbox,                  sizeof(snapshot->Lbox));
   hdf5_get_attribute (id_group, header.HubbleParam,   &snapshot->h,                     sizeof(snapshot->cosmology.HubbleParam));
   hdf5_get_attribute (id_group, header.OmegaM,        &snapshot->cosmology.OmegaM,      sizeof(snapshot->cosmology.OmegaM));
-  hdf5_get_attribute (id_group, header.OmegaB,        &snapshot->cosmology.OmegaB,      sizeof(snapshot->cosmology.OmegaB));
+  if (snapshot->format == EAGLE)
+    hdf5_get_attribute (id_group, header.OmegaB,        &snapshot->cosmology.OmegaB,      sizeof(snapshot->cosmology.OmegaB));
   hdf5_get_attribute (id_group, header.OmegaL,        &snapshot->cosmology.OmegaL,      sizeof(snapshot->cosmology.OmegaL));
   hdf5_get_attribute (id_group, header.Time,          &snapshot->Time,                  sizeof(snapshot->Time));
   hdf5_get_attribute (id_group, header.z,             &snapshot->z,                     sizeof(snapshot->z));
   hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile,         sizeof(snapshot->NpartThisFile[0]));
   hdf5_get_attribute (id_group, header.NpartTot,      &snapshot->NpartTot,              sizeof(snapshot->NpartTot[0]));
   hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,             sizeof(snapshot->MassTable[0]));
+
+
   snapshot->cosmology.HubbleParam = snapshot->h * 100.0;
-  snapshot->Lbox = snapshot->Lbox * 1000.0 / (1.0 + snapshot->z) / snapshot->h;
+  snapshot->Lbox = snapshot->Lbox * snapshot->to_kpc / (1.0 + snapshot->z) / snapshot->h;
   snapshot->a = snapshot->Time;
+
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
@@ -197,11 +218,15 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
   // Read Header
   //
-  sprintf (fname, "%s/%s.%d.hdf5", snapshot->archive.path, snapshot->archive.prefix, filenum);
+  sprintf (fname, "%s/%s.hdf5", snapshot->archive.path, snapshot->archive.prefix);
   if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
-    printf ("Couldn't open file %s\n", fname);
-    exit (0);
+    sprintf (fname, "%s/%s.%d.hdf5", snapshot->archive.path, snapshot->archive.prefix, filenum);
+    if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+    {
+      printf ("Couldn't open file %s\n", fname);
+      exit (0);
+    }
   }
 
   //
@@ -228,8 +253,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     exit(0);
   }
 
-  printf ("npartthisfile  %d\n", snapshot->NpartThisFile[4]);
-
 
   id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
   hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));
@@ -239,19 +262,15 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   status = H5Gclose (id_group);
   status = H5Fclose (id_file);
 
-   printf ("%10.5lf   %10.5lf  %10.5lf\n", posbuff[0], posbuff[1], posbuff[2]);
-
 
   for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
   {
-    posbuff[j]   *= 1000.0;
-    posbuff[j+1] *= 1000.0;
-    posbuff[j+2] *= 1000.0;
+    posbuff[j]   *= snapshot->to_kpc;
+    posbuff[j+1] *= snapshot->to_kpc;
+    posbuff[j+2] *= snapshot->to_kpc;
   }
 
-   printf ("%10.5lf   %10.5lf  %10.5lf\n", posbuff[0], posbuff[1], posbuff[2]);
   P = *(part);
-
   for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
   {
     P[i].Pos[0] = posbuff[j];
@@ -264,8 +283,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     P[i].Id     = idbuff   [i];
   }
 
-  printf("%10.5lf  %10.5lf  %10.5lf\n", P[0].Pos[0], P[0].Pos[1], P[0].Pos[2]);
-  printf("%10.5lf  %10.5lf  %10.5lf\n", P[0].Vel[0], P[0].Vel[1], P[0].Vel[2]);
 
   free (posbuff);
   free (velbuff);
@@ -284,6 +301,6 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
     P[i].Pos[0] *= a / h;
     P[i].Pos[1] *= a / h;
     P[i].Pos[2] *= a / h;
-    P[i].Mass   *= 1.0        / h;
+    P[i].Mass   *= 1.0 / h;
   }
 }

@@ -83,30 +83,28 @@ int main (int argc, char ** argv)
     strct_to_get[opt.id[0]] = 1;
 
 
+  // Tag all structures in 3DFOF
   int tmpid;
-  if (opt.i3dfof == 1)
+  for (i = 1; i <= opt.catalog.nstruct; i++)
   {
-    for (i = 1; i <= opt.catalog.nstruct; i++)
+    strct = &opt.catalog.strctProps[i];
+    tmpid = strct->ID;
+    if (strct->Type > 7)
     {
-      strct = &opt.catalog.strctProps[i];
-      tmpid = strct->ID;
-      if (strct->Type > 7)
+      strct2 = &opt.catalog.strctProps[strct->DirectHostID];
+      while (strct2->Type != 7 && strct2->ID != 0 && strct2->ID != tmpid)
       {
-        strct2 = &opt.catalog.strctProps[strct->DirectHostID];
-        while (strct2->Type != 7 && strct2->ID != 0 && strct2->ID != tmpid)
-        {
-          strct2 = &opt.catalog.strctProps[strct2->DirectHostID];
-          tmpid = strct2->ID;
-        }
-        if (strct2->ID == opt.id[0])
-        {
-          strct_to_get[i] = 1;
+        strct2 = &opt.catalog.strctProps[strct2->DirectHostID];
+        tmpid = strct2->ID;
+      }
+      if (strct2->ID == opt.id[0])
+      {
+        strct_to_get[i] = 1;
+        if (opt.verbose)
           printf ("strct_to_get   %d   %d\n", i, opt.catalog.strctProps[i].HostID);
-        }
       }
     }
   }
-
 
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
@@ -127,11 +125,15 @@ int main (int argc, char ** argv)
       if (strct_to_get[i] == 1)
         numpart += opt.catalog.strctProps[i].NumPart;
     }
-    printf ("NUMPART  %d\n", numpart);
 
     if ((P = (Particle *) malloc (numpart * sizeof(Particle))) == NULL)
+    {
       printf("Unable to allocate memory\n");
-    printf("Memory allocated\n");
+      printf("Exiting...\n");
+      exit(0);
+    }
+    if (opt.verbose)
+      printf("Memory allocated\n");
 
 
     k = 0;
@@ -143,13 +145,9 @@ int main (int argc, char ** argv)
         {
           Particle_copy (&opt.catalog.strctProps[i].Part[j], &P[k]);
 
-          //P[k].Pos[0] -= strctt->Pos[0]*1000.0;
-          //P[k].Pos[1] -= strctt->Pos[1]*1000.0;
-          //P[k].Pos[2] -= strctt->Pos[2]*1000.0;
-
-          P[k].Pos[0] -= strctt->Pos[0];
-          P[k].Pos[1] -= strctt->Pos[1];
-          P[k].Pos[2] -= strctt->Pos[2];
+          P[k].Pos[0] -= strctt->Pos[0] * opt.simulation.to_kpc;
+          P[k].Pos[1] -= strctt->Pos[1] * opt.simulation.to_kpc;
+          P[k].Pos[2] -= strctt->Pos[2] * opt.simulation.to_kpc;
           P[k].Vel[0] -= strctt->Vel[0];
           P[k].Vel[1] -= strctt->Vel[1];
           P[k].Vel[2] -= strctt->Vel[2];
@@ -163,7 +161,9 @@ int main (int argc, char ** argv)
   }
 
 
-
+  // Gets all galaxies and satellites in 3DFOF
+  // except the IHSC/ICL
+  //
   if (opt.iallinfof_single == 1)
   {
     numpart = 0;
@@ -203,12 +203,15 @@ int main (int argc, char ** argv)
         strct = &opt.catalog.strctProps[i];
         for (j = 0; j < strct->NumPart; j++)
         {
-          strct->Part[j].Pos[0] -= strctt->Pos[0]*1000.0;
-          strct->Part[j].Pos[1] -= strctt->Pos[1]*1000.0;
-          strct->Part[j].Pos[2] -= strctt->Pos[2]*1000.0;
-          strct->Part[j].Vel[0] -= strctt->Vel[0];
-          strct->Part[j].Vel[1] -= strctt->Vel[1];
-          strct->Part[j].Vel[2] -= strctt->Vel[2];
+          //strct->Part[j].Pos[0] -= strctt->Pos[0]*1000.0;
+          //strct->Part[j].Pos[1] -= strctt->Pos[1]*1000.0;
+          //strct->Part[j].Pos[2] -= strctt->Pos[2]*1000.0;
+          strct->Part[j].Pos[0] -= strct->Pos[0];
+          strct->Part[j].Pos[1] -= strct->Pos[1];
+          strct->Part[j].Pos[2] -= strct->Pos[2];
+          strct->Part[j].Vel[0] -= strct->Vel[0];
+          strct->Part[j].Vel[1] -= strct->Vel[1];
+          strct->Part[j].Vel[2] -= strct->Vel[2];
 
           strct->Part[j].Type = 1;
         }
