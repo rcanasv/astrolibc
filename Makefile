@@ -94,6 +94,13 @@ ihsc: tools/ihsc.c $(SRC)
 		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
 
 
+#
+#		check_gagetio
+#
+check_gadgetio: tools/check_gadgetio.c $(SRC)
+		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
+
+
 #---------------------------------------------
 #---------------------------------------------
 #---------------------------------------------
