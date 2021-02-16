@@ -67,6 +67,32 @@ void gadget_init (Simulation * gdt)
   gdt->a                     = header1.time;
   gdt->z                     = header1.redshift;
 
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  fread(&hname, sizeof(dummy), 1, fd);     printf ("%s \n", hname); sprintf(hname,"    ");
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  for (k=0; k < 29; k++)
+  {
+    fread(&hname, sizeof(dummy), 1, fd);     printf ("%s \n", hname);sprintf(hname,"    ");
+    fread(&hname, sizeof(double), 1, fd);    printf ("%s \n", hname);sprintf(hname,"    ");
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+    fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  }
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  fread(&hname, sizeof(dummy), 1, fd);     printf ("%s \n", hname);sprintf(hname,"    ");
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+  fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
+
+
   fclose (fd);
   return;
 }
