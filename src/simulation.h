@@ -18,8 +18,9 @@
 #include "hdf5sim.h"
 
 
-void Simulation_init           (Simulation * sim);
-void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part);
+void Simulation_init               (Simulation * sim);
+void Simulation_load_particles     (Simulation * sim, int filenum, Particle ** part);
+void Simuation_tag_neighbour_files (Simulation * sim, int * file_list);
 
 
 #endif    /*  SIMULATION_H  */

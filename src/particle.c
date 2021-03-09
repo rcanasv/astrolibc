@@ -48,3 +48,14 @@ void Particle_get_radius (Particle * P)
                     P->Pos[1]*P->Pos[1] + \
                     P->Pos[2]*P->Pos[2]);
 }
+
+Particle_correct_periodicity (Particle * P, double lbox_2)
+{
+  while (P->Pos[0] >  lbox_2) P->Pos[0] -= 2*lbox_2;
+  while (P->Pos[1] >  lbox_2) P->Pos[1] -= 2*lbox_2;
+  while (P->Pos[2] >  lbox_2) P->Pos[2] -= 2*lbox_2;
+
+  while (P->Pos[0] < -lbox_2) P->Pos[0] += 2*lbox_2;
+  while (P->Pos[1] < -lbox_2) P->Pos[1] += 2*lbox_2;
+  while (P->Pos[2] < -lbox_2) P->Pos[2] += 2*lbox_2;
+}

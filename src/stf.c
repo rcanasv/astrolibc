@@ -932,3 +932,39 @@ void stf_catalog_fill_isolated (Catalog * stf)
         strct1->Central = 1;
   }
 }
+
+
+stf_catalog_get_files_of_groups (Catalog * stf)
+{
+  int    i;
+  int    tmpid;
+  int    nfiles;
+  int  * files_of_strct;
+
+  FILE * f;
+  char   fname  [NAME_LENGTH];
+  char   buffer [NAME_LENGTH];
+
+  Structure * strct1;
+
+  // Open filesofgroup
+  sprintf (fname, "%s/%s.filesofgroup", stf->archive.path, stf->archive.name);
+  f = fopen (fname, "r");
+  for (i = 1; i <= stf->nstruct; i++)
+  {
+    strct1 = &stf->strctProps[i];
+
+    fgets  (buffer, NAME_LENGTH, f);
+    sscanf (buffer, "%d  %d", &tmpid, &nfiles);
+    fgets  (buffer, NAME_LENGTH, f);
+
+    get_n_num_from_string (buffer, nfiles, &files_of_strct);
+
+    strct1->NumFiles = nfiles;
+    strct1->FilesOfGroup = (int *) malloc (nfiles*sizeof(int));
+    for (j = 0; j < nfiles; j++)
+       strct1->FilesOfGroup[j] = files_of_strct[j];
+    free (files_of_strct);
+  }
+  fclose (f);
+}

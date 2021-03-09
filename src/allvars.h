@@ -38,4 +38,13 @@ int outType;
 int NUMFILES;
 
 
+// Misc Macros
+#define   ALL     0
+
+// Spherical Overdensity Macros
+#define   R200C     1
+#define   R200B     2
+#define   R500C     3
+#define   RBN98     4
+
 #endif    /*  ALLVARS_H  */

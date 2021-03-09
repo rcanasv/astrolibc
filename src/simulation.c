@@ -90,3 +90,17 @@ void Simulation_load_particles (Simulation * sim, int filenum, Particle ** part)
   if (sim->format == GIZMO_SIMBA) hdf5_sim_load_particles (sim, filenum, part);
   //if (sim->format == GADGET) gadget_load_particles (sim, filenum, part);
 }
+
+
+void Simuation_tag_neighbour_files (Simulation * sim, int * file_list)
+{
+  // From the list of files, tag those containing neighbouring regions
+
+}
+
+int Simulation_get_npart_ThisFile (Simulation * sim, int filenum)
+{
+  if (sim->format == GADGET)       return gadget_get_npart_ThisFile (sim, filenum);
+  if (sim->format == GADGET_HEAD)  return gadget_get_npart_ThisFile (sim, filenum);
+
+}

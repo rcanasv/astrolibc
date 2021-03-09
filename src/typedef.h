@@ -92,8 +92,22 @@ typedef struct Structure
   double     sigmaVelEval[3];
   double     j[4];
   double     sigma;
-  double     R200;
-  double     M200;
+
+  double     R200c;  // 200x critical density
+  double     M200c;
+  int        n200c;
+  double     R500c;  // 500x critical density
+  double     M500c;
+  int        n500c;
+  double     R200b;  // 200x background density
+  double     M200b;
+  int        n200b;
+  double     Rbn98;  // Bryan Norman 98 density
+  double     Mbn98;
+  int        nbn98;
+  int        nSO;
+  Particle * PSO;
+
   double     M30;
   double     M100;
   double     M2R50;

@@ -96,6 +96,46 @@ void gadget_init (Simulation * gdt)
   return;
 }
 
+int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
+{
+  FILE   * fd;
+  int      k;
+  int      NumPart;
+  int      dummy;
+  gheader  header1;
+
+  // Open File
+  sprintf (fname, "%s/%s", gdt->archive.path, gdt->archive.prefix);
+  if ((fd = fopen (fname, "r")) == NULL)
+  {
+    sprintf (fname, "%s/%s.%d", gdt->archive.path, gdt->archive.prefix, filenum);
+    if ((fd = fopen (fname, "r")) == NULL)
+    {
+      printf ("Couldn't open file %s ... Exiting\n", fname);
+      exit (0);
+    }
+  }
+
+  // Read Header
+  if (gdt->format == GADGET_HEAD)
+  {
+    fread(&dummy, sizeof(dummy), 1, fd);
+    fread(&hname[0], sizeof(hname), 1, fd);
+    fread(&dummy, sizeof(dummy), 1, fd);
+    fread(&dummy, sizeof(dummy), 1, fd);
+  }
+  fread(&dummy,   sizeof(dummy),   1, fd);
+  fread(&header1, sizeof(header1), 1, fd);
+  fread(&dummy,   sizeof(dummy),   1, fd);
+  
+  fclose (fd);
+
+  // Get total number of particles in THIS file
+  for(k = 0, NumPart = 0; k < 6; k++)
+    NumPart += header1.npart[k];
+
+  return NumPart;
+}
 
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
 {

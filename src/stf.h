@@ -41,6 +41,8 @@ int   stf_load_extended_output               (Catalog * stf, int filenum, stfExt
 int   stf_get_files_to_read                  (Catalog * stf, int * strcts_to_get, int * files_to_read);
 
 void  stf_catalog_fill_isolated              (Catalog * stf);
+void  stf_catalog_get_files_of_groups        (Catalog * stf);
+void  stf_catalog_get_files_of_groups_task   (Catalog * stf, int ntask);
 
 //int load_stf_extended_output (char * prefix, int filenum);
 //void free_extended_arrays (void);

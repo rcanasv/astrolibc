@@ -188,6 +188,11 @@ void Catalog_fill_isolated (Catalog * ctlg)
   if (ctlg->format == STF_HDF5)  stf_catalog_fill_isolated (ctlg);
 }
 
+void Catalog_get_files_of_groups (Catalog * ctlg)
+{
+  if (ctlg->format == STF)       stf_catalog_get_files_of_groups (ctlg);
+  if (ctlg->format == STF_HDF5)  stf_catalog_get_files_of_groups (ctlg);
+}
 
 
 /*

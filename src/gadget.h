@@ -39,5 +39,6 @@ void gadget_init (Simulation * gdt);
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part);
 void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archive * output);
 
+int  gadget_get_npart_ThisFile (Simulation * gdt, int filenum);
 
 #endif    /*  GADGET_H  */
