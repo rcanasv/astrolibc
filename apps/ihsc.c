@@ -12,6 +12,7 @@
 #include "../src/archive.h"
 #include "../src/catalog.h"
 #include "../src/simulation.h"
+#include "../tools/SO.h"
 
 
 typedef struct Options
@@ -20,6 +21,7 @@ typedef struct Options
   int            iFraction;
   int            iTrack;
   int            iExtract;
+  int            iSO;
   int            nsnap;
   int            ntrees;
   Archive        param;
@@ -72,23 +74,17 @@ int main (int argc, char ** argv)
   // This means  opt.tree[n] has the progenitors of
   // opt.catalos[n] in opt.catalog[n+1] and so on
   //
-
-//  opt.nsnap = 3;
-//  opt.ntrees = opt.nsnap-1;
-
   for (i = 0; i < opt.nsnap; i++)
   {
-    if (opt.iExtract)
+    if (opt.iExtract || opt.iSO)
       Simulation_init                 (&opt.simulation[i]);
 
     Catalog_init                    (&opt.catalog[i]);
     Catalog_load_properties         (&opt.catalog[i]);
-    //Catalog_get_particle_properties (&opt.catalog[i], &opt.simulation[i]);
     Catalog_fill_SubIDS             (&opt.catalog[i]);
     Catalog_fill_isolated           (&opt.catalog[i]);
 
-    if (opt.iTrack)
-      if (i < (opt.nsnap - 1))
+    if (opt.iTrack && i < (opt.nsnap - 1))
         stf_read_treefrog (&opt.tree[i], &opt.catalog[i]);
   }
 
@@ -107,9 +103,7 @@ int main (int argc, char ** argv)
   }
 
 
-  //
   // Tag central galaxy and add stellar mass
-  //
   for (i = 0; i < opt.nsnap; i++)
   {
     for (j = 1; j <= opt.catalog[i].nstruct; j++)
@@ -316,7 +310,8 @@ int main (int argc, char ** argv)
       fclose (f);
 
       // --------------------------------------------------- //
-
+      //                     Satellites                      //
+      // --------------------------------------------------- //
       sprintf (buffer, "%s.sats", opt.catalog[i].archive.prefix);
       f = fopen (buffer, "w");
       for (j = 1; j <= 1; j++)
@@ -345,34 +340,149 @@ int main (int argc, char ** argv)
   }
   // --------------------------------------------------- //
 
+  // --------------------------------------------------- //
+  //                       SO                            //
+  // --------------------------------------------------- //
+  printf ("BEFORE SO\n");
+  if (opt.iSO)
+  {
+    Particle * Pbuff;
+    int  msum_ap;
+    int  msum_str;
+    int  msum_dif;
+
+    double  ms200c_str, ms200b_str, ms500c_str, msbn98_str;
+    double  ms200c_dif, ms200b_dif, ms500c_dif, msbn98_dif;
+
+    for (i = 0; i < opt.nsnap; i++)
+    {
+      // Get SO information
+      int * SO_tasks = (int *) malloc (opt.catalog[i].archive.nfiles * sizeof(int));
+      for (j = 0; j < opt.catalog[i].archive.nfiles; j++)
+        SO_tasks[j] = 1;
+      get_structure_SO (&opt.catalog[i], &opt.simulation[i], SO_tasks);
+
+      // Open file to write
+      sprintf (buffer, "%s.ihsc.so", opt.catalog[i].archive.prefix);
+      f = fopen (buffer, "w");
+
+      // Loop over structures
+      for (j = 1; j <= opt.catalog[i].nstruct; j++)
+      {
+        strct1 = &opt.catalog[i].strctProps[j];              // IHSC
+        strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
+        Pbuff = strct1->PSO;
+
+        for (k = 0; k < strct1->nSO; k++)
+        {
+          msum_ap  = 0;  // for apperture acum
+          msum_str = 0;  // for structure acum
+          msum_dif = 0;  // for diffuse acum
+          if (Pbuff[k].Type == 4)
+          {
+            strct3 = &opt.catalog[i].strctProps[Pbuff[k].StructID];
+
+            // Spherical appertues e.g. Pillepich
+            if (Pbuff[k].StructID == strct1->ID || Pbuff[k].StructID == strct2->ID)
+            {
+              msum_ap += Pbuff[k].Mass;
+              if (Pbuff[k].Radius < 30.0)    strct1->M30  = msum_ap;
+              if (Pbuff[k].Radius < 100.0)   strct1->M100 = msum_ap;
+            }
+
+            // For IHSC comp
+            if (Pbuff[k].StructID > 0 && strct3->Type > 7)
+            {
+              msum_str += Pbuff[k].Mass;
+              if (Pbuff[k].Radius < strct1->R200c)  ms200c_str = msum_str;
+              if (Pbuff[k].Radius < strct1->R200b)  ms200b_str = msum_str;
+              if (Pbuff[k].Radius < strct1->R500c)  ms500c_str = msum_str;
+              if (Pbuff[k].Radius < strct1->Rbn98)  msbn98_str = msum_str;
+            }
+            else
+            {
+              msum_dif += Pbuff[k].Mass;
+              if (Pbuff[k].Radius < strct1->R200c)  ms200c_dif = msum_dif;
+              if (Pbuff[k].Radius < strct1->R200b)  ms200b_dif = msum_dif;
+              if (Pbuff[k].Radius < strct1->R500c)  ms500c_dif = msum_dif;
+              if (Pbuff[k].Radius < strct1->Rbn98)  msbn98_dif = msum_dif;
+            }
+          }
+        }
+      }
+
+      // Write properties
+      for (k = 1; k <= opt.catalog[i].nstruct; k++)
+      {
+        strct1 = &opt.catalog[i].strctProps[k];              // IHSC
+        if (strct1->Type == 7 && strct1->NumSubs > 0 && strct1->nSO > 0)
+        {
+          strct2 = &opt.catalog[i].strctProps[strct1->dummyi]; // Central
+          strct3 = &opt.catalog[i].strctProps[strct1->SubIDs[strct1->NumSubs-2]]; // Scnd
+
+          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
+          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
+          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
+          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
+          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
+          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
+          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
+          fprintf (f, "%5d ", strct2->ID);          // ID Central
+          fprintf (f, "%5d ", strct3->ID);          // ID Second most
+          fprintf (f, "%e  ", strct1->M30);         // 30 kpc stellar mass no sats
+          fprintf (f, "%e  ", strct1->M100);        // 100 kpc stellar mass no sats
+          fprintf (f, "%e  ", strct1->R500c);       // R500C
+          fprintf (f, "%e  ", strct1->M500c);
+          fprintf (f, "%e  ", ms500c_str);
+          fprintf (f, "%e  ", ms500c_dif);
+          fprintf (f, "%e  ", strct1->R200c);       // R200C
+          fprintf (f, "%e  ", strct1->M200c);
+          fprintf (f, "%e  ", ms200c_str);
+          fprintf (f, "%e  ", ms200c_dif);
+          fprintf (f, "%e  ", strct1->R200b);       // R200B
+          fprintf (f, "%e  ", strct1->M200b);
+          fprintf (f, "%e  ", ms200b_str);
+          fprintf (f, "%e  ", ms200b_dif);
+          fprintf (f, "%e  ", strct1->Rbn98);       // RBN98
+          fprintf (f, "%e  ", strct1->Mbn98);
+          fprintf (f, "%e  ", msbn98_str);
+          fprintf (f, "%e  ", msbn98_dif);
+          fprintf (f, "\n");
+        }
+      }
+      fclose (f);
+      printf("HERE IN SO 7\n");
+    }
+  }
+
+
 
   // --------------------------------------------------- //
   //
   // Create `evolutionary tracks'
   //
-  FILE * f1;
-  FILE * f2;
-  FILE * f3;
-  FILE * f4;
-  FILE * f5;
-
-  char   buffer1  [NAME_LENGTH];
-  char   buffer2  [NAME_LENGTH];
-  char   buffer3  [NAME_LENGTH];
-  char   buffer4  [NAME_LENGTH];
-  char   buffer5  [NAME_LENGTH];
-
-  Structure * ihsc;
-  Structure * ctrl;
-  Structure * ihscp;
-  Structure * ctrlp;
-  Structure * ihscpctrl;
-
-  int ok = 0;
-
-
   if (opt.iTrack)
   {
+    FILE * f1;
+    FILE * f2;
+    FILE * f3;
+    FILE * f4;
+    FILE * f5;
+
+    char   buffer1  [NAME_LENGTH];
+    char   buffer2  [NAME_LENGTH];
+    char   buffer3  [NAME_LENGTH];
+    char   buffer4  [NAME_LENGTH];
+    char   buffer5  [NAME_LENGTH];
+
+    Structure * ihsc;
+    Structure * ctrl;
+    Structure * ihscp;
+    Structure * ctrlp;
+    Structure * ihscpctrl;
+
+    int ok = 0;
+
     for (i = opt.catalog[0].nstruct, k = 0; ((k < top)&&(i >=1)); i--)
     {
       ctrl = &opt.catalog[0].strctProps[sorted[i].ID];
@@ -391,8 +501,8 @@ int main (int argc, char ** argv)
         for (j = 1; j < opt.nsnap; j++)
         {
 
-printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
-fflush (stdout);
+          printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
+          fflush (stdout);
           if (ctrl->NumMatch)
             ctrlp     = &opt.catalog[j].strctProps[ctrl->MatchIDs[0]];
           else
@@ -490,9 +600,7 @@ fflush (stdout);
     fclose (f4);
     fclose (f5);
   }
-  printf ("%d\n", k);
   // --------------------------------------------------- //
-
 
   /*
   // --------------------------------------------------- //
@@ -533,6 +641,12 @@ fflush (stdout);
   //
   if (opt.iExtract)
   {
+    Structure * ihsc;
+    Structure * ctrl;
+    Structure * ihscp;
+    Structure * ctrlp;
+    Structure * ihscpctrl;
+
     strct_to_get = (int **) malloc (opt.nsnap * (sizeof(int *)));
     for (i = 0; i < opt.nsnap; i++)
     {
@@ -919,7 +1033,7 @@ void ihsc_params (Options * opt)
 
   // Allocate memory
   opt->catalog    = (Catalog    *) malloc (opt->nsnap * sizeof(Catalog));
-  if (opt->iExtract)
+  if (opt->iExtract || opt->iSO)
     opt->simulation = (Simulation *) malloc (opt->nsnap * sizeof(Simulation));
   if (opt->iTrack)
     opt->tree     = (Archive    *) malloc (opt->nsnap * sizeof(Archive));
@@ -938,7 +1052,7 @@ void ihsc_params (Options * opt)
 
 
   // Simulation
-  if (opt->iExtract)
+  if (opt->iExtract || opt->iSO)
   {
     for (i = 0; i < opt->nsnap; i++)
     {
@@ -989,10 +1103,11 @@ int ihsc_options (int argc, char ** argv, Options * opt)
     {"fraction",  0, NULL, 'f'},
     {"track",     0, NULL, 't'},
     {"extract",   0, NULL, 'x'},
+    {"so",        0, NULL, 's'},
     {0,           0, NULL, 0}
   };
 
-  while ((myopt = getopt_long (argc, argv, "p:ftxvh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "p:ftxvhs", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -1011,6 +1126,10 @@ int ihsc_options (int argc, char ** argv, Options * opt)
 
       case 'x':
       	opt->iExtract = 1;
+      	break;
+
+      case 's':
+      	opt->iSO = 1;
       	break;
 
       case 'h':

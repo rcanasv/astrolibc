@@ -24,6 +24,8 @@ int Particle_rad_compare (const void * a, const void * b)
 
 void Particle_copy (Particle * src, Particle * dst)
 {
+  memcpy (dst, src, sizeof(Particle));
+  /*
   dst->Pos[0] = src->Pos[0];
   dst->Pos[1] = src->Pos[1];
   dst->Pos[2] = src->Pos[2];
@@ -39,6 +41,7 @@ void Particle_copy (Particle * src, Particle * dst)
   dst->Radius = src->Radius;
   dst->HostID = src->HostID;
   dst->DirectHostID = src->DirectHostID;
+  */
 }
 
 
@@ -49,7 +52,7 @@ void Particle_get_radius (Particle * P)
                     P->Pos[2]*P->Pos[2]);
 }
 
-Particle_correct_periodicity (Particle * P, double lbox_2)
+void Particle_correct_periodicity (Particle * P, double lbox_2)
 {
   while (P->Pos[0] >  lbox_2) P->Pos[0] -= 2*lbox_2;
   while (P->Pos[1] >  lbox_2) P->Pos[1] -= 2*lbox_2;

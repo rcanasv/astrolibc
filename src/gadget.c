@@ -67,6 +67,7 @@ void gadget_init (Simulation * gdt)
   gdt->a                     = header1.time;
   gdt->z                     = header1.redshift;
 
+  /*
   fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
   fread(&hname, sizeof(dummy), 1, fd);     printf ("%s \n", hname); sprintf(hname,"    ");
   fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
@@ -91,7 +92,7 @@ void gadget_init (Simulation * gdt)
   fread(&hname, sizeof(dummy), 1, fd);     printf ("%s \n", hname);sprintf(hname,"    ");
   fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
   fread(&dummy, sizeof(dummy), 1, fd);     printf ("%d \n", dummy);
-
+  */
   fclose (fd);
   return;
 }
@@ -99,10 +100,15 @@ void gadget_init (Simulation * gdt)
 int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
 {
   FILE   * fd;
+
   int      k;
   int      NumPart;
   int      dummy;
+
   gheader  header1;
+
+  char     hname[4];
+  char     fname[NAME_LENGTH];
 
   // Open File
   sprintf (fname, "%s/%s", gdt->archive.path, gdt->archive.prefix);
@@ -127,7 +133,7 @@ int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
   fread(&dummy,   sizeof(dummy),   1, fd);
   fread(&header1, sizeof(header1), 1, fd);
   fread(&dummy,   sizeof(dummy),   1, fd);
-  
+
   fclose (fd);
 
   // Get total number of particles in THIS file

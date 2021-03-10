@@ -21,6 +21,6 @@
 void Simulation_init               (Simulation * sim);
 void Simulation_load_particles     (Simulation * sim, int filenum, Particle ** part);
 void Simuation_tag_neighbour_files (Simulation * sim, int * file_list);
-
+int  Simulation_get_npart_ThisFile (Simulation * sim, int filenum);
 
 #endif    /*  SIMULATION_H  */

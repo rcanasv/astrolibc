@@ -74,23 +74,24 @@ LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
 FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
-SRC = $(wildcard src/*.c)
+SRC   = $(wildcard src/*.c)
+TOOLS = $(wildcard tools/*.c) 
 
 #
-#		get_structure
-#				Extract structure(s) from simulations as a Gadget-2 binay file.
-#				Either to visualize only or to do postprocessing.
+#  get_structure
+#    Extract structure(s) from simulations as a Gadget-2 binay file.
+#    Either to visualize only or to do postprocessing.
 #
-get_structure: tools/get_structure.c $(SRC)
+get_structure: apps/get_structure.c $(SRC)
 		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
 
 
 #
-#		ihsc
-#				Calculate IHSC mass fraction, and other relevant properties of 3DFOF
-#				objects.
+#  ihsc
+#    Calculate IHSC mass fraction, and other relevant properties of 3DFOF
+#    objects.
 #
-ihsc: tools/ihsc.c $(SRC)
+ihsc: apps/ihsc.c $(SRC) $(TOOLS)
 		$(CC) $(INC) $(LIB) $^ -o bin/$@ $(FLAGS)
 
 

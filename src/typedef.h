@@ -45,6 +45,7 @@ typedef struct Particle
   int         dummyi;
   int         HostID;
   int         DirectHostID;
+  int         StructID;
   float       Radius;
 } Particle;
 

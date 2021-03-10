@@ -934,9 +934,9 @@ void stf_catalog_fill_isolated (Catalog * stf)
 }
 
 
-stf_catalog_get_files_of_groups (Catalog * stf)
+void stf_catalog_get_files_of_groups (Catalog * stf)
 {
-  int    i;
+  int    i, j;
   int    tmpid;
   int    nfiles;
   int  * files_of_strct;
