@@ -46,6 +46,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
 
   Structure   * strct1;
   Structure   * strct2;
+  Structure   * strct3;
 
   FILE  * f;
   char    fname  [NAME_LENGTH];
@@ -53,6 +54,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
 
   int     numpart;
   int     ninrad;
+  int     nbuff;
 
   int  * files_to_read = NULL;
   int  * loaded_files  = NULL;
@@ -64,7 +66,18 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
   int                 indx;
   int                 id;
 
+  int      icheck;
+  double   msum;
+  double   rad;
+  double   rho;
+
   clock_t  start_t, end_t;
+
+  double  msum_ap;
+  double  msum_str;
+  double  msum_dif;
+  double  ms200c_str, ms200b_str, ms500c_str, msbn98_str;
+  double  ms200c_dif, ms200b_dif, ms500c_dif, msbn98_dif;
 
   // Useful variables
   double lbox   = sim->Lbox;
@@ -188,10 +201,12 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
         printf ("Something's wrong mismatch on number of particles\n");
 
       // Loop over centrals
+      Pbuff = NULL;
+      nbuff = 0;
       for (k = 1; k <= ctlg->nstruct; k++)
       {
         strct1 = &ctlg->strctProps[k];
-        if (strct_to_get[k] && strct1->inR200 == 0 && strct1->oTask == itask)
+        if (strct_to_get[k] && strct1->inR200 == 0 && strct1->oTask == itask && strct1->Type == 7 && strct1->NumSubs > 0)
         {
           //start_t = clock();
           // Centre of R200 is central galaxy
@@ -218,7 +233,13 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           }
 
           // Allocate memory
-          Pbuff = (Particle *) malloc (ninrad * sizeof(Particle));
+          if (ninrad > nbuff)
+          {
+            nbuff = ninrad;
+            if (Pbuff != NULL)
+              free (Pbuff);
+            Pbuff = (Particle *) malloc (nbuff * sizeof(Particle));
+          }
 
           // Copy particles
           for (j = 0, i = 0; j < numpart; j++)
@@ -237,16 +258,17 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
 
           //start_t = clock();
+          if (i != ninrad)  printf("Something went wrong\n");
           qsort (Pbuff, ninrad, sizeof(Particle), Particle_rad_compare);
           //end_t = clock();
           //printf ("%d  took %f seconds qsort\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
 
           //start_t = clock();
           // Starts loop to get SO
-          int    icheck = 0;
-          double msum   = 0;
-          double rad    = 0;
-          double rho    = 0;
+          icheck = 0;
+          msum   = 0;
+          rad    = 0;
+          rho    = 0;
 
           strct1->n500c = 0;
           strct1->n200c = 0;
@@ -270,23 +292,100 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
             }
           }
 
-          strct1->PSO = (Particle *) malloc (strct1->nSO * sizeof(Particle));
-          for (i = 0; i < strct1->nSO; i++)
-            Particle_copy (&Pbuff[i], &strct1->PSO[i]);
-          free(Pbuff);
-          /*
-          for (i = 0; i < numpart; i++)
+          msum_ap  = 0;  // for apperture acum
+          msum_str = 0;  // for structure acum
+          msum_dif = 0;  // for diffuse acum
+          for (i = 0; i <= strct1->nSO; i++)
           {
-            P[i].Pos[0] += strct2->Pos[0];
-            P[i].Pos[1] += strct2->Pos[1];
-            P[i].Pos[2] += strct2->Pos[2];
+            if (Pbuff[i].Type == 4)
+            {
+              strct3 = &ctlg->strctProps[Pbuff[i].StructID];
+
+              // Spherical appertues e.g. Pillepich
+              if (Pbuff[i].StructID == strct1->ID || Pbuff[i].StructID == strct2->ID)
+              {
+                msum_ap += Pbuff[i].Mass;
+                if (Pbuff[i].Radius < 30.0)    strct1->M30  = msum_ap;
+                if (Pbuff[i].Radius < 100.0)   strct1->M100 = msum_ap;
+              }
+
+              // For IHSC comp
+              if (Pbuff[i].StructID > 0 && strct3->Type > 7)
+              {
+                msum_str += Pbuff[i].Mass;
+                if (Pbuff[i].Radius < strct1->R200c)  strct1->ms200c_str = msum_str;
+                if (Pbuff[i].Radius < strct1->R200b)  strct1->ms200b_str = msum_str;
+                if (Pbuff[i].Radius < strct1->R500c)  strct1->ms500c_str = msum_str;
+                if (Pbuff[i].Radius < strct1->Rbn98)  strct1->msbn98_str = msum_str;
+              }
+              else
+              {
+                msum_dif += Pbuff[i].Mass;
+                if (Pbuff[i].Radius < strct1->R200c)  strct1->ms200c_dif = msum_dif;
+                if (Pbuff[i].Radius < strct1->R200b)  strct1->ms200b_dif = msum_dif;
+                if (Pbuff[i].Radius < strct1->R500c)  strct1->ms500c_dif = msum_dif;
+                if (Pbuff[i].Radius < strct1->Rbn98)  strct1->msbn98_dif = msum_dif;
+              }
+            }
           }
-          */
           //end_t = clock();
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
-          printf ("strct  %d  %d  %e  %e  %e  %e\n", k, ninrad, strct1->M500c, strct1->M200c, strct1->M200b, strct1->Mbn98);
+          //register double r = Pbuff[ninrad-1].Radius;
+          //strct2 = &ctlg->strctProps[strct1->dummyi]; // Central
+          //printf ("strct  %d  Rbuff  %e  M200c %e  Mctrl %e  M200b %e R500c %e  R200c %e  Rbn98 %e  R200b %e \n", \
+                  k, r, strct1->M200c, strct2->TotMass, strct1->M200b, strct1->R500c, strct1->R200c, strct1->Rbn98, strct1->R200b);
+          //printf ("strct  %d  %d  %e  %e  %e  %e  %e  %e  %e  %e  %e  %e\n", \
+                  k, ninrad, strct1->M500c, strct1->M200c, strct1->M200b, strct1->Mbn98, \
+                  strct1->ms200c_str, strct1->ms200b_str, strct1->msbn98_str, \
+                  msum_ap, msum_dif, msum_str);
         } // if strct_to_get
       } // loop over structures
+
+      // Free Particle buffer
+      if (Pbuff != NULL)
+        free(Pbuff);
+
+      // Open file to write
+      sprintf (buffer, "%s.ihsc.so.%d", ctlg->archive.prefix, itask);
+      f = fopen (buffer, "w");
+      for (k = 1; k <= ctlg->nstruct; k++)
+      {
+        strct1 = &ctlg->strctProps[k];
+        if (strct_to_get[k] && strct1->inR200 == 0 && strct1->oTask == itask && strct1->NumSubs > 0)
+        {
+          strct2 = &ctlg->strctProps[strct1->dummyi]; // Central
+          strct3 = &ctlg->strctProps[strct1->SubIDs[strct1->NumSubs-2]]; // Scnd
+          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
+          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
+          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
+          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
+          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
+          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
+          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
+          fprintf (f, "%5d ", strct2->ID);          // ID Central
+          fprintf (f, "%5d ", strct3->ID);          // ID Second most
+          fprintf (f, "%e  ", strct1->M30);         // 30 kpc stellar mass no sats
+          fprintf (f, "%e  ", strct1->M100);        // 100 kpc stellar mass no sats
+          fprintf (f, "%e  ", strct1->R500c);       // R500C
+          fprintf (f, "%e  ", strct1->M500c);
+          fprintf (f, "%e  ", strct1->ms500c_str);
+          fprintf (f, "%e  ", strct1->ms500c_dif);
+          fprintf (f, "%e  ", strct1->R200c);       // R200C
+          fprintf (f, "%e  ", strct1->M200c);
+          fprintf (f, "%e  ", strct1->ms200c_str);
+          fprintf (f, "%e  ", strct1->ms200c_dif);
+          fprintf (f, "%e  ", strct1->R200b);       // R200B
+          fprintf (f, "%e  ", strct1->M200b);
+          fprintf (f, "%e  ", strct1->ms200b_str);
+          fprintf (f, "%e  ", strct1->ms200b_dif);
+          fprintf (f, "%e  ", strct1->Rbn98);       // RBN98
+          fprintf (f, "%e  ", strct1->Mbn98);
+          fprintf (f, "%e  ", strct1->msbn98_str);
+          fprintf (f, "%e  ", strct1->msbn98_dif);
+          fprintf (f, "\n");
+        }
+      }
+      fclose (f);
     } // if tasks[itasks]
   }// Loop over tasks
 

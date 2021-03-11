@@ -197,7 +197,8 @@ int main (int argc, char ** argv)
 
     for (i = 0; i < opt.nsnap; i++)
     {
-      sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
+      //sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
+      sprintf (buffer, "test.ihsc");
       f = fopen (buffer, "w");
       for (j = 1; j <= opt.catalog[i].nstruct; j++)
       {
@@ -362,6 +363,7 @@ int main (int argc, char ** argv)
         SO_tasks[j] = 1;
       get_structure_SO (&opt.catalog[i], &opt.simulation[i], SO_tasks);
 
+      /*
       // Open file to write
       sprintf (buffer, "%s.ihsc.so", opt.catalog[i].archive.prefix);
       f = fopen (buffer, "w");
@@ -452,6 +454,7 @@ int main (int argc, char ** argv)
       }
       fclose (f);
       printf("HERE IN SO 7\n");
+      */
     }
   }
 

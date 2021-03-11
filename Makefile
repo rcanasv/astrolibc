@@ -71,7 +71,7 @@ endif
 
 INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
-FLAGS       = -lm $(HDF5_FLAGS) $(GSL_FLAGS)
+FLAGS       = -lm -O2 $(HDF5_FLAGS) $(GSL_FLAGS)
 
 
 SRC   = $(wildcard src/*.c)

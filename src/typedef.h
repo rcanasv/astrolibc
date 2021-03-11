@@ -109,6 +109,15 @@ typedef struct Structure
   int        nSO;
   Particle * PSO;
 
+  double   ms200c_str;
+  double   ms200b_str;
+  double   ms500c_str;
+  double   msbn98_str;
+  double   ms200c_dif;
+  double   ms200b_dif;
+  double   ms500c_dif;
+  double   msbn98_dif;
+
   double     M30;
   double     M100;
   double     M2R50;
