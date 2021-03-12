@@ -387,6 +387,9 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           fprintf (f, "%e  ", strct1->msbn98_str);
           fprintf (f, "%e  ", strct1->msbn98_dif);
 	  fprintf (f, "%d  ", strct1->n200b);      // if this is -1, there are low-res particles within R200c
+	  fprintf (f, "%e  ", strct2->Pos[0]);
+	  fprintf (f, "%e  ", strct2->Pos[1]);
+	  fprintf (f, "%e  ", strct2->Pos[2]);
           fprintf (f, "\n");
         }
       }
