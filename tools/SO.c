@@ -351,7 +351,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
       for (k = 1; k <= ctlg->nstruct; k++)
       {
         strct1 = &ctlg->strctProps[k];
-        if (strct_to_get[k] && strct1->inR200 == 0 && strct1->oTask == itask && strct1->NumSubs > 0)
+        if (strct_to_get[k] && strct1->inR200 == 0 && strct1->oTask == itask && strct1->NumSubs > 0 && strct1->Type == 7)
         {
           strct2 = &ctlg->strctProps[strct1->dummyi]; // Central
           strct3 = &ctlg->strctProps[strct1->SubIDs[strct1->NumSubs-2]]; // Scnd
