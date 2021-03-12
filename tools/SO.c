@@ -329,9 +329,19 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
             }
           }
 
-	  for (i = 0; i < strct1->n200c; i++)
+          strct1->nlowres = 0;
+          strct1->tlowres  = 0;
+          strct1->rlowres  = 0;
+  	      for (i = 0; i < strct1->n200c; i++)
             if (Pbuff[i].Type == 3 || Pbuff[i].Type == 2)
-	      strct1->n200b = -1;
+            {
+              if (strct1->nlowres == 0)
+  	          {
+                strct1->tlowres = Pbuff[i].Type;
+                strct1->rlowres = Pbuff[i].Radius;
+              }
+              strct1->nlowres++;
+            }
           //end_t = clock();
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
           //register double r = Pbuff[ninrad-1].Radius;
@@ -386,10 +396,12 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           fprintf (f, "%e  ", strct1->Mbn98);
           fprintf (f, "%e  ", strct1->msbn98_str);
           fprintf (f, "%e  ", strct1->msbn98_dif);
-	  fprintf (f, "%d  ", strct1->n200b);      // if this is -1, there are low-res particles within R200c
-	  fprintf (f, "%e  ", strct2->Pos[0]);
-	  fprintf (f, "%e  ", strct2->Pos[1]);
-	  fprintf (f, "%e  ", strct2->Pos[2]);
+      	  fprintf (f, "%e  ", strct2->Pos[0]);
+      	  fprintf (f, "%e  ", strct2->Pos[1]);
+      	  fprintf (f, "%e  ", strct2->Pos[2]);
+          fprintf (f, "%d  ", strct1->nlowres);
+          fprintf (f, "%e  ", strct1->tlowres);
+          fprintf (f, "%e  ", strct1->rlowres);
           fprintf (f, "\n");
         }
       }

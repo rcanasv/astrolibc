@@ -118,6 +118,11 @@ typedef struct Structure
   double   ms500c_dif;
   double   msbn98_dif;
 
+  int      nlowres;
+  int      tlowres;
+  double   rlowres;
+
+
   double     M30;
   double     M100;
   double     M2R50;
