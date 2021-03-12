@@ -68,6 +68,15 @@ GSL_LIB     = -L/cosma/local/gsl/2.4/lib
 GSL_FLAGS   = -lgsl -lgslcblas
 endif
 
+ifeq ($(MACHINE),taurus)
+HDF5_INCL   = -I/home2/rodrigo/opt/gcc/9.3.0/hdf5/1.8.18/include
+HDF5_LIB    = -L/home2/rodrigo/opt/gcc/9.3.0/hdf5/1.8.18/lib /home2/rodrigo/opt/gcc/9.3.0/hdf5/1.8.18/lib/libhdf5_hl.a  /home2/rodrigo/opt/gcc/9.3.0/hdf5/1.8.18/lib/libhdf5.a
+HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/home2/rodrigo/opt/gcc/9.3.0/hdf5/1.8.18/lib
+
+GSL_INCL    = -I/home2/rodrigo/opt/gcc/9.3.0/gsl/2.3/include
+GSL_LIB     = -L/home2/rodrigo/opt/gcc/9.3.0/gsl/2.3/lib
+GSL_FLAGS   = -lgsl -lgslcblas
+endif
 
 INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)

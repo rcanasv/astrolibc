@@ -328,6 +328,10 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
               }
             }
           }
+
+	  for (i = 0; i < strct1->n200c; i++)
+            if (Pbuff[i].Type == 3 || Pbuff[i].Type == 2)
+	      strct1->n200b = -1;
           //end_t = clock();
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
           //register double r = Pbuff[ninrad-1].Radius;
@@ -346,7 +350,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
         free(Pbuff);
 
       // Open file to write
-      sprintf (buffer, "%s.ihsc.so.%d", ctlg->archive.prefix, itask);
+      sprintf (buffer, "%s.ihsc.spho.%d", ctlg->archive.prefix, itask);
       f = fopen (buffer, "w");
       for (k = 1; k <= ctlg->nstruct; k++)
       {
@@ -382,6 +386,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           fprintf (f, "%e  ", strct1->Mbn98);
           fprintf (f, "%e  ", strct1->msbn98_str);
           fprintf (f, "%e  ", strct1->msbn98_dif);
+	  fprintf (f, "%d  ", strct1->n200b);      // if this is -1, there are low-res particles within R200c
           fprintf (f, "\n");
         }
       }
