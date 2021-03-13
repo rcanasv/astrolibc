@@ -350,7 +350,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           //strct2 = &ctlg->strctProps[strct1->dummyi]; // Central
           //printf ("strct  %d  Rbuff  %e  M200c %e  Mctrl %e  M200b %e R500c %e  R200c %e  Rbn98 %e  R200b %e \n", \
                   k, r, strct1->M200c, strct2->TotMass, strct1->M200b, strct1->R500c, strct1->R200c, strct1->Rbn98, strct1->R200b);
-          //printf ("strct  %d  %d  %e  %e  %e  %e  %e  %e  %e  %e  %e  %e\n", \
+          printf ("strct  %d  %d  %e  %e  %e  %e  %e  %e  %e  %e  %e  %e\n", \
                   k, ninrad, strct1->M500c, strct1->M200c, strct1->M200b, strct1->Mbn98, \
                   strct1->ms200c_str, strct1->ms200b_str, strct1->msbn98_str, \
                   msum_ap, msum_dif, msum_str);

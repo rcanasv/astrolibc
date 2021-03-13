@@ -64,6 +64,11 @@ int main (int argc, char ** argv)
   ihsc_options (argc, argv, &opt);
   ihsc_params  (&opt);
 
+  printf ("opt.iSO  %d\n", opt.iSO);
+  printf ("opt.iTrack %d\n", opt.iTrack);
+  printf ("opt.iFraction %d\n", opt.iFraction);
+  printf ("opt.iExtract %d\n", opt.iExtract);
+
   //
   //  Load catalogs and simulation details
   // for Horizon-AGN only info_XXXX is needed
@@ -1109,6 +1114,11 @@ int ihsc_options (int argc, char ** argv, Options * opt)
     {"so",        0, NULL, 's'},
     {0,           0, NULL, 0}
   };
+
+  opt->iFraction = 0;
+  opt->iTrack    = 0;
+  opt->iExtract  = 0;
+  opt->iSO       = 0;
 
   while ((myopt = getopt_long (argc, argv, "p:ftxvhs", lopts, &index)) != -1)
   {
