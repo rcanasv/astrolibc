@@ -20,6 +20,7 @@
 #include "simulation.h"
 #include "stf.h"
 #include "halomaker.h"
+#include "ahf.h"
 
 
 void Catalog_init (Catalog * ctlg);
@@ -33,8 +34,8 @@ void Catalog_fill_isolated   (Catalog * ctlg);
 void Catalog_fill_SubIDS     (Catalog * ctlg);
 
 void Catalog_get_particle_properties (Catalog * ctlg, Simulation * sim);
-
-void Catalog_get_files_of_groups      (Catalog * ctlg);
+void Catalog_get_files_of_groups     (Catalog * ctlg);
+void Catalog_get_particle_list       (Catalog * ctlg);
 
 //void Catalog_fill_ProgIDs (Catalog * catalog, char * tffile);
 

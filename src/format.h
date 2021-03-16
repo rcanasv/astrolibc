@@ -16,6 +16,7 @@
 #define  STF        10  // this is ASCII by default
 #define  STF_HDF5   11
 #define  HALOMAKER  20
+#define  AHF        30
 
 
 //

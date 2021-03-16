@@ -36,6 +36,10 @@ void Catalog_init (Catalog * ctlg)
       (!strcmp(ctlg->archive.format, "halomaker")))
     ctlg->format = HALOMAKER;
   else
+  if ((!strcmp(ctlg->archive.format, "ahf"))            ||  \
+      (!strcmp(ctlg->archive.format, "AHF")))
+    ctlg->format = AHF;
+  else
   {
     printf ("Format %s not supported\n", ctlg->archive.format);
     printf ("Exiting...\n");
@@ -58,6 +62,7 @@ void Catalog_load_properties (Catalog * ctlg)
   if (ctlg->format == STF)         stf_read_properties (ctlg);
   if (ctlg->format == STF_HDF5)    stf_read_properties (ctlg);
   if (ctlg->format == HALOMAKER)   halomaker_read_properties (ctlg);
+  if (ctlg->format == AHF)         ahf_read_properties (ctlg);
 }
 
 
@@ -81,6 +86,10 @@ void Catalog_get_particle_properties (Catalog * ctlg, Simulation * sim)
 }
 
 
+void Catalog_get_particle_list (Catalog * ctlg)
+{
+  if (ctlg->format == AHF)  ahf_catalog_get_particle_list (ctlg);
+}
 
 void Catalog_free (Catalog * ctlg)
 {

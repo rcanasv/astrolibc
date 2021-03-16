@@ -6,6 +6,7 @@
 
  #include "gadget.h"
 
+// Initalize
 void gadget_init (Simulation * gdt)
 {
   FILE  * fd;
@@ -97,6 +98,7 @@ void gadget_init (Simulation * gdt)
   return;
 }
 
+// Get number of particles in this file
 int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
 {
   FILE   * fd;
@@ -161,7 +163,6 @@ void gadget_get_header (Simulation * gdt, FILE * f, gheader * header)
   fread(header, sizeof(*header), 1, f);
   fread(&dummy,   sizeof(dummy),   1, f);
 }
-
 
 // Read Property
 long gadget_get_property (Simulation * gdt, FILE * f, Particle * P, char * prop)
@@ -232,6 +233,7 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
   return n;
 }
 
+// Load particles
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
 {
   FILE  * fd;
@@ -539,7 +541,7 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   return;
 }
 
-
+// Write gadget file
 void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archive * output)
 {
   FILE * snap_file;

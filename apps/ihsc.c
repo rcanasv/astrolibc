@@ -22,6 +22,7 @@ typedef struct Options
   int            iTrack;
   int            iExtract;
   int            iSO;
+  int            iSO_AHF;
   int            nsnap;
   int            ntrees;
   Archive        param;
@@ -181,12 +182,10 @@ int main (int argc, char ** argv)
 
 
   // --------------------------------------------------- //
-  //
-  // Diffuse stellar fraction
-  //
+  //              IHSC Mass fraction FOF                 //
+  // --------------------------------------------------- //
   FILE * f;
   char buffer [NAME_LENGTH];
-
   if (opt.iFraction)
   {
     int     nsat_m08;
@@ -346,10 +345,11 @@ int main (int argc, char ** argv)
   }
   // --------------------------------------------------- //
 
+
+
   // --------------------------------------------------- //
-  //                       SO                            //
+  //                    IHSC SO                          //
   // --------------------------------------------------- //
-  printf ("BEFORE SO\n");
   if (opt.iSO)
   {
     Particle * Pbuff;
@@ -462,13 +462,28 @@ int main (int argc, char ** argv)
       */
     }
   }
+  // --------------------------------------------------- //
+
+  // --------------------------------------------------- //
+  //            IHSC SO FROM AHF CLEAN HALOS             //
+  // --------------------------------------------------- //
+  if (opt.iSO_AHF)
+  {
+    // 1. Read AHF clean halos ASCII
+    // 2. Load AHF Catalog
+    // 3. Load AHF Particle list inside
+    //    Sort IDs
+    // 4. Load Particles from Simulation
+    // 5. Load Extended Output
+    // 6. Sort Particles by ID
+  }
+  // --------------------------------------------------- //
 
 
 
   // --------------------------------------------------- //
-  //
-  // Create `evolutionary tracks'
-  //
+  //            Create `evolutionary tracks'             //
+  // --------------------------------------------------- //
   if (opt.iTrack)
   {
     FILE * f1;
@@ -644,9 +659,8 @@ int main (int argc, char ** argv)
 
 
   // --------------------------------------------------- //
-  //
-  // Write snapshots for visualization
-  //
+  //          Write snapshots for visualization          //
+  // --------------------------------------------------- //
   if (opt.iExtract)
   {
     Structure * ihsc;
@@ -877,9 +891,8 @@ int main (int argc, char ** argv)
 
 
   // --------------------------------------------------- //
-  //
-  // Free catalogues
-  //
+  //                    Free catalogues                  //
+  // --------------------------------------------------- //
   for (i = 0; i < opt.nsnap; i++)
     Catalog_free (&opt.catalog[i]);
   free (opt.catalog);
@@ -961,7 +974,6 @@ void ihsc_prog_tree (Catalog * ctlgs, int pid, int plevel, int maxlvls, char * m
         continue;
     }
 
-//    if (!(strct->Type%type) && (ihscpctrl->dummyd > 1e8))
     if (!(strct->Type%type) && (ihscpctrl->dummyd > 1e10))
     {
       if (j == 0)
@@ -1091,6 +1103,7 @@ void ihsc_params (Options * opt)
   fclose (opt->param.file);
 }
 
+
 //
 //  Options
 //
@@ -1112,13 +1125,16 @@ int ihsc_options (int argc, char ** argv, Options * opt)
     {"track",     0, NULL, 't'},
     {"extract",   0, NULL, 'x'},
     {"so",        0, NULL, 's'},
+    {"soAHF",     0, NULL, 'a'},
     {0,           0, NULL, 0}
   };
 
+  opt->iVerbose  = 0;
   opt->iFraction = 0;
   opt->iTrack    = 0;
   opt->iExtract  = 0;
   opt->iSO       = 0;
+  opt->iSO_AHF   = 0;
 
   while ((myopt = getopt_long (argc, argv, "p:ftxvhs", lopts, &index)) != -1)
   {
@@ -1143,6 +1159,10 @@ int ihsc_options (int argc, char ** argv, Options * opt)
 
       case 's':
       	opt->iSO = 1;
+      	break;
+
+      case 's':
+      	opt->iSO_AHF = 1;
       	break;
 
       case 'h':
@@ -1171,7 +1191,7 @@ void ihsc_usage (int opt, char ** argv)
     printf ("                                                                         \n");
     printf ("  Author:            Rodrigo Can\\~as                                    \n");
     printf ("                                                                         \n");
-    printf ("  Last edition:      03 - 02 - 2021                                      \n");
+    printf ("  Last edition:      16 - March - 2021                                      \n");
     printf ("                                                                         \n");
     printf ("                                                                         \n");
     printf ("  Usage:             %s [Option] [Parameter [argument]] ...\n",      argv[0]);

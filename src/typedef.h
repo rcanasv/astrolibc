@@ -117,6 +117,7 @@ typedef struct Structure
   double     Rvir;
   double     Tvir;
   double     Csvir;
+  double     cNFW;
   double     RhoNFW;
   double     ReNFW;
   double     SFR20;
@@ -125,9 +126,12 @@ typedef struct Structure
   double     Rx;
   double     R20;
   double     R90;
+  double     Rmax;
   int        mbpID;
   double     mbpPos[3];
   double     mbpVel[3];
+  double     mbpOffset;
+  double     comOffset;
   double     sigmaPosEval[3];
   double     sigmaVelEval[3];
   double     j[4];
