@@ -34,6 +34,18 @@ typedef struct gheader
   char     fill[256 - 6*4 - 6*8 - 2*8 - 2*4 - 6*4 - 2*4 - 4*8];      /* fills to 256 Bytes */
 } gheader;
 
+//
+//  Info block
+//
+typedef struct ginfo
+{
+  char     name[5];
+  char     type[9];
+  int      ndim;
+  int      flag[6];
+  int      read;
+} ginfo;
+
 
 void gadget_init (Simulation * gdt);
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part);

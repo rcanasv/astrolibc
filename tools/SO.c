@@ -71,6 +71,9 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
   double   rad;
   double   rho;
 
+  Archive  output;
+  gheader  header;
+
   clock_t  start_t, end_t;
 
   double  msum_ap;
@@ -332,18 +335,24 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           strct1->nlowres = 0;
           strct1->tlowres  = 0;
           strct1->rlowres  = 0;
-  	  for (i = 0; i < strct1->n200c; i++)
+          for (i = 0; i < strct1->n200c; i++)
           {
             if (Pbuff[i].Type == 3 || Pbuff[i].Type == 2)
             {
               if (strct1->nlowres == 0)
-  	      {
+              {
                 strct1->tlowres = Pbuff[i].Type;
                 strct1->rlowres = Pbuff[i].Radius;
               }
               strct1->nlowres++;
             }
-	  }
+          }
+
+
+          sprintf (output.name, "ihsc.gdt_%03d", strct1->ID);
+          gadget_write_snapshot (&Pbuff[0], strct1->n200c, &header, &output);
+
+
           //end_t = clock();
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
           //register double r = Pbuff[ninrad-1].Radius;

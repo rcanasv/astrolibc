@@ -31,6 +31,30 @@ typedef struct Cosmology
 } Cosmology;
 
 
+typedef struct Star
+{
+  float       Age;    // Age
+  float       Z;      // Metallicity
+} Star;
+
+typedef struct Gas
+{
+  float       U;      // Internal energy
+  float       Rho;    // Density
+  float       NE;     // NE
+  float       NH;     // NH
+  float       HSML;   // HSML
+  float       SFR;    // Star Formation Rate
+  float       Z;      // Metallicity
+  float       T;      // Temperature
+} Gas;
+
+typedef struct BlackHole
+{
+  float       Age;
+} BlackHole;
+
+
 typedef struct Particle
 {
   double      Pos[3];
@@ -38,7 +62,6 @@ typedef struct Particle
   double      Mass;
   int         Id;
   int         Level;
-  float       Age;
   float       Metal;
   float       Chem;
   int         Type;
@@ -47,9 +70,25 @@ typedef struct Particle
   int         DirectHostID;
   int         StructID;
   float       Radius;
+  float       U;      // Internal energy
+  float       Rho;    // Density
+  float       NE;     // NE
+  float       NH;     // NH
+  float       HSML;   // HSML
+  float       SFR;    // Star Formation Rate
+  float       Z;      // Metallicity
+  float       T;      // Temperature
+  float       Age;    // Temperature
 } Particle;
 
-
+// Not Yet implemented, Not sure if this is the way
+typedef struct ParticleData
+{
+  Particle  * Part;
+  Gas       * GasP;
+  Star      * StarP;
+  BlackHole * BHP;
+} ParticleData;
 
 typedef struct Structure
 {
