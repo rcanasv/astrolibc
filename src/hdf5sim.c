@@ -100,8 +100,8 @@ void hdf5_sim_init (Simulation * snapshot)
 {
   int     i;
   FILE  * f;
-  char    fname  [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
+  char    fname  [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
 
   hid_t     id_file;
   hid_t     id_group;
@@ -181,8 +181,8 @@ void hdf5_sim_init (Simulation * snapshot)
 void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** part)
 {
   int      i, j;
-  char     fname  [NAME_LENGTH];
-  char     buffer [NAME_LENGTH];
+  char     fname  [LONG_LENGTH];
+  char     buffer [LONG_LENGTH];
 
   int      dummy;
   int      dummyi;

@@ -32,7 +32,7 @@ void halomaker_read_properties (Catalog * hmkr)
   int     nsubs;
 
   FILE  * f;
-  char    treebricks_fname [NAME_LENGTH];
+  char    treebricks_fname [LONG_LENGTH];
 
   int     iReadParticles = 0;
   int     iGetProfile    = 0;
@@ -266,7 +266,7 @@ void halomaker_read_particles (Catalog * hmkr)
   double  dummyd;
 
   FILE  * f;
-  char    treebricks_fname [NAME_LENGTH];
+  char    treebricks_fname [LONG_LENGTH];
 
   //
   // Open treebricks file to read properties
@@ -359,7 +359,7 @@ void halomaker_read_galfile (Simulation * sim, Structure * strct)
 
   FILE     * f;
   Particle * P;
-  char       fname[NAME_LENGTH];
+  char       fname [LONG_LENGTH];
 
   int        gal_number;
   int        gal_level;
@@ -370,7 +370,7 @@ void halomaker_read_galfile (Simulation * sim, Structure * strct)
   int        nlist;
 
 
-  sprintf (fname, "%s/gal_stars_%07d", sim->archive.name, strct->ID);
+  sprintf (fname, "%s/gal_stars_%07ld", sim->archive.name, strct->ID);
   if ((f = fopen (fname, "r")) == NULL)
   {
     printf ("Can't open file named   %s \n", fname);
@@ -577,7 +577,7 @@ void halomaker_read_galfile (Simulation * sim, Structure * strct)
 void halomaker_catalog_get_particle_properties (Catalog * hmkr, Simulation * sim)
 {
   int         i, j;
-  char        fname[NAME_LENGTH];
+  char        fname[LONG_LENGTH];
   Structure * strct;
 
   if (sim->format == GALFILE)

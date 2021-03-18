@@ -32,7 +32,7 @@ void stf_read_properties (Catalog * stf)
   herr_t   status;
 
   FILE * f;
-  char   propts_fname [NAME_LENGTH];
+  char   propts_fname [LONG_LENGTH];
   char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
@@ -261,7 +261,7 @@ void stf_read_properties (Catalog * stf)
       {
         fgets (longbuffer, 3000, f);
         stf->strctProps[j+offst].oTask = oTask;
-        sscanf (longbuffer, "%d  %d  %d  %d  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
+        sscanf (longbuffer, "%ld  %d  %ld  %ld  %d  %d  %d  %lf  %lf  %lf  %lf  %lf  %lf  %lf          \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf      \
                 %lf  %lf",                                                                          \
@@ -341,7 +341,7 @@ void stf_write_catalog_group (Catalog * stf)
 {
   int    i, j, k;
   FILE * f;
-  char   fname[NAME_LENGTH];
+  char   fname [LONG_LENGTH];
 
   Catalog * ctlg = stf;
 
@@ -379,7 +379,7 @@ void stf_write_catalog_particles (Catalog * stf)
 {
   int    i, j, k;
   FILE * f;
-  char   fname[NAME_LENGTH];
+  char   fname[LONG_LENGTH];
 
   Catalog * ctlg = stf;
 
@@ -403,7 +403,7 @@ void stf_write_catalog_particles (Catalog * stf)
   // Structure number of particles
   for (i = 1; i <= stf->nstruct; i++)
     for (j = 0; j < stf->strctProps[i].NumPart; j++)
-      fprintf (f, "%u\n", -1*stf->strctProps[i].PIDs[j]);
+      fprintf (f, "%ld\n", -1*stf->strctProps[i].PIDs[j]);
 
   fclose (f);
 
@@ -435,7 +435,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   int nmatch;
 
   char buffer [LONG_LENGTH];
-  char fname  [NAME_LENGTH];
+  char fname  [LONG_LENGTH];
 
   sprintf (fname, "%s/%s", tfrog->path, tfrog->name);
   if ((f = fopen (fname, "r")) == NULL)
@@ -492,7 +492,7 @@ void  stf_catalog_get_particle_properties (Catalog * stf, Simulation * sim)
 {
   int    i, j, k;
   FILE * f;
-  char   fname [NAME_LENGTH];
+  char   fname [LONG_LENGTH];
 
 
   stfExtendedOutput * xtndd;
@@ -568,8 +568,8 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
   int    i, j, k;
   FILE * f;
 
-  char   fname  [NAME_LENGTH];
-  char   buffer [NAME_LENGTH];
+  char   fname  [LONG_LENGTH];
+  char   buffer [LONG_LENGTH];
 
   int *  files_to_read;
 
@@ -671,8 +671,8 @@ void  stf_simulation_get_particle_properties (Catalog * stf, Simulation * sim, i
 {
   int    i, j, k;
   FILE * f;
-  char   fname  [NAME_LENGTH];
-  char   buffer [NAME_LENGTH];
+  char   fname  [LONG_LENGTH];
+  char   buffer [LONG_LENGTH];
   Particle  * part;
 
   //
@@ -704,8 +704,8 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
 {
 
   int    i, j, k;
-  char   fname  [NAME_LENGTH];
-  char   buffer [NAME_LENGTH];
+  char   fname  [LONG_LENGTH];
+  char   buffer [LONG_LENGTH];
   int    nparts;
 
   int     * buffi;
@@ -761,7 +761,8 @@ int stf_load_extended_output (Catalog * stf,  int filenum, stfExtendedOutput ** 
   }
   else
   {
-    f = fopen(fname, "r");
+    if ((f = fopen(fname, "r")) == NULL)
+      printf ("Cannot open file %s\n", fname);
     while (fgets(buffer, NAME_LENGTH, f) != NULL)
       nparts++;
     rewind(f);
@@ -799,8 +800,8 @@ int stf_get_files_to_read (Catalog * stf, int * strcts_to_get, int * files_to_re
   int     i, j;
   FILE  * f;
 
-  char    fname  [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
+  char    fname  [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
 
   int     tmpid;
   int     nfiles;
@@ -942,8 +943,8 @@ void stf_catalog_get_files_of_groups (Catalog * stf)
   int  * files_of_strct;
 
   FILE * f;
-  char   fname  [NAME_LENGTH];
-  char   buffer [NAME_LENGTH];
+  char   fname  [LONG_LENGTH];
+  char   buffer [LONG_LENGTH];
 
   Structure * strct1;
 

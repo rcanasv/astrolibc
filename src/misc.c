@@ -47,3 +47,18 @@ int get_n_num_from_string (char * strng, int n_num, int ** nums)
   }
   return 0;
 }
+
+
+int long_compare (const void * a, const void * b)
+{
+  long * l1 = (long *) a;
+  long * l2 = (long *) b;
+
+  if (*l1 > *l2)
+    return  1;
+  if (*l1 == *l2)
+    return  0;
+  if (*l1 < *l2)
+    return -1;
+}
+

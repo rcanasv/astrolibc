@@ -14,7 +14,7 @@ void gadget_init (Simulation * gdt)
   int     dummy;
   int     ntot_withmasses;
   char    hname [4];
-  char    fname [NAME_LENGTH];
+  char    fname [LONG_LENGTH];
 
   gheader header1;
 
@@ -109,8 +109,8 @@ int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
 
   gheader  header1;
 
-  char     hname[4];
-  char     fname[NAME_LENGTH];
+  char     hname [4];
+  char     fname [LONG_LENGTH];
 
   // Open File
   sprintf (fname, "%s/%s", gdt->archive.path, gdt->archive.prefix);
@@ -145,6 +145,7 @@ int gadget_get_npart_ThisFile (Simulation * gdt, int filenum)
   return NumPart;
 }
 
+
 // Here we assume that f is properly opened
 void gadget_get_header (Simulation * gdt, FILE * f, gheader * header)
 {
@@ -163,6 +164,7 @@ void gadget_get_header (Simulation * gdt, FILE * f, gheader * header)
   fread(header, sizeof(*header), 1, f);
   fread(&dummy,   sizeof(dummy),   1, f);
 }
+
 
 // Read Property
 long gadget_get_property (Simulation * gdt, FILE * f, Particle * P, char * prop)
@@ -192,21 +194,28 @@ long gadget_get_property (Simulation * gdt, FILE * f, Particle * P, char * prop)
   return ftell(f);
 }
 
+
 // Get Info
 int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
 {
-  int    k, n, pc_new;
-  int    dummy;
-  char   hname [4];
+  int      k, n, pc_new;
+  int      dummy;
+  char     ref   [5];
+  char     hname [5];
   ginfo  * data;
 
   rewind(f);
+  sprintf(hname, "TEST");
+  n = -2;
   do
   {
-    fread(&dummy, sizeof(dummy), 1, f);
-    fread(&hname, sizeof(hname), 1, f);
-    fread(&dummy, sizeof(dummy), 1, f);
-    fread(&dummy, sizeof(dummy), 1, f);
+    n++;
+    strcpy (ref, hname); 
+
+    fread(&dummy,    sizeof(dummy), 1, f);
+    fread(&hname[0], sizeof(dummy), 1, f);
+    fread(&dummy,    sizeof(dummy), 1, f);
+    fread(&dummy,    sizeof(dummy), 1, f);
 
     if (strncmp (hname, "INFO", 4))
     {
@@ -214,8 +223,16 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
       fseek(f, dummy, SEEK_CUR);
       fread(&dummy, sizeof(dummy), 1, f);
     }
-  } while (strncmp (hname, "INFO", 4));
+  } while (strncmp(hname, "INFO", 4) && strncmp(ref, hname, 4));
 
+  // If no INFO block is found return 0
+  if (strncmp(hname, "INFO", 4))
+  {
+    printf ("No INFO block in Gadget file\n");
+    return n;
+  }
+
+  // Otherwise read and store data of each block
   fread(&dummy, sizeof(dummy), 1, f);
   n = dummy / 40;
   *(info) = (ginfo *) malloc (n * sizeof(ginfo));
@@ -229,9 +246,9 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
     data[k].read = 0;
   }
   fread(&dummy, sizeof(dummy), 1, f);
-
   return n;
 }
+
 
 // Load particles
 void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
@@ -242,7 +259,7 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   int     nblocks;
   int     dummy;
   int     ntot_withmasses;
-  char    fname [NAME_LENGTH];
+  char    fname [LONG_LENGTH];
   char    hname [4];
 
   int     i;
@@ -339,11 +356,11 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
   // IDs
   //
   fseek(fd, gadget_get_property (gdt, fd, P, "ID  "), SEEK_SET);
-  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  fread(&dummy,   sizeof(dummy),   1, fd);
   for(k = 0, pc_new = pc; k < 6; k++)
     for(n = 0; n < header1.npart[k]; n++)
       fread(&P[pc_new++].Id, sizeof(int), 1, fd);
-  fread(&dummy,   sizeof(dummy),   1, fd);  //printf ("%d\n", dummy);
+  fread(&dummy,   sizeof(dummy),   1, fd);
   for (k = 0; k < nblocks; k++) if (!strncmp(info[k].name, "ID  ", 4)) info[k].read = 1;
 
   //
@@ -369,8 +386,6 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
     for (k = 0; k < nblocks; k++) if (!strncmp(info[k].name, "MASS", 4)) info[k].read = 1;
   }
 
-
-
   //
   // U internal energy
   //
@@ -383,7 +398,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "U   "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].U, sizeof(float), 1, fd);
@@ -400,7 +416,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "RHO "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].Rho, sizeof(float), 1, fd);
@@ -417,7 +434,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "NE  "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].Rho, sizeof(float), 1, fd);
@@ -434,7 +452,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "NH  "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].Rho, sizeof(float), 1, fd);
@@ -451,7 +470,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "HSML"), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].HSML, sizeof(float), 1, fd);
@@ -468,7 +488,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "SFR "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==0)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].SFR, sizeof(float), 1, fd);
@@ -485,7 +506,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "AGE "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+        if (k==4 || k==5)  // This is is implemented in case INFO block is missing
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].Age, sizeof(float), 1, fd);
@@ -502,7 +524,8 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       fseek(fd, gadget_get_property (gdt, fd, P, "Z   "), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+	if (k==0 || k==4)
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].Z, sizeof(float), 1, fd);
@@ -513,13 +536,14 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
       info[iblock].read = 1;
     }
 
-    // Density NH
+    // Temperature
     if (!strncmp(info[iblock].name, "TEMP", 4))
     {
       fseek(fd, gadget_get_property (gdt, fd, P, "TEMP"), SEEK_SET);
       fread(&dummy, sizeof(dummy), 1, fd);
       for(k = 0, pc_new = pc; k < 6; k++)
-        if (info[iblock].flag[k])
+        //if (info[iblock].flag[k])
+	if (k==0)
         {
           for(n = 0; n < header1.npart[k]; n++)
             fread(&P[pc_new++].T, sizeof(float), 1, fd);
@@ -540,6 +564,7 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
 
   return;
 }
+
 
 // Write gadget file
 void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archive * output)

@@ -107,6 +107,12 @@ void Catalog_free (Catalog * ctlg)
 
       if (ctlg->strctProps[i].MatchMrrts != NULL)
         free (ctlg->strctProps[i].MatchMrrts);
+
+      if (ctlg->strctProps[i].PSO != NULL)
+        free (ctlg->strctProps[i].PSO);
+
+      if (ctlg->strctProps[i].PIDs != NULL)
+        free (ctlg->strctProps[i].PIDs);
     }
     free (ctlg->strctProps);
   }

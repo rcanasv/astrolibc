@@ -23,8 +23,8 @@ void ahf_read_properties (Catalog * ahf)
   double  * buffd;
 
   FILE * f;
-  char   parts_fname  [NAME_LENGTH];
-  char   halos_fname  [NAME_LENGTH];
+  char   parts_fname  [LONG_LENGTH];
+  char   halos_fname  [LONG_LENGTH];
   char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
@@ -95,12 +95,12 @@ void ahf_read_properties (Catalog * ahf)
 
   for (i = 0; i < ahf->nprocs; i++)
   {
-    fgets  (longbuffer, NAME_LENGTH, f);
+    fgets  (longbuffer, LONG_LENGTH, f); // AHF Column names
     for (j = 0; j < mystructs; j++)
     {
-      fgets (longbuffer, 3000, f);
+      fgets (longbuffer, LONG_LENGTH, f);
       ahf->strctProps[j+offst].oTask = oTask;
-      sscanf (longbuffer, "%d  %d  %d  %lf  %d  %lf  %lf  %lf  %lf  %lf  %lf   \
+      sscanf (longbuffer, "%ld  %ld  %d  %lf  %d  %lf  %lf  %lf  %lf  %lf  %lf   \
               %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  \
               %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  %lf  \
               %lf  %lf  %lf  %lf  %lf  %lf",                                                                          \
@@ -165,8 +165,8 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   double    dummyd;
 
   FILE * f;
-  char   parts_fname  [NAME_LENGTH];
-  char   halos_fname  [NAME_LENGTH];
+  char   parts_fname  [LONG_LENGTH];
+  char   halos_fname  [LONG_LENGTH];
   char   longbuffer   [LONG_LENGTH];
   int    mystructs;
 
@@ -193,7 +193,7 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   for (i = 1; i <= ahf->nstruct; i++)
   {
     strct = &ahf->strctProps[i];
-    if ((strct->PIDs = (int *) malloc (strct->NumPart * sizeof(int)))==NULL)
+    if ((strct->PIDs = (long *) malloc (strct->NumPart * sizeof(long)))==NULL)
     {
       printf ("Couldn't allocate memory for Struct Particle IDs\n");
       exit (0);
@@ -206,15 +206,18 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   int   npart;
   f = fopen (parts_fname, "r");
   fgets  (longbuffer, NAME_LENGTH, f); // Number of structures
-  do
+  
+  for (k = 1; k <= ahf->nstruct; k++)
   {
     fgets  (longbuffer, NAME_LENGTH, f);
     check = sscanf (longbuffer, "%d  %ld", &npart, &dummyl);
+    strct = &ahf->strctProps[k];
     for (i = 0; i < npart; i++)
     {
       fgets  (longbuffer, NAME_LENGTH, f);
-      check = sscanf (longbuffer, "%ld  %d", &dummyl, &dummyi);
+      check = sscanf (longbuffer, "%ld  %d", &strct->PIDs[i], &dummyi);
     }
-  } while (dummyl != ahf->nstruct);
+  }
+
   fclose (f);
 }

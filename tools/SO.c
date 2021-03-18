@@ -49,8 +49,8 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
   Structure   * strct3;
 
   FILE  * f;
-  char    fname  [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
+  char    fname  [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
 
   int     numpart;
   int     ninrad;
@@ -349,7 +349,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
           }
 
 
-          sprintf (output.name, "ihsc.gdt_%03d", strct1->ID);
+          sprintf (output.name, "ihsc.gdt_%06ld", strct1->ID);
           gadget_write_snapshot (&Pbuff[0], strct1->n200c, &header, &output);
 
 
@@ -380,39 +380,39 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
         {
           strct2 = &ctlg->strctProps[strct1->dummyi]; // Central
           strct3 = &ctlg->strctProps[strct1->SubIDs[strct1->NumSubs-2]]; // Scnd
-          fprintf (f, "%e  ", strct2->dummyd);      // Total Stellar Mass
-          fprintf (f, "%e  ", strct1->TotMass);     // Mass IHSC
-          fprintf (f, "%e  ", strct2->TotMass);     // Mass Central
-          fprintf (f, "%e  ", strct3->TotMass);     // Mass Second most massive Gal
-          fprintf (f, "%5d ", strct1->NumSubs);     // NumSubs
-          fprintf (f, "%5d ", strct2->Central);     // Is Central central?
-          fprintf (f, "%5d ", strct1->ID);          // ID IHSC
-          fprintf (f, "%5d ", strct2->ID);          // ID Central
-          fprintf (f, "%5d ", strct3->ID);          // ID Second most
-          fprintf (f, "%e  ", strct1->M30);         // 30 kpc stellar mass no sats
-          fprintf (f, "%e  ", strct1->M100);        // 100 kpc stellar mass no sats
-          fprintf (f, "%e  ", strct1->R500c);       // R500C
-          fprintf (f, "%e  ", strct1->M500c);
-          fprintf (f, "%e  ", strct1->ms500c_str);
-          fprintf (f, "%e  ", strct1->ms500c_dif);
-          fprintf (f, "%e  ", strct1->R200c);       // R200C
-          fprintf (f, "%e  ", strct1->M200c);
-          fprintf (f, "%e  ", strct1->ms200c_str);
-          fprintf (f, "%e  ", strct1->ms200c_dif);
-          fprintf (f, "%e  ", strct1->R200b);       // R200B
-          fprintf (f, "%e  ", strct1->M200b);
-          fprintf (f, "%e  ", strct1->ms200b_str);
-          fprintf (f, "%e  ", strct1->ms200b_dif);
-          fprintf (f, "%e  ", strct1->Rbn98);       // RBN98
-          fprintf (f, "%e  ", strct1->Mbn98);
-          fprintf (f, "%e  ", strct1->msbn98_str);
-          fprintf (f, "%e  ", strct1->msbn98_dif);
-      	  fprintf (f, "%e  ", strct2->Pos[0]);
-      	  fprintf (f, "%e  ", strct2->Pos[1]);
-      	  fprintf (f, "%e  ", strct2->Pos[2]);
-          fprintf (f, "%d  ", strct1->nlowres);
-          fprintf (f, "%d  ", strct1->tlowres);
-          fprintf (f, "%e  ", strct1->rlowres);
+          fprintf (f, "%e  ",   strct2->dummyd);      // Total Stellar Mass
+          fprintf (f, "%e  ",   strct1->TotMass);     // Mass IHSC
+          fprintf (f, "%e  ",   strct2->TotMass);     // Mass Central
+          fprintf (f, "%e  ",   strct3->TotMass);     // Mass Second most massive Gal
+          fprintf (f, "%5d ",   strct1->NumSubs);     // NumSubs
+          fprintf (f, "%5d ",   strct2->Central);     // Is Central central?
+          fprintf (f, "%15ld ", strct1->ID);          // ID IHSC
+          fprintf (f, "%15ld ", strct2->ID);          // ID Central
+          fprintf (f, "%15ld ", strct3->ID);          // ID Second most
+          fprintf (f, "%e  ",   strct1->M30);         // 30 kpc stellar mass no sats
+          fprintf (f, "%e  ",   strct1->M100);        // 100 kpc stellar mass no sats
+          fprintf (f, "%e  ",   strct1->R500c);       // R500C
+          fprintf (f, "%e  ",   strct1->M500c);
+          fprintf (f, "%e  ",   strct1->ms500c_str);
+          fprintf (f, "%e  ",   strct1->ms500c_dif);
+          fprintf (f, "%e  ",   strct1->R200c);       // R200C
+          fprintf (f, "%e  ",   strct1->M200c);
+          fprintf (f, "%e  ",   strct1->ms200c_str);
+          fprintf (f, "%e  ",   strct1->ms200c_dif);
+          fprintf (f, "%e  ",   strct1->R200b);       // R200B
+          fprintf (f, "%e  ",   strct1->M200b);
+          fprintf (f, "%e  ",   strct1->ms200b_str);
+          fprintf (f, "%e  ",   strct1->ms200b_dif);
+          fprintf (f, "%e  ",   strct1->Rbn98);       // RBN98
+          fprintf (f, "%e  ",   strct1->Mbn98);
+          fprintf (f, "%e  ",   strct1->msbn98_str);
+          fprintf (f, "%e  ",   strct1->msbn98_dif);
+      	  fprintf (f, "%e  ",   strct2->Pos[0]);
+      	  fprintf (f, "%e  ",   strct2->Pos[1]);
+      	  fprintf (f, "%e  ",   strct2->Pos[2]);
+          fprintf (f, "%d  ",   strct1->nlowres);
+          fprintf (f, "%d  ",   strct1->tlowres);
+          fprintf (f, "%e  ",   strct1->rlowres);
           fprintf (f, "\n");
         }
       }

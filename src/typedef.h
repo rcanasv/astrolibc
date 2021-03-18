@@ -60,7 +60,7 @@ typedef struct Particle
   double      Pos[3];
   double      Vel[3];
   double      Mass;
-  int         Id;
+  long        Id;
   int         Level;
   float       Metal;
   float       Chem;
@@ -69,6 +69,7 @@ typedef struct Particle
   int         HostID;
   int         DirectHostID;
   int         StructID;
+  int         indx;
   float       Radius;
   float       U;      // Internal energy
   float       Rho;    // Density
@@ -92,9 +93,9 @@ typedef struct ParticleData
 
 typedef struct Structure
 {
-  int        ID;
-  int        DirectHostID;
-  int        HostID;
+  long       ID;
+  long       DirectHostID;
+  long       HostID;
   int        NumSubs;
   int        Type;
   int        NumPart;
@@ -193,7 +194,7 @@ typedef struct Structure
 
   // Particle IDs
   int        iIDs;
-  int      * PIDs;
+  long     * PIDs;
 
   // Substructure Info
   int        IDfirstSub;

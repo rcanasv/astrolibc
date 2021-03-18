@@ -30,10 +30,10 @@ void ramses_hydro_read (Simulation * ramses, int filenum, Grid * grid)
   int     tmplvl;
   int     tmpng;
 
-  char    fname    [NAME_LENGTH];
-  char    dummys   [NAME_LENGTH];
-  char    buffer   [NAME_LENGTH];
-  char    ordering [NAME_LENGTH];
+  char    fname    [LONG_LENGTH];
+  char    dummys   [LONG_LENGTH];
+  char    buffer   [LONG_LENGTH];
+  char    ordering [LONG_LENGTH];
 
   if (!(grid->alloc_ngrid && grid->alloc_level))
   {
@@ -207,10 +207,10 @@ void ramses_amr_load (Simulation * ramses, int filenum, Grid * grid)
   char    name[100];
   int     twondim, twotondim;
 
-  char    fname    [NAME_LENGTH];
-  char    dummys   [NAME_LENGTH];
-  char    buffer   [NAME_LENGTH];
-  char    ordering [NAME_LENGTH];
+  char    fname    [LONG_LENGTH];
+  char    dummys   [LONG_LENGTH];
+  char    buffer   [LONG_LENGTH];
+  char    ordering [LONG_LENGTH];
 
   sprintf (fname, "%s/amr_%s.out%05d", ramses->archive.path, ramses->archive.prefix, filenum+1);
   if ((f = fopen (fname, "r")) == NULL)
@@ -413,9 +413,9 @@ void ramses_init (Simulation * ramses)
 {
   int     i;
   FILE  * f;
-  char    fname  [NAME_LENGTH];
-  char    dummys [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
+  char    fname  [LONG_LENGTH];
+  char    dummys [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
 
 
   sprintf (fname, "%s/info_%s.txt", ramses->archive.path, ramses->archive.prefix);
@@ -462,8 +462,8 @@ void ramses_load_particles (Simulation * ramses, int filenum, Particle ** part)
 {
 
   int     i, j;
-  char    fname  [NAME_LENGTH];
-  char    buffer [NAME_LENGTH];
+  char    fname  [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
 
   int     dummy;
   int     dummyi;
@@ -787,9 +787,9 @@ void  ramses_structure_calculate_star_age (Simulation * ramses, Catalog * ctlg, 
   double   time_simu;
 
   FILE   * f;
-  char     fname  [NAME_LENGTH];
-  char     dummys [NAME_LENGTH];
-  char     buffer [NAME_LENGTH];
+  char     fname  [LONG_LENGTH];
+  char     dummys [LONG_LENGTH];
+  char     buffer [LONG_LENGTH];
   double   dummyd;
 
   Structure * strct;
@@ -873,9 +873,9 @@ void  ramses_catalog_calculate_star_age (Simulation * ramses, Catalog * ctlg)
   double   time_simu;
 
   FILE   * f;
-  char     fname  [NAME_LENGTH];
-  char     dummys [NAME_LENGTH];
-  char     buffer [NAME_LENGTH];
+  char     fname  [LONG_LENGTH];
+  char     dummys [LONG_LENGTH];
+  char     buffer [LONG_LENGTH];
   double   dummyd;
 
   Structure * strct;
