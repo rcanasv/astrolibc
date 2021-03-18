@@ -54,6 +54,7 @@ void gadget_write_snapshot (Particle * P, int NPartTot, gheader * header, Archiv
 void gadget_get_header    (Simulation * gdt, FILE * f, gheader * header);
 long gadget_get_property  (Simulation * gdt, FILE * f, Particle * P, char * prop);
 int  gadget_get_info      (Simulation * gdt, FILE * f, ginfo ** info);
+int gadget_get_noinfo     (Simulation * gdt, FILE * f, ginfo ** info, int nblocks);
 
 int  gadget_get_npart_ThisFile (Simulation * gdt, int filenum);
 

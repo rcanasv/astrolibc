@@ -210,7 +210,7 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
   do
   {
     n++;
-    strcpy (ref, hname); 
+    strcpy (ref, hname);
 
     fread(&dummy,    sizeof(dummy), 1, f);
     fread(&hname[0], sizeof(dummy), 1, f);
@@ -229,7 +229,7 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
   if (strncmp(hname, "INFO", 4))
   {
     printf ("No INFO block in Gadget file\n");
-    return n;
+    return gadget_get_noinfo (gdt, f, info, n);
   }
 
   // Otherwise read and store data of each block
@@ -246,6 +246,45 @@ int gadget_get_info (Simulation * gdt, FILE * f, ginfo ** info)
     data[k].read = 0;
   }
   fread(&dummy, sizeof(dummy), 1, f);
+  return n;
+}
+
+
+// Get Info when there is no INFO block
+int gadget_get_noinfo (Simulation * gdt, FILE * f, ginfo ** info, int nblocks)
+{
+  int      k, n;
+  int      dummy;
+  char     hname [5];
+  ginfo  * data;
+
+  rewind(f);
+  // Skip Header
+  fread(&dummy,    sizeof(dummy), 1, f);
+  fread(&hname[0], sizeof(dummy), 1, f);
+  fread(&dummy,    sizeof(dummy), 1, f);
+  fread(&dummy,    sizeof(dummy), 1, f);
+
+  fread(&dummy, sizeof(dummy), 1, f);
+  fseek(f, dummy, SEEK_CUR);
+  fread(&dummy, sizeof(dummy), 1, f);
+
+  // Get block names
+  n = nblocks;
+  *(info) = (ginfo *) malloc (n * sizeof(ginfo));
+  data = *(info);
+  for (k = 0; k < n; k++)
+  {
+    fread(&dummy,        sizeof(dummy), 1, f);
+    fread(&data[k].name, sizeof(int),   1, f); data[k].name[4] = '\0';
+    fread(&dummy,        sizeof(dummy), 1, f);
+    fread(&dummy,        sizeof(dummy), 1, f);
+
+    fread(&dummy, sizeof(dummy), 1, f);
+    fseek(f, dummy, SEEK_CUR);
+    fread(&dummy, sizeof(dummy), 1, f);
+  }
+  
   return n;
 }
 
