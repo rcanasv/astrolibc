@@ -20,6 +20,7 @@ typedef struct Options
   int            iFraction;
   int            iExtract;
   int            region;
+  int            rho;
   Archive        param;
   Archive        output;
   Archive        clean;
@@ -113,6 +114,12 @@ printf ("READ CLEAN\n");
   Catalog_load_properties (&opt.ahf);
 
 
+for (i = 1; i <= 10; i++)
+  printf ("%ld  %d  %e\n", opt.ahf.strctProps[i].ID, opt.ahf.strctProps[i].NumPart,opt.ahf.strctProps[i].Mvir);
+
+for (i = 1; i <= 10; i++)
+  printf ("%ld  %d  %e\n", opt.stf.strctProps[i].ID, opt.stf.strctProps[i].NumPart,opt.stf.strctProps[i].TotMass);
+
   // 3. Load AHF Particle list inside and sort IDs
   ahf_catalog_get_particle_list (&opt.ahf);
   for (i = 1; i <= opt.ahf.nstruct; i++)
@@ -120,7 +127,7 @@ printf ("READ CLEAN\n");
     strct1 = &opt.ahf.strctProps[i];
     qsort (&strct1->PIDs[0], strct1->NumPart, sizeof(long), long_compare);
   }
-
+exit(0);
 printf ("CATALOGS LOADED\n");
 
   // 4. Load Simultion Partilces and Extended Outpu
@@ -175,6 +182,7 @@ printf ("PARTICLES SORTED\n");
     if (strct_clean[i].HostID == opt.region)
     {
       strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
+printf ("region  %d  line %d strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);  
       strct1->PSO = (Particle *) malloc (strct1->NumPart*sizeof(Particle));
       strct1->nSO = strct1->NumPart;
 
@@ -187,7 +195,7 @@ printf ("PARTICLES SORTED\n");
 	}
       }
 
-      sprintf (output.name, "%s.ihsc_AHF_200c.gdt_%03d", opt.stf.archive.prefix, n++);
+      sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
       gadget_write_snapshot (&strct1->PSO[0], strct1->NumPart, &header, &output);
 
       strct1->ms200c_str = 0;
@@ -215,7 +223,7 @@ printf ("PARTICLES SORTED\n");
 
 
   // 7. Write IHSC mass fractions
-  sprintf (buffer, "%s.ihsc_AHF_200c", opt.stf.archive.prefix);
+  sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
   f = fopen (buffer, "w");
   for (i = 0; i < ncleans; i++)
   {
@@ -287,6 +295,9 @@ void ihsc_params (Options * opt)
 
   // Region 
   fscanf (opt->param.file, "%d", &opt->region);
+
+  // Overdensity
+  fscanf (opt->param.file, "%d", &opt->rho);
 
   // Output
   fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);

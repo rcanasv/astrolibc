@@ -37,7 +37,7 @@ void ahf_read_properties (Catalog * ahf)
   sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
   if ((f = fopen (parts_fname, "r")) == NULL)
   {
-    sprintf (parts_fname, "%s/%s.AHF_particles.0", ahf->archive.path, ahf->archive.prefix);
+    sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
     if ((f = fopen (parts_fname, "r")) == NULL)
     {
       printf ("ERROR: Cannot open file  %s\n", parts_fname);
@@ -50,6 +50,9 @@ void ahf_read_properties (Catalog * ahf)
   sscanf (longbuffer, "%d", &(ahf->nstruct));
   fclose (f);
 
+printf ("Opening %s\n", parts_fname);
+printf ("nstruct  %s\n", ahf->nstruct);
+ 
   // Allocate memory for structure properties
   if ( (ahf->strctProps = (Structure *) malloc ((ahf->nstruct+1) * sizeof(Structure))) == NULL)
   {
@@ -92,6 +95,7 @@ void ahf_read_properties (Catalog * ahf)
       exit (0);
     }
   }
+
 
   for (i = 0; i < ahf->nprocs; i++)
   {
@@ -181,7 +185,7 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
   if ((f = fopen (parts_fname, "r")) == NULL)
   {
-    sprintf (parts_fname, "%s/%s.AHF_particles.0", ahf->archive.path, ahf->archive.prefix);
+    sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
     if ((f = fopen (parts_fname, "r")) == NULL)
     {
       printf ("ERROR: Cannot open file  %s\n", parts_fname);
