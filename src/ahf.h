@@ -15,6 +15,7 @@
 #include "archive.h"
 #include "catalog.h"
 #include "misc.h"
+#include "bzip.h"
 
 
 void  ahf_read_properties           (Catalog * ahf);

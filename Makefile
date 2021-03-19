@@ -50,6 +50,10 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl -Wl,-rpath -Wl,/opt/gcc/5.4.0/hdf5/1.8.1
 GSL_INCL    = -I/opt/gsl/gsl-2.3_gcc-5.4.0/include
 GSL_LIB     = -L/opt/gsl/gsl-2.3_gcc-5.4.0/lib
 GSL_FLAGS   = -lgsl -lgslcblas
+
+BZL_INCL    = -I/usr/include
+BZL_LIB     = -L/usr/lib/x86_64-linux-gnu/
+BZL_FLAGS   = -lbz2
 endif
 
 ifeq ($(MACHINE),hyades)
@@ -76,11 +80,13 @@ HDF5_FLAGS  = -lhdf5 -lhdf5_hl -lz -ldl
 GSL_INCL    = -I/home2/rodrigo/opt/gcc/9.3.0/gsl/2.3/include
 GSL_LIB     = -L/home2/rodrigo/opt/gcc/9.3.0/gsl/2.3/lib
 GSL_FLAGS   = -lgsl -lgslcblas
+
+BZL_INCL    = -I/usr/include
 endif
 
-INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL)
-LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB)
-FLAGS       = -lm -O3 $(HDF5_FLAGS) $(GSL_FLAGS)
+INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL) $(BZL_INCL)
+LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB) $(BZL_LIB)
+FLAGS       = -lm  $(HDF5_FLAGS) $(GSL_FLAGS) $(BZL_FLAGS)
 
 
 SRC   = $(wildcard src/*.c)

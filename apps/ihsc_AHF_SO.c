@@ -103,7 +103,7 @@ int main (int argc, char ** argv)
   }
   fclose (f);
 
-printf ("READ CLEAN\n");  
+printf ("READ CLEAN\n");
 
   // 2. Load Catalogues
   //      - STF
@@ -182,7 +182,7 @@ printf ("PARTICLES SORTED\n");
     if (strct_clean[i].HostID == opt.region)
     {
       strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
-printf ("region  %d  line %d strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);  
+printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);  
       strct1->PSO = (Particle *) malloc (strct1->NumPart*sizeof(Particle));
       strct1->nSO = strct1->NumPart;
 
@@ -293,7 +293,7 @@ void ihsc_params (Options * opt)
     exit (0);
   }
 
-  // Region 
+  // Region
   fscanf (opt->param.file, "%d", &opt->region);
 
   // Overdensity

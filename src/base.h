@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include <bzlib.h>
 #include <hdf5.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>

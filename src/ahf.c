@@ -43,6 +43,14 @@ void ahf_read_properties (Catalog * ahf)
       printf ("ERROR: Cannot open file  %s\n", parts_fname);
       exit (0);
     }
+    else
+    {
+      fclose (f);
+      char * buff;
+      read_bz2_file (parts_fname, &buff, 0);
+      printf ("Returned succesfully\n");
+      exit (0);
+    }
   }
   fclose (f);
   f = fopen (parts_fname, "r");
@@ -51,8 +59,8 @@ void ahf_read_properties (Catalog * ahf)
   fclose (f);
 
 printf ("Opening %s\n", parts_fname);
-printf ("nstruct  %s\n", ahf->nstruct);
- 
+printf ("nstruct  %d\n", ahf->nstruct);
+
   // Allocate memory for structure properties
   if ( (ahf->strctProps = (Structure *) malloc ((ahf->nstruct+1) * sizeof(Structure))) == NULL)
   {
@@ -210,7 +218,7 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   int   npart;
   f = fopen (parts_fname, "r");
   fgets  (longbuffer, NAME_LENGTH, f); // Number of structures
-  
+
   for (k = 1; k <= ahf->nstruct; k++)
   {
     fgets  (longbuffer, NAME_LENGTH, f);
