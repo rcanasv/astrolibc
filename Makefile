@@ -82,11 +82,13 @@ GSL_LIB     = -L/home2/rodrigo/opt/gcc/9.3.0/gsl/2.3/lib
 GSL_FLAGS   = -lgsl -lgslcblas
 
 BZL_INCL    = -I/usr/include
+BZL_LIB     = -L/usr/lib/x86_64-linux-gnu/
+BZL_FLAGS   = -lbz2
 endif
 
 INC         = $(HDF5_INCL) $(GSL_INCL) $(MPI_INCL) $(BZL_INCL)
 LIB         = $(HDF5_LIB) $(GSL_LIB) $(MPI_LIB) $(BZL_LIB)
-FLAGS       = -lm  $(HDF5_FLAGS) $(GSL_FLAGS) $(BZL_FLAGS)
+FLAGS       = -lm -O2 $(HDF5_FLAGS) $(GSL_FLAGS) $(BZL_FLAGS)
 
 
 SRC   = $(wildcard src/*.c)
