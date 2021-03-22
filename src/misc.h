@@ -21,4 +21,6 @@ int get_n_num_from_string (char * strng, int n_num, int ** nums);
 
 int long_compare (const void * a, const void * b);
 
+int mysgets (char * outbuff, int maxchar, char ** inbuff);
+
 #endif    /*  MISC_H  */

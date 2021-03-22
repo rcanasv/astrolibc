@@ -17,6 +17,7 @@ void ahf_read_properties (Catalog * ahf)
   float     dummyf;
   double    dummyd;
 
+  char    * buffc;
   int     * buffi;
   long    * buffl;
   float   * bufff;
@@ -34,32 +35,32 @@ void ahf_read_properties (Catalog * ahf)
   // Open properties file to read total number of structures
   // and number of processors if stf was run with MPI
   //
+  ahf->nstruct = 0;
   sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
-  if ((f = fopen (parts_fname, "r")) == NULL)
+  if ((f = fopen (parts_fname, "r")) != NULL)
   {
-    sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
-    if ((f = fopen (parts_fname, "r")) == NULL)
-    {
-      printf ("ERROR: Cannot open file  %s\n", parts_fname);
-      exit (0);
-    }
-    else
-    {
-      fclose (f);
-      char * buff;
-      read_bz2_file (parts_fname, &buff, 0);
-      printf ("Returned succesfully\n");
-      exit (0);
-    }
+    fgets  (longbuffer, sizeof(longbuffer), f);
+    sscanf (longbuffer, "%d", &(ahf->nstruct));
+    fclose (f);
   }
-  fclose (f);
-  f = fopen (parts_fname, "r");
-  fgets  (longbuffer, sizeof(longbuffer), f);
-  sscanf (longbuffer, "%d", &(ahf->nstruct));
-  fclose (f);
 
-printf ("Opening %s\n", parts_fname);
-printf ("nstruct  %d\n", ahf->nstruct);
+  // Try bz2 compressed file
+  sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
+  if ((f = fopen (parts_fname, "r")) != NULL)
+  {
+    //read_bz2_file (parts_fname, &buff, 0);
+    fclose (f);
+    read_bz2_file (parts_fname, &buffc, 20);
+    sscanf (buffc, "%d", &(ahf->nstruct));
+  }
+
+  // Number of particles should have already been read, otherwise error
+  if (ahf->nstruct == 0)
+  {
+    printf ("ERROR: Cannot open particles file  %s\n", parts_fname);
+    exit (0);
+  }
+  printf ("nstruct  %d\n", ahf->nstruct);
 
   // Allocate memory for structure properties
   if ( (ahf->strctProps = (Structure *) malloc ((ahf->nstruct+1) * sizeof(Structure))) == NULL)
@@ -169,14 +170,17 @@ printf ("nstruct  %d\n", ahf->nstruct);
 
 void ahf_catalog_get_particle_list (Catalog * ahf)
 {
-  int    i, j, k;
+  int     i, j, k;
+  int     check;
+  int     npart;
+  char  * fbuff;
 
   int       dummyi;
   long      dummyl;
   float     dummyf;
   double    dummyd;
 
-  FILE * f;
+  FILE * f = NULL;
   char   parts_fname  [LONG_LENGTH];
   char   halos_fname  [LONG_LENGTH];
   char   longbuffer   [LONG_LENGTH];
@@ -185,21 +189,6 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   int    oTask;
 
   Structure * strct;
-
-  //
-  // Open properties file to read total number of structures
-  // and number of processors if stf was run with MPI
-  //
-  sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
-  if ((f = fopen (parts_fname, "r")) == NULL)
-  {
-    sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
-    if ((f = fopen (parts_fname, "r")) == NULL)
-    {
-      printf ("ERROR: Cannot open file  %s\n", parts_fname);
-      exit (0);
-    }
-  }
 
   // Allocate memory for PIDS
   for (i = 1; i <= ahf->nstruct; i++)
@@ -213,23 +202,61 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
     strct->iIDs = 1;
   }
 
-  // Read
-  int   check;
-  int   npart;
-  f = fopen (parts_fname, "r");
-  fgets  (longbuffer, NAME_LENGTH, f); // Number of structures
-
-  for (k = 1; k <= ahf->nstruct; k++)
+  // Open particles file
+  sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
+  if ((f = fopen (parts_fname, "r")) != NULL)
   {
-    fgets  (longbuffer, NAME_LENGTH, f);
-    check = sscanf (longbuffer, "%d  %ld", &npart, &dummyl);
-    strct = &ahf->strctProps[k];
-    for (i = 0; i < npart; i++)
+    // Read
+    fgets  (longbuffer, NAME_LENGTH, f); // Number of structures
+
+    // Loop over structures to get Particle IDs
+    for (k = 1; k <= ahf->nstruct; k++)
     {
-      fgets  (longbuffer, NAME_LENGTH, f);
-      check = sscanf (longbuffer, "%ld  %d", &strct->PIDs[i], &dummyi);
+      fgets (longbuffer, NAME_LENGTH, f);
+      check = sscanf (longbuffer, "%d  %ld", &npart, &dummyl);
+      strct = &ahf->strctProps[k];
+      for (i = 0; i < npart; i++)
+      {
+        fgets (longbuffer, NAME_LENGTH, f);
+        check = sscanf (longbuffer, "%ld  %d", &strct->PIDs[i], &dummyi);
+      }
     }
+    fclose (f);
   }
 
-  fclose (f);
+  // Try bz2 compressed file
+  sprintf (parts_fname, "%s/%s.AHF_particles.bz2", ahf->archive.path, ahf->archive.prefix);
+  if ((f = fopen (parts_fname, "r")) != NULL)
+  {
+    fclose (f);
+    read_bz2_file (parts_fname, &fbuff, 0);
+    void * init = fbuff;
+
+    // Read
+    mysgets (longbuffer, NAME_LENGTH, &fbuff); // Number of structures
+
+    // Loop over structures to get Particle IDs
+    for (k = 1; k <= ahf->nstruct; k++)
+    {
+      mysgets (longbuffer, NAME_LENGTH, &fbuff);
+      check = sscanf (longbuffer, "%d  %ld", &npart, &dummyl);
+      strct = &ahf->strctProps[k];
+      for (i = 0; i < npart; i++)
+      {
+        mysgets (longbuffer, NAME_LENGTH, &fbuff);
+        check = sscanf (longbuffer, "%ld  %d", &strct->PIDs[i], &dummyi);
+      }
+    }
+
+    fbuff = init;
+    free (fbuff);
+  }
+
+  // Number of particles should have already been read, otherwise error
+  if (f == NULL)
+  {
+    printf ("ERROR: Cannot open particles file  %s\n", parts_fname);
+    exit (0);
+  }
+
 }

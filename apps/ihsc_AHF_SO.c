@@ -103,7 +103,6 @@ int main (int argc, char ** argv)
   }
   fclose (f);
 
-printf ("READ CLEAN\n");
 
   // 2. Load Catalogues
   //      - STF
@@ -114,12 +113,6 @@ printf ("READ CLEAN\n");
   Catalog_load_properties (&opt.ahf);
 
 
-for (i = 1; i <= 10; i++)
-  printf ("%ld  %d  %e\n", opt.ahf.strctProps[i].ID, opt.ahf.strctProps[i].NumPart,opt.ahf.strctProps[i].Mvir);
-
-for (i = 1; i <= 10; i++)
-  printf ("%ld  %d  %e\n", opt.stf.strctProps[i].ID, opt.stf.strctProps[i].NumPart,opt.stf.strctProps[i].TotMass);
-
   // 3. Load AHF Particle list inside and sort IDs
   ahf_catalog_get_particle_list (&opt.ahf);
   for (i = 1; i <= opt.ahf.nstruct; i++)
@@ -127,8 +120,7 @@ for (i = 1; i <= 10; i++)
     strct1 = &opt.ahf.strctProps[i];
     qsort (&strct1->PIDs[0], strct1->NumPart, sizeof(long), long_compare);
   }
-exit(0);
-printf ("CATALOGS LOADED\n");
+
 
   // 4. Load Simultion Partilces and Extended Outpu
   int  ninextended;
@@ -136,21 +128,13 @@ printf ("CATALOGS LOADED\n");
   stfExtendedOutput * xtndd;
 
   Simulation_init (&opt.sim);                              // Initialize sim
-
-printf ("SImulation initialized\n");
-
   numpart = Simulation_get_npart_ThisFile (&opt.sim, 0);   // Get numpart
-
-printf ("NumPart %d\n", numpart);
-
   Simulation_load_particles (&opt.sim, 0, &P);             // Load particles into P
   for (i = 0; i < numpart; i++)
   {
     P[i].dummyi = 0;
     P[i].StructID = 0;
   }
-
-printf ("SIMULATION LOADED\n");
 
   // Tag particles host ID
   xtndd = NULL;
@@ -171,7 +155,6 @@ printf ("SIMULATION LOADED\n");
   // 5. Sort Particles by ID
   qsort(&P[0], numpart, sizeof(Particle), Particle_id_compare);
 
-printf ("PARTICLES SORTED\n");
 
   // 6. Loop over clean structures and copy particles
   //      - Write Gadget snapshot (if desired)
@@ -182,17 +165,17 @@ printf ("PARTICLES SORTED\n");
     if (strct_clean[i].HostID == opt.region)
     {
       strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
-printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);  
+printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);
       strct1->PSO = (Particle *) malloc (strct1->NumPart*sizeof(Particle));
       strct1->nSO = strct1->NumPart;
 
       for (k = 0, j = 0; k < numpart; k++)
       {
         if (P[k].Id == strct1->PIDs[j])
-	{
+        {
           Particle_copy (&P[k], &strct1->PSO[j]);
           j++;
-	}
+        }
       }
 
       sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
@@ -202,9 +185,9 @@ printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clea
       strct1->ms200c_dif = 0;
       for (j = 0; j < strct1->nSO; j++)
       {
-	strct1->PSO[j].Pos[0] -= strct1->Pos[0];
-	strct1->PSO[j].Pos[1] -= strct1->Pos[1];
-	strct1->PSO[j].Pos[2] -= strct1->Pos[2];
+        strct1->PSO[j].Pos[0] -= strct1->Pos[0];
+        strct1->PSO[j].Pos[1] -= strct1->Pos[1];
+        strct1->PSO[j].Pos[2] -= strct1->Pos[2];
 
         if (strct1->PSO[j].Type == 4)
         {

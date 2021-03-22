@@ -7,6 +7,29 @@
 
 #include "misc.h"
 
+int mysgets (char * outbuff, int maxchar, char ** inbuff)
+{
+  // assuming buffer is large enough and input are already allocated
+  int   i, j;
+  char  c;
+  char * buff;
+  int   nchar;
+
+  //memset (outbuff, 0, maxchar);
+  buff = *(inbuff);
+  for (i=0, j=0; i < maxchar; i++)
+    if (buff[i] == '\n')
+      break;
+    else
+      outbuff[j++] = buff[i];
+
+  // Move buffer pointer
+  *(inbuff) += j+1;
+  outbuff[j] = '\0';
+
+  return j;
+}
+
 
 int get_n_num_from_string (char * strng, int n_num, int ** nums)
 {
@@ -61,4 +84,3 @@ int long_compare (const void * a, const void * b)
   if (*l1 < *l2)
     return -1;
 }
-
