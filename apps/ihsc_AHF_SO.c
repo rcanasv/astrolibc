@@ -165,7 +165,6 @@ int main (int argc, char ** argv)
     if (strct_clean[i].HostID == opt.region)
     {
       strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
-printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clean[i].ID, strct1->ID, strct1->NumPart);
       strct1->PSO = (Particle *) malloc (strct1->NumPart*sizeof(Particle));
       strct1->nSO = strct1->NumPart;
 
@@ -183,6 +182,9 @@ printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clea
 
       strct1->ms200c_str = 0;
       strct1->ms200c_dif = 0;
+      register int ndif = 0;
+
+
       for (j = 0; j < strct1->nSO; j++)
       {
         strct1->PSO[j].Pos[0] -= strct1->Pos[0];
@@ -191,15 +193,25 @@ printf ("region  %d  line %ld strct  %ld  numpart  %d\n", opt.region, strct_clea
 
         if (strct1->PSO[j].Type == 4)
         {
-          Particle_get_radius(&strct1->PSO[j]);
+          //Particle_get_radius(&strct1->PSO[j]);
+          strct1->PSO[j].Radius = 1;
           strct2 = &opt.stf.strctProps[strct1->PSO[j].StructID]; // Cross catalog check
 
           // For IHSC comp
           if (strct1->PSO[j].StructID > 0 && strct2->Type > 7)
             strct1->ms200c_str += strct1->PSO[j].Mass;
           else
+          {
             strct1->ms200c_dif += strct1->PSO[j].Mass;
+            strct1->PSO[j].Radius = 0;  // Tag these for writing ihsc output
+            ndif++;
+          }
         }
+
+        // All ICL particles will be at the front of the array
+        qsort (strct1->PSO, strct1->nSO, sizeof(Particle), Particle_rad_compare);
+        sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
+        gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
       }
     }
   }

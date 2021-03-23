@@ -105,14 +105,17 @@ int main (int argc, char ** argv)
       }
     }
   }
+  printf ("HERE 0\n");
 
   for (i = 1; i <= opt.catalog.nstruct; i++)
     if (opt.catalog.strctProps[i].DirectHostID == opt.id[0])
       strct_to_get[i] = 1;
 
+printf ("HERE 1\n");
 
   Structure_get_particle_properties (&opt.catalog, &opt.simulation, strct_to_get);
 
+printf ("HERE 2\n");
 
   Particle * P;
   int numpart = 0;
@@ -152,7 +155,7 @@ int main (int argc, char ** argv)
           P[k].Vel[1] -= strctt->Vel[1];
           P[k].Vel[2] -= strctt->Vel[2];
 
-          P[k].Type = 1;
+          //P[k].Type = 1;
         }
       }
     }
@@ -206,14 +209,14 @@ int main (int argc, char ** argv)
           //strct->Part[j].Pos[0] -= strctt->Pos[0]*1000.0;
           //strct->Part[j].Pos[1] -= strctt->Pos[1]*1000.0;
           //strct->Part[j].Pos[2] -= strctt->Pos[2]*1000.0;
-          strct->Part[j].Pos[0] -= strct->Pos[0];
-          strct->Part[j].Pos[1] -= strct->Pos[1];
-          strct->Part[j].Pos[2] -= strct->Pos[2];
-          strct->Part[j].Vel[0] -= strct->Vel[0];
-          strct->Part[j].Vel[1] -= strct->Vel[1];
-          strct->Part[j].Vel[2] -= strct->Vel[2];
+          //strct->Part[j].Pos[0] -= strct->Pos[0];
+          //strct->Part[j].Pos[1] -= strct->Pos[1];
+          //strct->Part[j].Pos[2] -= strct->Pos[2];
+          //strct->Part[j].Vel[0] -= strct->Vel[0];
+          //strct->Part[j].Vel[1] -= strct->Vel[1];
+          //strct->Part[j].Vel[2] -= strct->Vel[2];
 
-          strct->Part[j].Type = 1;
+          //strct->Part[j].Type = 1;
         }
         sprintf (opt.output.name, "%s.gdt_%03d", opt.output.prefix, k);
 

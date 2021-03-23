@@ -676,6 +676,7 @@ int main (int argc, char ** argv)
       for (j = 1; j <= opt.catalog[i].nstruct; j++)
         strct_to_get[i][j] = 0;
     }
+
     //
     // Tag galaxies to be extracted.
     // For visualization purposes label is used
@@ -745,10 +746,15 @@ int main (int argc, char ** argv)
       }
     }
 
+    printf ("HERE2\n");
+
+    for (i = 1; i <= opt.catalog[0].nstruct; i++)
+      printf ("%d\n", strct_to_get[0][i]);
     // Load Particles
     for (i = 0; i < opt.nsnap; i++)
       Structure_get_particle_properties (&opt.catalog[i], &opt.simulation[i], strct_to_get[i]);
 
+      printf ("HERE2\n");
     // Write Gadget Snapshots
     for (i = opt.catalog[0].nstruct, k = 0; ((k < top)&&(i >=1)); i--)
     {
@@ -758,6 +764,7 @@ int main (int argc, char ** argv)
       fihsc = ihsc->TotMass/ctrl->dummyd;
       mstot = ctrl->dummyd;
 
+      printf ("HERE2\n");
       if (ctrl->dummyi)
       {
         m = 0;
@@ -1153,6 +1160,10 @@ int ihsc_options (int argc, char ** argv, Options * opt)
       	opt->iTrack = 1;
       	break;
 
+      case 'v':
+      	opt->iVerbose = 1;
+      	break;
+
       case 'x':
       	opt->iExtract = 1;
       	break;
@@ -1161,9 +1172,6 @@ int ihsc_options (int argc, char ** argv, Options * opt)
       	opt->iSO = 1;
       	break;
 
-      case 's':
-      	opt->iSO_AHF = 1;
-      	break;
 
       case 'h':
       	ihsc_usage (0, argv);
