@@ -203,6 +203,7 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
   }
 
   // Open particles file
+  int iread = 0;
   sprintf (parts_fname, "%s/%s.AHF_particles", ahf->archive.path, ahf->archive.prefix);
   if ((f = fopen (parts_fname, "r")) != NULL)
   {
@@ -221,6 +222,7 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
         check = sscanf (longbuffer, "%ld  %d", &strct->PIDs[i], &dummyi);
       }
     }
+    iread = 1;
     fclose (f);
   }
 
@@ -250,10 +252,11 @@ void ahf_catalog_get_particle_list (Catalog * ahf)
 
     fbuff = init;
     free (fbuff);
+    iread = 1;
   }
 
   // Number of particles should have already been read, otherwise error
-  if (f == NULL)
+  if (iread == 0)
   {
     printf ("ERROR: Cannot open particles file  %s\n", parts_fname);
     exit (0);

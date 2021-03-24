@@ -187,14 +187,15 @@ int main (int argc, char ** argv)
 
       for (j = 0; j < strct1->nSO; j++)
       {
-        strct1->PSO[j].Pos[0] -= strct1->Pos[0];
-        strct1->PSO[j].Pos[1] -= strct1->Pos[1];
-        strct1->PSO[j].Pos[2] -= strct1->Pos[2];
+        //strct1->PSO[j].Pos[0] -= strct1->Pos[0];
+        //strct1->PSO[j].Pos[1] -= strct1->Pos[1];
+        //strct1->PSO[j].Pos[2] -= strct1->Pos[2];
+        strct1->PSO[j].Radius = 100.;
 
         if (strct1->PSO[j].Type == 4)
         {
           //Particle_get_radius(&strct1->PSO[j]);
-          strct1->PSO[j].Radius = 1;
+          //strct1->PSO[j].Radius = 1;
           strct2 = &opt.stf.strctProps[strct1->PSO[j].StructID]; // Cross catalog check
 
           // For IHSC comp
@@ -203,16 +204,15 @@ int main (int argc, char ** argv)
           else
           {
             strct1->ms200c_dif += strct1->PSO[j].Mass;
-            strct1->PSO[j].Radius = 0;  // Tag these for writing ihsc output
+            strct1->PSO[j].Radius = 0.;  // Tag these for writing ihsc output
             ndif++;
           }
         }
-
-        // All ICL particles will be at the front of the array
-        qsort (strct1->PSO, strct1->nSO, sizeof(Particle), Particle_rad_compare);
-        sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
-        gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
       }
+        // All ICL particles will be at the front of the array
+      qsort (&strct1->PSO[0], strct1->nSO, sizeof(Particle), Particle_rad_compare);
+      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
     }
   }
 
