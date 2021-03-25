@@ -581,6 +581,8 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
   Particle  * part;
   Structure * strct;
 
+  int nOffset;
+
   files_to_read = (int *) malloc (sim->archive.nfiles * sizeof(int));
 
   for (i = 0; i < sim->archive.nfiles; i++)
@@ -631,6 +633,11 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
         ninextended = 0;
         ninextended = stf_load_extended_output (stf, i, &xtndd);
 
+        nOffset = 0;
+        if (sim->format == GIZMO_SIMBA)  // NEED TO WRITE THIS IN A BETTER WAY
+          for (k = 0; k < 4; k++)
+           nOffset += sim->NpartThisFile[k];
+
         if (ninextended)
         {
           Simulation_load_particles (sim, i, &part);
@@ -639,6 +646,7 @@ void  stf_structure_get_particle_properties (Catalog * stf, Simulation * sim, in
           {
             id    = xtndd[j].IdStruct;
             indx  = xtndd[j].oIndex;
+            indx += nOffset;
 
             if ((strcts_to_get[id]) && (id > 0))
             {

@@ -101,7 +101,7 @@ int main (int argc, char ** argv)
       {
         strct_to_get[i] = 1;
         if (opt.verbose)
-          printf ("strct_to_get   %d   %d\n", i, opt.catalog.strctProps[i].HostID);
+          printf ("strct_to_get   %d   %ld\n", i, opt.catalog.strctProps[i].HostID);
       }
     }
   }
