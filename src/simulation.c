@@ -100,7 +100,8 @@ void Simuation_tag_neighbour_files (Simulation * sim, int * file_list)
 
 int Simulation_get_npart_ThisFile (Simulation * sim, int filenum)
 {
-  if (sim->format == GADGET)       return gadget_get_npart_ThisFile (sim, filenum);
-  if (sim->format == GADGET_HEAD)  return gadget_get_npart_ThisFile (sim, filenum);
+  if (sim->format == GADGET)       return gadget_get_npart_ThisFile   (sim, filenum);
+  if (sim->format == GADGET_HEAD)  return gadget_get_npart_ThisFile   (sim, filenum);
+  if (sim->format == GIZMO_SIMBA)  return hdf5_sim_get_npart_ThisFile (sim, filenum);
 
 }

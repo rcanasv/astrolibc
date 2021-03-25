@@ -130,6 +130,7 @@ int main (int argc, char ** argv)
   Simulation_init (&opt.sim);                              // Initialize sim
   numpart = Simulation_get_npart_ThisFile (&opt.sim, 0);   // Get numpart
   Simulation_load_particles (&opt.sim, 0, &P);             // Load particles into P
+
   for (i = 0; i < numpart; i++)
   {
     P[i].dummyi = 0;

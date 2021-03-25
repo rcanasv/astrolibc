@@ -93,6 +93,9 @@ void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
     strcpy (dataset->Velocity, "Velocities");
     strcpy (dataset->Mass,     "Masses");
   }
+
+  strcpy (dataset->Density, "Density");
+  strcpy (dataset->U, "InternalEnergy");
 }
 
 
@@ -178,9 +181,62 @@ void hdf5_sim_init (Simulation * snapshot)
 }
 
 
-void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** part)
+
+int hdf5_sim_get_npart_ThisFile (Simulation * sim, int filenum)
 {
-  int      i, j;
+  int     i;
+  FILE  * f;
+  char    fname  [LONG_LENGTH];
+  char    buffer [LONG_LENGTH];
+
+  hid_t     id_file;
+  hid_t     id_group;
+
+  herr_t    status;
+
+  HDF5_SimGroup    group;
+  HDF5_SimHeader   header;
+
+  int   nPartThisFile;
+
+  //
+  //  Initialize Depending on  Format
+  //
+  hdf5_sim_init_groups (sim, &group);
+  hdf5_sim_init_header (sim, &header);
+
+  //
+  // Read Header
+  //
+  sprintf (fname, "%s/%s.hdf5", sim->archive.path, sim->archive.prefix);
+  if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+  {
+    sprintf (fname, "%s/%s.0.hdf5", sim->archive.path, sim->archive.prefix);
+    if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
+    {
+      printf ("Couldn't open file %s\n", fname);
+      exit (0);
+    }
+  }
+  printf("Opening file  %s\n",fname);
+
+  id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
+  hdf5_get_attribute (id_group, header.NpartThisFile, &sim->NpartThisFile, sizeof(sim->NpartThisFile[0]));
+
+  nPartThisFile = 0;
+  for (i = 0; i < 6; i++)
+    nPartThisFile += sim->NpartThisFile[i];
+
+  status = H5Gclose (id_group);
+  status = H5Fclose (id_file);
+
+  return nPartThisFile;
+}
+
+
+void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
+{
+  int      i, j, k, n;
   char     fname  [LONG_LENGTH];
   char     buffer [LONG_LENGTH];
 
@@ -202,26 +258,31 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   double   * posbuff;
   double   * velbuff;
   double   * massbuff;
-  int      * idbuff;
+  long     * idbuff;
+  double   * rhobuff;
+  double   * ubuff;
 
   HDF5_SimGroup    group;
   HDF5_SimHeader   header;
   HDF5_PartDset    dataset;
 
+  int  nPartThisFile;
+  int  nOffset;
+
   //
   //  Initialize Depending on  Format
   //
-  hdf5_sim_init_groups  (snapshot, &group);
-  hdf5_sim_init_header  (snapshot, &header);
-  hdf5_sim_init_dataset (snapshot, &dataset);
+  hdf5_sim_init_groups  (sim, &group);
+  hdf5_sim_init_header  (sim, &header);
+  hdf5_sim_init_dataset (sim, &dataset);
 
   //
   // Read Header
   //
-  sprintf (fname, "%s/%s.hdf5", snapshot->archive.path, snapshot->archive.prefix);
+  sprintf (fname, "%s/%s.hdf5", sim->archive.path, sim->archive.prefix);
   if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
   {
-    sprintf (fname, "%s/%s.%d.hdf5", snapshot->archive.path, snapshot->archive.prefix, filenum);
+    sprintf (fname, "%s/%s.%d.hdf5", sim->archive.path, sim->archive.prefix, filenum);
     if ((id_file = H5Fopen (fname, H5F_ACC_RDONLY, H5P_DEFAULT)) < 0)
     {
       printf ("Couldn't open file %s\n", fname);
@@ -234,73 +295,123 @@ void hdf5_sim_load_particles (Simulation * snapshot, int filenum, Particle ** pa
   //
 
   id_group = H5Gopen (id_file, group.Header, H5P_DEFAULT);
-  hdf5_get_attribute (id_group, header.NpartThisFile, &snapshot->NpartThisFile, sizeof(snapshot->NpartThisFile[0]));
-  hdf5_get_attribute (id_group, header.MassTable,     &snapshot->MassTable,     sizeof(snapshot->MassTable[0]));
+  hdf5_get_attribute (id_group, header.NpartThisFile, &sim->NpartThisFile, sizeof(sim->NpartThisFile[0]));
+  hdf5_get_attribute (id_group, header.MassTable,     &sim->MassTable,     sizeof(sim->MassTable[0]));
   status = H5Gclose  (id_group);
 
+  nPartThisFile = 0;
+  for (k = 0; k < 6; k++)
+    nPartThisFile += sim->NpartThisFile[k];
 
   //
   // From buffer to Particle
   //
-  if (((*(part)  = (Particle *) malloc (    snapshot->NpartThisFile[4] * sizeof(Particle)))  == NULL) || \
-      ((posbuff  = (double   *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL) || \
-      ((velbuff  = (double   *) malloc (3 * snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL) || \
-      ((idbuff   = (int      *) malloc (    snapshot->NpartThisFile[4] * sizeof(int))     )  == NULL) || \
-      ((massbuff = (double   *) malloc (    snapshot->NpartThisFile[4] * sizeof(double))  )  == NULL)
+  if (((*(part)  = (Particle *) malloc (  nPartThisFile * sizeof(Particle)))  == NULL) || \
+      ((posbuff  = (double   *) malloc (3*nPartThisFile * sizeof(double))  )  == NULL) || \
+      ((velbuff  = (double   *) malloc (3*nPartThisFile * sizeof(double))  )  == NULL) || \
+      ((idbuff   = (long     *) malloc (  nPartThisFile * sizeof(long))    )  == NULL) || \
+      ((massbuff = (double   *) malloc (  nPartThisFile * sizeof(double))  )  == NULL)
      )
   {
     printf ("Couldn't allocate memory for Particle array\n");
     exit(0);
   }
 
+  if (sim->NpartThisFile[0])
+  {
+      rhobuff = (double *) malloc (sim->NpartThisFile[0] * sizeof(double));
+      ubuff   = (double *) malloc (sim->NpartThisFile[0] * sizeof(double));
+  }
 
-  id_group = H5Gopen (id_file, group.StarPart, H5P_DEFAULT);
-  hdf5_get_data (id_group, dataset.Position,  posbuff,  sizeof(posbuff[0]));
-  hdf5_get_data (id_group, dataset.Velocity,  velbuff,  sizeof(velbuff[0]));
-  hdf5_get_data (id_group, dataset.Mass,      massbuff, sizeof(massbuff[0]));
-  hdf5_get_data (id_group, dataset.ID,        idbuff,   sizeof(idbuff[0]));
-  status = H5Gclose (id_group);
+  char gname [6][NAME_LENGTH];
+  strcpy (gname[0], group.GasPart);
+  strcpy (gname[1], group.DarkPart);
+  strcpy (gname[2], group.ExtraPart);
+  strcpy (gname[3], group.TracerPart);
+  strcpy (gname[4], group.StarPart);
+  strcpy (gname[5], group.BHPart);
+
+  nOffset = 0;
+  for (k = 0; k < 6; k++)
+  {
+    if (sim->NpartThisFile[k])
+    {
+      id_group = H5Gopen (id_file, gname[k], H5P_DEFAULT);
+      hdf5_get_data (id_group, dataset.Position,  &posbuff[3*nOffset],  sizeof(posbuff[0]));
+      hdf5_get_data (id_group, dataset.Velocity,  &velbuff[3*nOffset],  sizeof(velbuff[0]));
+      hdf5_get_data (id_group, dataset.Mass,      &massbuff[nOffset],   sizeof(massbuff[0]));
+      hdf5_get_data (id_group, dataset.ID,        &idbuff[nOffset],     sizeof(idbuff[0]));
+
+      if (k == 0 && sim->NpartThisFile[0])
+      {
+        hdf5_get_data (id_group, dataset.Density, &rhobuff[0],  sizeof(rhobuff[0]));
+        hdf5_get_data (id_group, dataset.U,       &ubuff[0],    sizeof(ubuff[0]));
+      }
+
+      status = H5Gclose (id_group);
+      nOffset += sim->NpartThisFile[k];
+    }
+  }
   status = H5Fclose (id_file);
 
 
-  for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
-  {
-    posbuff[j]   *= snapshot->to_kpc;
-    posbuff[j+1] *= snapshot->to_kpc;
-    posbuff[j+2] *= snapshot->to_kpc;
-  }
-
+  // Now assign values to respective particle properties
   P = *(part);
-  for (i = 0, j = 0; i < snapshot->NpartThisFile[4]; i++, j=j+3)
+  for (k = 0, n = 0; k < 6; k++)
   {
-    P[i].Pos[0] = posbuff[j];
-    P[i].Pos[1] = posbuff[j+1];
-    P[i].Pos[2] = posbuff[j+2];
-    P[i].Vel[0] = velbuff  [j];
-    P[i].Vel[1] = velbuff  [j+1];
-    P[i].Vel[2] = velbuff  [j+2];
-    P[i].Mass   = massbuff [i];
-    P[i].Id     = idbuff   [i];
+    for (i = 0; i < sim->NpartThisFile[k]; i++, n++)
+    {
+      j = n*3;
+      P[n].Pos[0] = posbuff[j]   * sim->to_kpc;
+      P[n].Pos[1] = posbuff[j+1] * sim->to_kpc;
+      P[n].Pos[2] = posbuff[j+2] * sim->to_kpc;
+
+      P[n].Vel[0] = velbuff[j];
+      P[n].Vel[1] = velbuff[j+1];
+      P[n].Vel[2] = velbuff[j+2];
+
+      P[n].Mass   = massbuff[n];
+      P[n].Id     = idbuff[n];
+      P[n].Type   = k;
+
+      if (k == 0)
+      {
+        P[n].Rho = rhobuff[i];
+	P[n].U   = ubuff[i];
+      }
+
+      if (i < 10)
+        printf ("%e  %e  %e  %ld  %d\n", P[n].Pos[0], P[n].Pos[1], P[n].Pos[2], P[n].Id, P[n].Type);
+    }
   }
 
-
+  // Free memory
   free (posbuff);
   free (velbuff);
   free (idbuff);
   free (massbuff);
-
-
-  //
-  // Convert to human readable units
-  //
-  double a = snapshot->a;
-  double h = snapshot->h;
-
-  for (i = 0; i < snapshot->NpartThisFile[4]; i++)
+  
+  if (sim->NpartThisFile[0])
   {
-    P[i].Pos[0] *= a / h;
-    P[i].Pos[1] *= a / h;
-    P[i].Pos[2] *= a / h;
-    P[i].Mass   *= 1.0 / h;
+    free (rhobuff);
+    free (ubuff);
   }
+
+
+  // Convert to human readable units
+  double a = sim->a;
+  double h = sim->h;
+
+  for (k = 0, n = 0; k < 6; k++)
+  {
+    for (i = 0; i < sim->NpartThisFile[k]; i++, n++)
+    {
+     P[n].Pos[0] *= a / h;
+     P[n].Pos[1] *= a / h;
+     P[n].Pos[2] *= a / h;
+     P[n].Mass   *= 1.0 / h;
+    }
+  }
+
+  //end of function
 }
