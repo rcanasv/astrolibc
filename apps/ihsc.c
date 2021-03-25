@@ -201,8 +201,8 @@ int main (int argc, char ** argv)
 
     for (i = 0; i < opt.nsnap; i++)
     {
-      //sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
-      sprintf (buffer, "test.ihsc");
+      sprintf (buffer, "%s.ihsc", opt.catalog[i].archive.prefix);
+      //sprintf (buffer, "test.ihsc");
       f = fopen (buffer, "w");
       for (j = 1; j <= opt.catalog[i].nstruct; j++)
       {
@@ -302,7 +302,7 @@ int main (int argc, char ** argv)
           fprintf (f, "%e ",  strct2->SFR100);      // SFR100
           */
           fprintf (f, "%e ", minsat_m08);            // Mass in sats M > 1e8
-         fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
+          fprintf (f, "%e ", minsat_m09);            // Mass in sats M > 1e9
           fprintf (f, "%e ", minsat_m10);            // Mass in sats M > 1e10
           fprintf (f, "%e ", minsat_m11);            // Mass in sats M > 1e11
 

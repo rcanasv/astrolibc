@@ -137,14 +137,23 @@ int main (int argc, char ** argv)
     P[i].StructID = 0;
   }
 
+
   // Tag particles host ID
   xtndd = NULL;
   ninextended = 0;
   ninextended = stf_load_extended_output (&opt.stf, 0, &xtndd);
+
+  int starOffset = 0;
+  for (k = 0; k < 4; k++)
+    starOffset += opt.sim.NpartThisFile[k];
+
   for (j = 0; j < ninextended; j++)
   {
     id    = xtndd[j].IdStruct;
     indx  = xtndd[j].oIndex;
+
+    if (opt.sim.format == GIZMO_SIMBA)
+      indx += starOffset;
 
     if (id > 0)
       P[indx].StructID = id;

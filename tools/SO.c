@@ -174,6 +174,12 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
         {
           // Load particles from simulation
           Simulation_load_particles (sim, i, &Pbuff);
+     
+    //------------ PATCH ------->
+         free(Pbuff);
+	 exit(0);
+    //-----------END OF PATCH -->
+
           for (i = 0; i < npartinfile[n]; i++)
           {
             Pbuff[i].dummyi = 0;
