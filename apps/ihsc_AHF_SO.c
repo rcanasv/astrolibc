@@ -209,7 +209,7 @@ int main (int argc, char ** argv)
           strct2 = &opt.stf.strctProps[strct1->PSO[j].StructID]; // Cross catalog check
 
           // For IHSC comp
-          if (strct1->PSO[j].StructID > 0 && strct2->Type > 7)
+          if (strct1->PSO[j].StructID > 0 && strct2->Type > 7 || (strct2->Type == 7 && strct2->NumSubs == 0))
             strct1->ms200c_str += strct1->PSO[j].Mass;
           else
           {
@@ -221,14 +221,16 @@ int main (int argc, char ** argv)
       }
         // All ICL particles will be at the front of the array
       qsort (&strct1->PSO[0], strct1->nSO, sizeof(Particle), Particle_rad_compare);
-      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      //sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl_3DFOFs.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
       gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
     }
   }
 
 
   // 7. Write IHSC mass fractions
-  sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
+  //sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
+  sprintf (buffer, "%s.ihsc_AHF_%03dc_3DFOFs", opt.stf.archive.prefix, opt.rho);
   f = fopen (buffer, "w");
   for (i = 0; i < ncleans; i++)
   {
