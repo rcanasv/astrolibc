@@ -210,7 +210,10 @@ int main (int argc, char ** argv)
 
           // For IHSC comp
           if (strct1->PSO[j].StructID > 0 && strct2->Type > 7 || (strct2->Type == 7 && strct2->NumSubs == 0))
+	  {
             strct1->ms200c_str += strct1->PSO[j].Mass;
+	    strct2->dummyi = 1;
+	  }
           else
           {
             strct1->ms200c_dif += strct1->PSO[j].Mass;
@@ -224,6 +227,27 @@ int main (int argc, char ** argv)
       //sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
       sprintf (output.name, "%s.ihsc_AHF_%03dc_icl_3DFOFs.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
       gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
+
+      // Now print Galaxies info for GSMF
+      sprintf (output.name, "%s.ihsc_AHF_%03dc.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      FILE * ff = fopen (output.name, "w");
+      for (j = 1; j <= opt.stf.nstruct; j++)
+      {
+        strct2 = &opt.stf.strctProps[j];
+	if (strct2->dummyi == 1)
+	{
+	  fprintf (ff, "%ld  ", strct2->ID);
+	  fprintf (ff, "%d  ",  strct2->Type);
+	  fprintf (ff, "%e  ",  strct2->TotMass);
+	  fprintf (ff, "%d  ",  strct2->NumPart);
+	  fprintf (ff, "%d  ",  strct2->NumSubs);
+	  fprintf (ff, "%e  ",  strct2->Pos[0]);
+	  fprintf (ff, "%e  ",  strct2->Pos[1]);
+	  fprintf (ff, "%e  ",  strct2->Pos[2]);
+	  fprintf (ff, "\n");
+	}
+      }
+      fclose (ff); 
     }
   }
 
