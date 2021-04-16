@@ -377,7 +377,7 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
       if (k == 0)
       {
         P[n].Rho = rhobuff[i];
-	P[n].U   = ubuff[i];
+        P[n].U   = ubuff[i];
       }
 
       if (i < 10)
@@ -390,7 +390,7 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
   free (velbuff);
   free (idbuff);
   free (massbuff);
-  
+
   if (sim->NpartThisFile[0])
   {
     free (rhobuff);

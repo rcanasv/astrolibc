@@ -19,6 +19,7 @@ typedef struct Options
   int            iVerbose;
   int            iFraction;
   int            iExtract;
+  int            iIncludeFOF;
   int            region;
   int            rho;
   Archive        param;
@@ -187,6 +188,10 @@ int main (int argc, char ** argv)
         }
       }
 
+      for (j = 1; j <= opt.stf.nstruct; j++)
+        opt.stf.strctProps[j].dummyi = 0;
+
+
       sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
       gadget_write_snapshot (&strct1->PSO[0], strct1->NumPart, &header, &output);
 
@@ -209,11 +214,12 @@ int main (int argc, char ** argv)
           strct2 = &opt.stf.strctProps[strct1->PSO[j].StructID]; // Cross catalog check
 
           // For IHSC comp
-          if (strct1->PSO[j].StructID > 0 && strct2->Type > 7 || (strct2->Type == 7 && strct2->NumSubs == 0))
-	  {
+          //if (strct1->PSO[j].StructID > 0 && strct2->Type > 7 || (strct2->Type == 7 && strct2->NumSubs == 0))
+          if (strct2->Type > 7 || (strct2->Type == 7 && strct2->NumSubs == 0)*opt.iIncludeFOF)
+          {
             strct1->ms200c_str += strct1->PSO[j].Mass;
-	    strct2->dummyi = 1;
-	  }
+            strct2->dummyi = 1;
+          }
           else
           {
             strct1->ms200c_dif += strct1->PSO[j].Mass;
@@ -225,36 +231,42 @@ int main (int argc, char ** argv)
         // All ICL particles will be at the front of the array
       qsort (&strct1->PSO[0], strct1->nSO, sizeof(Particle), Particle_rad_compare);
       //sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl_3DFOFs.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      if (opt.iIncludeFOF)
+        sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
       gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
 
       // Now print Galaxies info for GSMF
       sprintf (output.name, "%s.ihsc_AHF_%03dc.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+      if (opt.iIncludeFOF)
+        sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
       FILE * ff = fopen (output.name, "w");
       for (j = 1; j <= opt.stf.nstruct; j++)
       {
         strct2 = &opt.stf.strctProps[j];
-	if (strct2->dummyi == 1)
-	{
-	  fprintf (ff, "%ld  ", strct2->ID);
-	  fprintf (ff, "%d  ",  strct2->Type);
-	  fprintf (ff, "%e  ",  strct2->TotMass);
-	  fprintf (ff, "%d  ",  strct2->NumPart);
-	  fprintf (ff, "%d  ",  strct2->NumSubs);
-	  fprintf (ff, "%e  ",  strct2->Pos[0]);
-	  fprintf (ff, "%e  ",  strct2->Pos[1]);
-	  fprintf (ff, "%e  ",  strct2->Pos[2]);
-	  fprintf (ff, "\n");
-	}
+        if (strct2->dummyi == 1)
+        {
+          fprintf (ff, "%ld  ", strct2->ID);
+          fprintf (ff, "%d  ",  strct2->Type);
+          fprintf (ff, "%e  ",  strct2->TotMass);
+          fprintf (ff, "%d  ",  strct2->NumPart);
+          fprintf (ff, "%d  ",  strct2->NumSubs);
+          fprintf (ff, "%e  ",  strct2->Pos[0]);
+          fprintf (ff, "%e  ",  strct2->Pos[1]);
+          fprintf (ff, "%e  ",  strct2->Pos[2]);
+          fprintf (ff, "\n");
+        }
       }
-      fclose (ff); 
+      fclose (ff);
     }
   }
 
 
   // 7. Write IHSC mass fractions
   //sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
-  sprintf (buffer, "%s.ihsc_AHF_%03dc_3DFOFs", opt.stf.archive.prefix, opt.rho);
+  sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
+  if (opt.iIncludeFOF)
+    sprintf (buffer, "%s.ihsc_AHF_%03dc_3DFOFs", opt.stf.archive.prefix, opt.rho);
   f = fopen (buffer, "w");
   for (i = 0; i < ncleans; i++)
   {
@@ -389,17 +401,19 @@ int ihsc_options (int argc, char ** argv, Options * opt)
   extern int    optopt;
 
   struct option lopts[] = {
-    {"help",      0, NULL, 'h'},
-    {"verbose",   0, NULL, 'v'},
-    {"param",     0, NULL, 'p'},
-    {"extract",   0, NULL, 'x'},
-    {0,           0, NULL, 0}
+    {"help",         0, NULL, 'h'},
+    {"verbose",      0, NULL, 'v'},
+    {"param",        0, NULL, 'p'},
+    {"extract",      0, NULL, 'x'},
+    {"include-fofs", 0, NULL, 'f'},
+    {0,              0, NULL, 0}
   };
 
-  opt->iVerbose  = 0;
-  opt->iExtract  = 0;
+  opt->iVerbose    = 0;
+  opt->iExtract    = 0;
+  opt->iIncludeFOF = 0;
 
-  while ((myopt = getopt_long (argc, argv, "p:ftxvhs", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "p:fxvh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -408,8 +422,16 @@ int ihsc_options (int argc, char ** argv, Options * opt)
         flag++;
         break;
 
+      case 'f':
+      	opt->iIncludeFOF = 1;
+      	break;
+
       case 'x':
       	opt->iExtract = 1;
+      	break;
+
+      case 'v':
+      	opt->iVerbose = 1;
       	break;
 
       case 'h':
