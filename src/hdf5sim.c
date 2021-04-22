@@ -95,7 +95,9 @@ void hdf5_sim_init_dataset (Simulation * sim, HDF5_PartDset * dataset)
   }
 
   strcpy (dataset->Density, "Density");
-  strcpy (dataset->U, "InternalEnergy");
+  strcpy (dataset->U,       "InternalEnergy");
+  strcpy (dataset->Age,     "StellarFormationTime");
+  strcpy (dataset->Z,       "Metallicity");
 }
 
 
@@ -261,6 +263,8 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
   long     * idbuff;
   double   * rhobuff;
   double   * ubuff;
+  double   * zbuff;
+  double   * agebuff;
 
   HDF5_SimGroup    group;
   HDF5_SimHeader   header;
@@ -323,6 +327,14 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
       ubuff   = (double *) malloc (sim->NpartThisFile[0] * sizeof(double));
   }
 
+  if (sim->NpartThisFile[4])
+  {
+    //zbuff   = (double *) malloc (sim->NpartThisFile[4] * sizeof(double));
+    agebuff = (double *) malloc (sim->NpartThisFile[4] * sizeof(double));
+  }
+
+  printf ("HERE\n");
+
   char gname [6][NAME_LENGTH];
   strcpy (gname[0], group.GasPart);
   strcpy (gname[1], group.DarkPart);
@@ -348,12 +360,18 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
         hdf5_get_data (id_group, dataset.U,       &ubuff[0],    sizeof(ubuff[0]));
       }
 
+      if (k == 4 && sim->NpartThisFile[4])
+      {
+        hdf5_get_data (id_group, dataset.Age, &agebuff[0],  sizeof(agebuff[0]));
+        //hdf5_get_data (id_group, dataset.Z,   &zbuff[0],    sizeof(zbuff[0]));
+      }
+
       status = H5Gclose (id_group);
       nOffset += sim->NpartThisFile[k];
     }
   }
   status = H5Fclose (id_file);
-
+printf ("HERE2\n");
 
   // Now assign values to respective particle properties
   P = *(part);
@@ -380,7 +398,13 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
         P[n].U   = ubuff[i];
       }
 
-      if (i < 10)
+      if (k == 4)
+      {
+        P[n].Age = agebuff[i];
+        //P[n].Z   = zbuff[i];
+      }
+
+      if (i < 5)
         printf ("%e  %e  %e  %ld  %d\n", P[n].Pos[0], P[n].Pos[1], P[n].Pos[2], P[n].Id, P[n].Type);
     }
   }
@@ -397,6 +421,11 @@ void hdf5_sim_load_particles (Simulation * sim, int filenum, Particle ** part)
     free (ubuff);
   }
 
+  if (sim->NpartThisFile[4])
+  {
+    free (agebuff);
+    //free (zbuff);
+  }
 
   // Convert to human readable units
   double a = sim->a;

@@ -63,6 +63,8 @@ typedef struct HDF5_PartDset
   char ID          [NAME_LENGTH];
   char Density     [NAME_LENGTH];
   char U           [NAME_LENGTH];
+  char Age         [NAME_LENGTH];
+  char Z           [NAME_LENGTH];
 } HDF5_PartDset;
 
 
