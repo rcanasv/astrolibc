@@ -16,18 +16,22 @@
 
 typedef struct Options
 {
-  int            iVerbose;
-  int            iFraction;
-  int            iExtract;
-  int            iIncludeFOF;
-  int            region;
-  int            rho;
-  Archive        param;
-  Archive        output;
-  Archive        clean;
-  Catalog        stf;
-  Catalog        ahf;
-  Simulation     sim;
+  int         iVerbose;
+  int         iFraction;
+  int         iExtract;
+  int         iIncludeFOF;
+  int         iGetSO;
+  int         iGetICL;
+  int         iGals;
+  int         iProps;
+  int         region;
+  int         rho;
+  Archive     param;
+  Archive     output;
+  Archive     clean;
+  Catalog     stf;
+  Catalog     ahf;
+  Simulation  sim;
 } Options;
 
 
@@ -191,9 +195,11 @@ int main (int argc, char ** argv)
       for (j = 1; j <= opt.stf.nstruct; j++)
         opt.stf.strctProps[j].dummyi = 0;
 
-
-      sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
-      gadget_write_snapshot (&strct1->PSO[0], strct1->NumPart, &header, &output);
+      if (opt.iGetSO)
+      {
+        sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
+        gadget_write_snapshot (&strct1->PSO[0], strct1->NumPart, &header, &output);
+      }
 
       strct1->ms200c_str = 0;
       strct1->ms200c_dif = 0;
@@ -205,7 +211,7 @@ int main (int argc, char ** argv)
         //strct1->PSO[j].Pos[0] -= strct1->Pos[0];
         //strct1->PSO[j].Pos[1] -= strct1->Pos[1];
         //strct1->PSO[j].Pos[2] -= strct1->Pos[2];
-        strct1->PSO[j].Radius = 100.;
+        strct1->PSO[j].Radius = 1;
 
         if (strct1->PSO[j].Type == 4)
         {
@@ -228,76 +234,108 @@ int main (int argc, char ** argv)
           }
         }
       }
-        // All ICL particles will be at the front of the array
+
+      // All ICL particles will be at the front of the array
       qsort (&strct1->PSO[0], strct1->nSO, sizeof(Particle), Particle_rad_compare);
-      //sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      if (opt.iIncludeFOF)
-        sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
+
+      // Write Gadget snapshot of ICL
+      if (opt.iGetICL)
+      {
+        //sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+        sprintf (output.name, "%s.ihsc_AHF_%03dc_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+        if (opt.iIncludeFOF)
+          sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs_icl.gdt_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+        gadget_write_snapshot (&strct1->PSO[0], ndif, &header, &output);
+      }
+
+      // Write particle properties of ICL
+      if (opt.iAsciiStars)
+      {
+        sprintf (output.name, "%s.ihsc_AHF_%03dc.stars_icl_%03d", opt.stf.archive.prefix, opt.r
+        if (opt.iIncludeFOF)
+          sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.stars_icl_%03d", opt.stf.archive.pref
+        FILE * fff = fopen (output.name, "w");
+        for (j = 0; j < strct1->nSO; j++)
+        {
+          fprintf (fff, "%e ", strct1->PSO[i].Pos[0]);
+          fprintf (fff, "%e ", strct1->PSO[j].Pos[1]);
+          fprintf (fff, "%e ", strct1->PSO[j].Pos[2]);
+          fprintf (fff, "%e ", strct1->PSO[j].Vel[0]);
+          fprintf (fff, "%e ", strct1->PSO[j].Vel[1]);
+          fprintf (fff, "%e ", strct1->PSO[j].Vel[2]);
+          fprintf (fff, "%e ", strct1->PSO[j].Age);
+          fprintf (fff, "%d",  (int)strct1->PSO[j].Radius);
+          fprintf (fff, "\n");
+        }
+        fclose (fff);
+      }
 
       // Now print Galaxies info for GSMF
-      sprintf (output.name, "%s.ihsc_AHF_%03dc.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      if (opt.iIncludeFOF)
-        sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
-      FILE * ff = fopen (output.name, "w");
-      for (j = 1; j <= opt.stf.nstruct; j++)
+      if (opt.iGals)
       {
-        strct2 = &opt.stf.strctProps[j];
-        if (strct2->dummyi == 1)
+        sprintf (output.name, "%s.ihsc_AHF_%03dc.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+        if (opt.iIncludeFOF)
+          sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.gals_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+        FILE * ff = fopen (output.name, "w");
+        for (j = 1; j <= opt.stf.nstruct; j++)
         {
-          fprintf (ff, "%ld  ", strct2->ID);
-          fprintf (ff, "%d  ",  strct2->Type);
-          fprintf (ff, "%e  ",  strct2->TotMass);
-          fprintf (ff, "%d  ",  strct2->NumPart);
-          fprintf (ff, "%d  ",  strct2->NumSubs);
-          fprintf (ff, "%e  ",  strct2->Pos[0]);
-          fprintf (ff, "%e  ",  strct2->Pos[1]);
-          fprintf (ff, "%e  ",  strct2->Pos[2]);
-          fprintf (ff, "\n");
+          strct2 = &opt.stf.strctProps[j];
+          if (strct2->dummyi == 1)
+          {
+            fprintf (ff, "%ld  ", strct2->ID);
+            fprintf (ff, "%d  ",  strct2->Type);
+            fprintf (ff, "%e  ",  strct2->TotMass);
+            fprintf (ff, "%d  ",  strct2->NumPart);
+            fprintf (ff, "%d  ",  strct2->NumSubs);
+            fprintf (ff, "%e  ",  strct2->Pos[0]);
+            fprintf (ff, "%e  ",  strct2->Pos[1]);
+            fprintf (ff, "%e  ",  strct2->Pos[2]);
+            fprintf (ff, "\n");
+          }
         }
+        fclose (ff);
       }
-      fclose (ff);
-    }
-  }
+    } // Region IF block
+  } // End of Ncleans loop
 
 
   // 7. Write IHSC mass fractions
-  //sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
-  sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
-  if (opt.iIncludeFOF)
-    sprintf (buffer, "%s.ihsc_AHF_%03dc_3DFOFs", opt.stf.archive.prefix, opt.rho);
-  f = fopen (buffer, "w");
-  for (i = 0; i < ncleans; i++)
+  if (opt.iProps)
   {
-    if (strct_clean[i].HostID == opt.region)
+    sprintf (buffer, "%s.ihsc_AHF_%03dc", opt.stf.archive.prefix, opt.rho);
+    if (opt.iIncludeFOF)
+      sprintf (buffer, "%s.ihsc_AHF_%03dc_3DFOFs", opt.stf.archive.prefix, opt.rho);
+    f = fopen (buffer, "w");
+    for (i = 0; i < ncleans; i++)
     {
-      strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
-      fprintf (f, "%15ld  ", strct1->ID);
-      fprintf (f, "%d     ", strct1->NumPart);
-      fprintf (f, "%e     ", strct1->Mvir);
-      fprintf (f, "%e     ", strct1->Rvir);
-      fprintf (f, "%e     ", strct1->Pos[0]);
-      fprintf (f, "%e     ", strct1->Pos[1]);
-      fprintf (f, "%e     ", strct1->Pos[2]);
-      fprintf (f, "%e     ", strct1->Vel[1]);
-      fprintf (f, "%e     ", strct1->Vel[2]);
-      fprintf (f, "%e     ", strct1->Rmax);
-      fprintf (f, "%e     ", strct1->mbpOffset);
-      fprintf (f, "%e     ", strct1->comOffset);
-      fprintf (f, "%e     ", strct1->Vmax);
-      fprintf (f, "%e     ", strct1->Vdisp);
-      fprintf (f, "%e     ", strct1->Ekin);
-      fprintf (f, "%e     ", strct1->Epot);
-      fprintf (f, "%e     ", strct1->cNFW);
-      fprintf (f, "%e     ", strct1->ms200c_str + strct1->ms200c_dif);
-      fprintf (f, "%e     ", strct1->ms200c_dif);
-      fprintf (f, "%e     ", strct1->ms200c_str);
-      fprintf (f, "\n");
+      if (strct_clean[i].HostID == opt.region)
+      {
+        strct1 = &opt.ahf.strctProps[strct_clean[i].ID];
+        fprintf (f, "%15ld  ", strct1->ID);
+        fprintf (f, "%d     ", strct1->NumPart);
+        fprintf (f, "%e     ", strct1->Mvir);
+        fprintf (f, "%e     ", strct1->Rvir);
+        fprintf (f, "%e     ", strct1->Pos[0]);
+        fprintf (f, "%e     ", strct1->Pos[1]);
+        fprintf (f, "%e     ", strct1->Pos[2]);
+        fprintf (f, "%e     ", strct1->Vel[1]);
+        fprintf (f, "%e     ", strct1->Vel[2]);
+        fprintf (f, "%e     ", strct1->Rmax);
+        fprintf (f, "%e     ", strct1->mbpOffset);
+        fprintf (f, "%e     ", strct1->comOffset);
+        fprintf (f, "%e     ", strct1->Vmax);
+        fprintf (f, "%e     ", strct1->Vdisp);
+        fprintf (f, "%e     ", strct1->Ekin);
+        fprintf (f, "%e     ", strct1->Epot);
+        fprintf (f, "%e     ", strct1->cNFW);
+        fprintf (f, "%e     ", strct1->ms200c_str + strct1->ms200c_dif);
+        fprintf (f, "%e     ", strct1->ms200c_dif);
+        fprintf (f, "%e     ", strct1->ms200c_str);
+        fprintf (f, "\n");
+      }
     }
+    fclose (f);
   }
-  fclose (f);
-
   // --------------------------------------------------- //
 
 
@@ -403,21 +441,29 @@ int ihsc_options (int argc, char ** argv, Options * opt)
   struct option lopts[] = {
     {"help",         0, NULL, 'h'},
     {"verbose",      0, NULL, 'v'},
-    {"param",        0, NULL, 'p'},
+    {"param",        0, NULL, 'P'},
     {"extract",      0, NULL, 'x'},
     {"include-fofs", 0, NULL, 'f'},
+    {"get-so",       0, NULL, 's'},
+    {"get-icl",      0, NULL, 'i'},
+    {"gals-info",    0, NULL, 'g'},
+    {"properties",   0, NULL, 'p'},
     {0,              0, NULL, 0}
   };
 
   opt->iVerbose    = 0;
   opt->iExtract    = 0;
   opt->iIncludeFOF = 0;
+  opt->iGetSO      = 0;
+  opt->iGetICL     = 0;
+  opt->iGals       = 0;
+  opt->iProps      = 0;
 
   while ((myopt = getopt_long (argc, argv, "p:fxvh", lopts, &index)) != -1)
   {
     switch (myopt)
     {
-      case 'p':
+      case 'P':
       	strcpy (opt->param.name, optarg);
         flag++;
         break;
@@ -432,6 +478,22 @@ int ihsc_options (int argc, char ** argv, Options * opt)
 
       case 'v':
       	opt->iVerbose = 1;
+      	break;
+
+      case 's':
+      	opt->iGetSO = 1;
+      	break;
+
+      case 'i':
+      	opt->iGetICL = 1;
+      	break;
+
+      case 'g':
+      	opt->iGals = 1;
+      	break;
+
+      case 'p':
+      	opt->iProps = 1;
       	break;
 
       case 'h':
