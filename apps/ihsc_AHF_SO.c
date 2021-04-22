@@ -23,6 +23,7 @@ typedef struct Options
   int         iGetSO;
   int         iGetICL;
   int         iGals;
+  int         iAsciiStars;
   int         iProps;
   int         region;
   int         rho;
@@ -448,6 +449,7 @@ int ihsc_options (int argc, char ** argv, Options * opt)
     {"get-icl",      0, NULL, 'i'},
     {"gals-info",    0, NULL, 'g'},
     {"properties",   0, NULL, 'p'},
+    {"ascii-stars",  0, NULL, 'a'},
     {0,              0, NULL, 0}
   };
 
@@ -458,8 +460,9 @@ int ihsc_options (int argc, char ** argv, Options * opt)
   opt->iGetICL     = 0;
   opt->iGals       = 0;
   opt->iProps      = 0;
+  opt->iAsciiStars = 0;
 
-  while ((myopt = getopt_long (argc, argv, "p:fxvh", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "P:hvxfsigpa", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -493,6 +496,10 @@ int ihsc_options (int argc, char ** argv, Options * opt)
       	break;
 
       case 'p':
+      	opt->iProps = 1;
+      	break;
+
+      case 'a':
       	opt->iProps = 1;
       	break;
 
