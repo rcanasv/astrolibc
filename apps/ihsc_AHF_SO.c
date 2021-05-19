@@ -176,7 +176,7 @@ int main (int argc, char ** argv)
   //      - Write Gadget snapshot (if desired)
   gheader  header;
   Archive  output;
-  for (i = 0, n = 0; i < ncleans; i++)
+  for (i = 0, n = 1; i < ncleans; i++)
   {
     if (strct_clean[i].HostID == opt.region)
     {
@@ -198,7 +198,7 @@ int main (int argc, char ** argv)
 
       if (opt.iGetSO)
       {
-        sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n++);
+        sprintf (output.name, "%s.ihsc_AHF_%03dc.gdt_%03d", opt.stf.archive.prefix, opt.rho, n);
         gadget_write_snapshot (&strct1->PSO[0], strct1->NumPart, &header, &output);
       }
 
@@ -252,22 +252,24 @@ int main (int argc, char ** argv)
       // Write particle properties of ICL
       if (opt.iAsciiStars)
       {
-        sprintf (output.name, "%s.ihsc_AHF_%03dc.stars_icl_%03d", opt.stf.archive.prefix, opt.r
+        sprintf (output.name, "%s.ihsc_AHF_%03dc.stars_icl_%03d", opt.stf.archive.prefix, opt.rho, n-1);
         if (opt.iIncludeFOF)
-          sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.stars_icl_%03d", opt.stf.archive.pref
+          sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.stars_icl_%03d", opt.stf.archive.prefix, opt.rho, n-1);
         FILE * fff = fopen (output.name, "w");
         for (j = 0; j < strct1->nSO; j++)
-        {
-          fprintf (fff, "%e ", strct1->PSO[i].Pos[0]);
-          fprintf (fff, "%e ", strct1->PSO[j].Pos[1]);
-          fprintf (fff, "%e ", strct1->PSO[j].Pos[2]);
-          fprintf (fff, "%e ", strct1->PSO[j].Vel[0]);
-          fprintf (fff, "%e ", strct1->PSO[j].Vel[1]);
-          fprintf (fff, "%e ", strct1->PSO[j].Vel[2]);
-          fprintf (fff, "%e ", strct1->PSO[j].Age);
-          fprintf (fff, "%d",  (int)strct1->PSO[j].Radius);
-          fprintf (fff, "\n");
-        }
+	  if (strct1->PSO[j].Type == 4)
+          {
+            fprintf (fff, "%e ", strct1->PSO[j].Pos[0]);
+            fprintf (fff, "%e ", strct1->PSO[j].Pos[1]);
+            fprintf (fff, "%e ", strct1->PSO[j].Pos[2]);
+            fprintf (fff, "%e ", strct1->PSO[j].Vel[0]);
+            fprintf (fff, "%e ", strct1->PSO[j].Vel[1]);
+            fprintf (fff, "%e ", strct1->PSO[j].Vel[2]);
+            fprintf (fff, "%e ", strct1->PSO[j].Age);
+            fprintf (fff, "%d ",  (int)strct1->PSO[j].Radius);
+	    fprintf (fff, "%e ", strct1->PSO[j].Mass);
+            fprintf (fff, "\n");
+          }
         fclose (fff);
       }
 
@@ -296,6 +298,7 @@ int main (int argc, char ** argv)
         }
         fclose (ff);
       }
+    n++;
     } // Region IF block
   } // End of Ncleans loop
 
@@ -500,7 +503,7 @@ int ihsc_options (int argc, char ** argv, Options * opt)
       	break;
 
       case 'a':
-      	opt->iProps = 1;
+      	opt->iAsciiStars = 1;
       	break;
 
       case 'h':
