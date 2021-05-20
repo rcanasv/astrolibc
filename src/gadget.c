@@ -284,7 +284,7 @@ int gadget_get_noinfo (Simulation * gdt, FILE * f, ginfo ** info, int nblocks)
     fseek(f, dummy, SEEK_CUR);
     fread(&dummy, sizeof(dummy), 1, f);
   }
-  
+
   return n;
 }
 

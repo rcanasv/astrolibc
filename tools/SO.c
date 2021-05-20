@@ -113,6 +113,8 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
   npartinfile   = (int *) malloc ((sim->archive.nfiles) * sizeof(int));
   strct_to_get  = (int *) malloc ((ctlg->nstruct)       * sizeof(int));
 
+  printf("HEREE\n");
+
   // Initialize arrays
   for (i = 0; i < sim->archive.nfiles; i++)
   {
@@ -174,10 +176,10 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
         {
           // Load particles from simulation
           Simulation_load_particles (sim, i, &Pbuff);
-     
+
     //------------ PATCH ------->
-         free(Pbuff);
-	 exit(0);
+//         free(Pbuff);
+//	 exit(0);
     //-----------END OF PATCH -->
 
           for (i = 0; i < npartinfile[n]; i++)
@@ -309,6 +311,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
             if (Pbuff[i].Type == 4)
             {
               strct3 = &ctlg->strctProps[Pbuff[i].StructID];
+              Pbuff[i].dummyi = 1;
 
               // Spherical appertues e.g. Pillepich
               if (Pbuff[i].StructID == strct1->ID || Pbuff[i].StructID == strct2->ID)
@@ -329,6 +332,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
               }
               else
               {
+                Pbuff[i].dummyi = 0;
                 msum_dif += Pbuff[i].Mass;
                 if (Pbuff[i].Radius < strct1->R200c)  strct1->ms200c_dif = msum_dif;
                 if (Pbuff[i].Radius < strct1->R200b)  strct1->ms200b_dif = msum_dif;
@@ -354,10 +358,40 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
             }
           }
 
+          if (strct1->ID == 1)
+          {
+            sprintf (output.name, "%s.ihsc.gdt_%03d", ctlg->archive.prefix, (int)strct1->ID);
+            gadget_write_snapshot (&Pbuff[0], strct1->n200c, &header, &output);
 
-          sprintf (output.name, "ihsc.gdt_%06ld", strct1->ID);
-          gadget_write_snapshot (&Pbuff[0], strct1->n200c, &header, &output);
+            for (i = 0; i < strct1->n200c; i++)
+              Pbuff[i].Radius = Pbuff[i].dummyi;
+            int nicl = 0;
+            for (i = 0; i < strct1->n200c; i++)
+              if (Pbuff[i].Radius == 0 && Pbuff[i].Type == 4)
+                nicl++;
+            qsort (&Pbuff[0], strct1->n200c, sizeof(Particle), Particle_rad_compare);
+            sprintf (output.name, "%s.ihsc_icl.gdt_%03d", ctlg->archive.prefix, (int)strct1->ID);
+            gadget_write_snapshot (&Pbuff[0], nicl, &header, &output);
 
+            //Ascii stars
+            sprintf (output.name, "%s.ihsc.stars_icl_001", ctlg->archive.prefix);
+            FILE * fff = fopen (output.name, "w");
+            for (i = 0; i < strct1->n200c; i++)
+      	      if (Pbuff[i].Type == 4)
+                {
+                  fprintf (fff, "%e ", Pbuff[i].Pos[0]);
+                  fprintf (fff, "%e ", Pbuff[i].Pos[1]);
+                  fprintf (fff, "%e ", Pbuff[i].Pos[2]);
+                  fprintf (fff, "%e ", Pbuff[i].Vel[0]);
+                  fprintf (fff, "%e ", Pbuff[i].Vel[1]);
+                  fprintf (fff, "%e ", Pbuff[i].Vel[2]);
+                  fprintf (fff, "%e ", Pbuff[i].Age);
+                  fprintf (fff, "%d ", Pbuff[i].dummyi);
+                  fprintf (fff, "%e ", Pbuff[i].Mass);
+                  fprintf (fff, "\n");
+                }
+            fclose (fff);
+          }
 
           //end_t = clock();
           //printf ("%d  took %f seconds\n", k, (end_t - start_t)/(double)CLOCKS_PER_SEC);
