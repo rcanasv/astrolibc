@@ -30,6 +30,7 @@ typedef struct Options
   Archive     param;
   Archive     output;
   Archive     clean;
+  Archive     tree;
   Catalog     stf;
   Catalog     ahf;
   Simulation  sim;
@@ -117,6 +118,7 @@ int main (int argc, char ** argv)
   Catalog_load_properties (&opt.stf);
   Catalog_init            (&opt.ahf);
   Catalog_load_properties (&opt.ahf);
+  stf_read_treefrog       (&opt.tree, &opt.stf);
 
 
   // 3. Load AHF Particle list inside and sort IDs
@@ -257,7 +259,7 @@ int main (int argc, char ** argv)
           sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.stars_icl_%03d", opt.stf.archive.prefix, opt.rho, n-1);
         FILE * fff = fopen (output.name, "w");
         for (j = 0; j < strct1->nSO; j++)
-	  if (strct1->PSO[j].Type == 4 || strct1->PSO[j].Type == 5)
+          if (strct1->PSO[j].Type == 4 || strct1->PSO[j].Type == 5)
           {
             fprintf (fff, "%e  ", strct1->PSO[j].Pos[0]);
             fprintf (fff, "%e  ", strct1->PSO[j].Pos[1]);
@@ -267,9 +269,9 @@ int main (int argc, char ** argv)
             fprintf (fff, "%e  ", strct1->PSO[j].Vel[2]);
             fprintf (fff, "%e  ", strct1->PSO[j].Age);
             fprintf (fff, "%d  ",  (int)strct1->PSO[j].Radius);
-	    fprintf (fff, "%e  ", strct1->PSO[j].Mass);
-	    fprintf (fff, "%d  ", strct1->PSO[j].Type);
-	    fprintf (fff, "%ld ", strct1->PSO[j].Id);
+            fprintf (fff, "%e  ", strct1->PSO[j].Mass);
+            fprintf (fff, "%d  ", strct1->PSO[j].Type);
+            fprintf (fff, "%ld ", strct1->PSO[j].Id);
             fprintf (fff, "\n");
           }
         fclose (fff);
@@ -295,6 +297,11 @@ int main (int argc, char ** argv)
             fprintf (ff, "%e  ",  strct2->Pos[0]);
             fprintf (ff, "%e  ",  strct2->Pos[1]);
             fprintf (ff, "%e  ",  strct2->Pos[2]);
+            printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
+            if (strct2->NumMatch)
+              fprintf (ff, "%ld  ", strct2->MatchIDs[0]);
+            else
+              fprintf (ff, "%ld  ", 0);
             fprintf (ff, "\n");
           }
         }
@@ -425,6 +432,14 @@ void ihsc_params (Options * opt)
   Archive_format (&opt->sim.archive, frmtbuff);
   Archive_path   (&opt->sim.archive, pathbuff);
   Archive_nfiles (&opt->sim.archive, nflsbuff);
+
+  // Tree
+  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
+  Archive_name   (&opt->tree.archive, namebuff);
+  Archive_prefix (&opt->tree.archive, prefixbuff);
+  Archive_format (&opt->tree.archive, frmtbuff);
+  Archive_path   (&opt->tree.archive, pathbuff);
+  Archive_nfiles (&opt->tree.archive, nflsbuff);
 
   // Close
   fclose (opt->param.file);
