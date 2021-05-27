@@ -369,7 +369,7 @@ void gadget_load_particles (Simulation * gdt, int filenum, Particle ** part)
     {
       fread(&ftmp3[0], sizeof(float), 3, fd);
       for (i = 0; i < 3; i++)
-         P[pc_new].Pos[i] = ftmp3[i] / header1.HubbleParam;
+         P[pc_new].Pos[i] = ftmp3[i] * header1.time / header1.HubbleParam;
       pc_new++;
     }
   fread(&dummy,   sizeof(dummy),   1, fd);

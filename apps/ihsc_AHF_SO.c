@@ -257,17 +257,19 @@ int main (int argc, char ** argv)
           sprintf (output.name, "%s.ihsc_AHF_%03dc_3DFOFs.stars_icl_%03d", opt.stf.archive.prefix, opt.rho, n-1);
         FILE * fff = fopen (output.name, "w");
         for (j = 0; j < strct1->nSO; j++)
-	  if (strct1->PSO[j].Type == 4)
+	  if (strct1->PSO[j].Type == 4 || strct1->PSO[j].Type == 5)
           {
-            fprintf (fff, "%e ", strct1->PSO[j].Pos[0]);
-            fprintf (fff, "%e ", strct1->PSO[j].Pos[1]);
-            fprintf (fff, "%e ", strct1->PSO[j].Pos[2]);
-            fprintf (fff, "%e ", strct1->PSO[j].Vel[0]);
-            fprintf (fff, "%e ", strct1->PSO[j].Vel[1]);
-            fprintf (fff, "%e ", strct1->PSO[j].Vel[2]);
-            fprintf (fff, "%e ", strct1->PSO[j].Age);
-            fprintf (fff, "%d ",  (int)strct1->PSO[j].Radius);
-	    fprintf (fff, "%e ", strct1->PSO[j].Mass);
+            fprintf (fff, "%e  ", strct1->PSO[j].Pos[0]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Pos[1]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Pos[2]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Vel[0]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Vel[1]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Vel[2]);
+            fprintf (fff, "%e  ", strct1->PSO[j].Age);
+            fprintf (fff, "%d  ",  (int)strct1->PSO[j].Radius);
+	    fprintf (fff, "%e  ", strct1->PSO[j].Mass);
+	    fprintf (fff, "%d  ", strct1->PSO[j].Type);
+	    fprintf (fff, "%ld ", strct1->PSO[j].Id);
             fprintf (fff, "\n");
           }
         fclose (fff);
