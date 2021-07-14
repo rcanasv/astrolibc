@@ -234,9 +234,9 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
 
             Particle_correct_periodicity (&P[j], lbox_2);
 
-            if ((fabs(P[j].Pos[0]) < 5000.0) && \
-                (fabs(P[j].Pos[1]) < 5000.0) && \
-                (fabs(P[j].Pos[2]) < 5000.0))
+            if ((fabs(P[j].Pos[0]) < 10000.0) && \
+                (fabs(P[j].Pos[1]) < 10000.0) && \
+                (fabs(P[j].Pos[2]) < 10000.0))
             {
               ninrad++;
               P[j].dummyi = 1;
@@ -303,10 +303,19 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
             }
           }
 
+          strct1->PSO[j].HostID = strct2->ID;
+              }
+              else
+              {
+                strct1->ms200c_dif += strct1->PSO[j].Mass;
+                strct1->PSO[j].Radius = 0;  // Tag these for writing ihsc output
+    	    strct1->PSO[j].HostID = 0;
+
+
           msum_ap  = 0;  // for apperture acum
           msum_str = 0;  // for structure acum
           msum_dif = 0;  // for diffuse acum
-          for (i = 0; i <= strct1->nSO; i++)
+          for (i = 0; i <= strct1->ninrad; i++)
           {
             if (Pbuff[i].Type == 4)
             {
@@ -324,6 +333,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
               // For IHSC comp
               if (Pbuff[i].StructID > 0 && strct3->Type > 7)
               {
+                Pbuff[i].HostID = strct3->ID;
                 msum_str += Pbuff[i].Mass;
                 if (Pbuff[i].Radius < strct1->R200c)  strct1->ms200c_str = msum_str;
                 if (Pbuff[i].Radius < strct1->R200b)  strct1->ms200b_str = msum_str;
@@ -332,6 +342,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
               }
               else
               {
+                Pbuff[i].StructID = 0;
                 Pbuff[i].dummyi = 0;
                 msum_dif += Pbuff[i].Mass;
                 if (Pbuff[i].Radius < strct1->R200c)  strct1->ms200c_dif = msum_dif;
@@ -360,6 +371,30 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
 
           if (strct1->ID == 1)
           {
+            fiver200b = 5*strct1->R200b;
+            sprintf (output.name, "%s.ihsc_5x200bc.stars_icl_%03d", opt.stf.archive.prefix, opt.rho, n-1);
+            fff = fopen (output.name, "w");
+            for (i = 0; i < ninrad; i++)
+              if ((Pbuff[i].Type == 4 || Pbuff[i].Type==5) && Pbuff[i].Radius < fiver200b)
+              {
+                fprintf (fff, "%e  ", Pbuff[i].Pos[0]);
+                fprintf (fff, "%e  ", Pbuff[i].Pos[1]);
+                fprintf (fff, "%e  ", Pbuff[i].Pos[2]);
+                fprintf (fff, "%e  ", Pbuff[i].Vel[0]);
+                fprintf (fff, "%e  ", Pbuff[i].Vel[1]);
+                fprintf (fff, "%e  ", Pbuff[i].Vel[2]);
+                fprintf (fff, "%e  ", Pbuff[i].Age);
+                fprintf (fff, "%ld ", Pbuff[i].HostID);
+                fprintf (fff, "%e  ", Pbuff[i].Mass);
+                fprintf (fff, "%d  ", Pbuff[i].Type);
+                fprintf (fff, "%ld ", Pbuff[i].Id);
+                fprintf (fff, "%e  ", Pbuff[i].Radius);
+                fprintf (fff, "\n");
+              }
+            fclose (fff);
+
+
+            /*
             sprintf (output.name, "%s.ihsc.gdt_%03d", ctlg->archive.prefix, (int)strct1->ID);
             gadget_write_snapshot (&Pbuff[0], strct1->n200c, &header, &output);
 
@@ -391,6 +426,7 @@ void get_structure_SO (Catalog * ctlg, Simulation * sim, int * tasks)
                   fprintf (fff, "\n");
                 }
             fclose (fff);
+            */
           }
 
           //end_t = clock();
