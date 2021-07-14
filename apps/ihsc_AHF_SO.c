@@ -25,6 +25,7 @@ typedef struct Options
   int         iGals;
   int         iAsciiStars;
   int         iProps;
+  int         iTree;
   int         region;
   int         rho;
   Archive     param;
@@ -118,7 +119,8 @@ int main (int argc, char ** argv)
   Catalog_load_properties (&opt.stf);
   Catalog_init            (&opt.ahf);
   Catalog_load_properties (&opt.ahf);
-  stf_read_treefrog       (&opt.tree, &opt.stf);
+  if (opt.iTree)
+    stf_read_treefrog       (&opt.tree, &opt.stf);
 
 
   // 3. Load AHF Particle list inside and sort IDs
@@ -214,12 +216,11 @@ int main (int argc, char ** argv)
         //strct1->PSO[j].Pos[0] -= strct1->Pos[0];
         //strct1->PSO[j].Pos[1] -= strct1->Pos[1];
         //strct1->PSO[j].Pos[2] -= strct1->Pos[2];
-        strct1->PSO[j].Radius = 1;
+        strct1->PSO[j].HostID = 0;
+	strct1->PSO[j].Radius = 1;
 
         if (strct1->PSO[j].Type == 4)
         {
-          //Particle_get_radius(&strct1->PSO[j]);
-          //strct1->PSO[j].Radius = 1;
           strct2 = &opt.stf.strctProps[strct1->PSO[j].StructID]; // Cross catalog check
 
           // For IHSC comp
@@ -228,11 +229,13 @@ int main (int argc, char ** argv)
           {
             strct1->ms200c_str += strct1->PSO[j].Mass;
             strct2->dummyi = 1;
+	    strct1->PSO[j].HostID = strct2->ID;
           }
           else
           {
             strct1->ms200c_dif += strct1->PSO[j].Mass;
-            strct1->PSO[j].Radius = 0.;  // Tag these for writing ihsc output
+            strct1->PSO[j].Radius = 0;  // Tag these for writing ihsc output
+	    strct1->PSO[j].HostID = 0;
             ndif++;
           }
         }
@@ -268,7 +271,7 @@ int main (int argc, char ** argv)
             fprintf (fff, "%e  ", strct1->PSO[j].Vel[1]);
             fprintf (fff, "%e  ", strct1->PSO[j].Vel[2]);
             fprintf (fff, "%e  ", strct1->PSO[j].Age);
-            fprintf (fff, "%d  ",  (int)strct1->PSO[j].Radius);
+            fprintf (fff, "%ld ", strct1->PSO[j].HostID);
             fprintf (fff, "%e  ", strct1->PSO[j].Mass);
             fprintf (fff, "%d  ", strct1->PSO[j].Type);
             fprintf (fff, "%ld ", strct1->PSO[j].Id);
@@ -297,11 +300,13 @@ int main (int argc, char ** argv)
             fprintf (ff, "%e  ",  strct2->Pos[0]);
             fprintf (ff, "%e  ",  strct2->Pos[1]);
             fprintf (ff, "%e  ",  strct2->Pos[2]);
-            printf ("%d  %d\n", ctrl->NumMatch, ctrl->iMatch);
-            if (strct2->NumMatch)
-              fprintf (ff, "%ld  ", strct2->MatchIDs[0]);
-            else
-              fprintf (ff, "%ld  ", 0);
+	    if (opt.iTree)
+	    {
+              if (strct2->NumMatch)
+                fprintf (ff, "%ld  ", strct2->MatchIDs[0]);
+              else
+                fprintf (ff, "%ld  ", 0l);
+	    }
             fprintf (ff, "\n");
           }
         }
@@ -434,12 +439,15 @@ void ihsc_params (Options * opt)
   Archive_nfiles (&opt->sim.archive, nflsbuff);
 
   // Tree
-  fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
-  Archive_name   (&opt->tree.archive, namebuff);
-  Archive_prefix (&opt->tree.archive, prefixbuff);
-  Archive_format (&opt->tree.archive, frmtbuff);
-  Archive_path   (&opt->tree.archive, pathbuff);
-  Archive_nfiles (&opt->tree.archive, nflsbuff);
+  if (opt->iTree)
+  {
+    fscanf (opt->param.file, "%s  %s  %s  %s  %d", prefixbuff, namebuff, frmtbuff, pathbuff, &nflsbuff);
+    Archive_name   (&opt->tree, namebuff);
+    Archive_prefix (&opt->tree, prefixbuff);
+    Archive_format (&opt->tree, frmtbuff);
+    Archive_path   (&opt->tree, pathbuff);
+    Archive_nfiles (&opt->tree, nflsbuff);
+  }
 
   // Close
   fclose (opt->param.file);
@@ -470,6 +478,7 @@ int ihsc_options (int argc, char ** argv, Options * opt)
     {"gals-info",    0, NULL, 'g'},
     {"properties",   0, NULL, 'p'},
     {"ascii-stars",  0, NULL, 'a'},
+    {"tree",         0, NULL, 't'},
     {0,              0, NULL, 0}
   };
 
@@ -481,8 +490,9 @@ int ihsc_options (int argc, char ** argv, Options * opt)
   opt->iGals       = 0;
   opt->iProps      = 0;
   opt->iAsciiStars = 0;
+  opt->iTree       = 0;
 
-  while ((myopt = getopt_long (argc, argv, "P:hvxfsigpa", lopts, &index)) != -1)
+  while ((myopt = getopt_long (argc, argv, "P:hvxfsigpat", lopts, &index)) != -1)
   {
     switch (myopt)
     {
@@ -522,6 +532,10 @@ int ihsc_options (int argc, char ** argv, Options * opt)
       case 'a':
       	opt->iAsciiStars = 1;
       	break;
+
+      case 't':
+        opt->iTree = 1;
+        break;
 
       case 'h':
       	ihsc_usage (0, argv);

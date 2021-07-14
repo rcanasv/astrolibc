@@ -430,9 +430,9 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   int i, j, k;
   FILE * f;
 
-  int tmpstrct;
-  int tmpid;
-  int nmatch;
+  int   tmpstrct;
+  long  tmpid;
+  int   nmatch;
 
   char buffer [LONG_LENGTH];
   char fname  [LONG_LENGTH];
@@ -448,7 +448,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
   fgets (buffer, LONG_LENGTH, f);
-  sscanf (buffer, "%d  %d", &tmpid, &tmpstrct);
+  sscanf (buffer, "%ld  %d", &tmpid, &tmpstrct);
   if (tmpstrct != stf->nstruct)
   {
     printf("Treefrog nstruct doesnt match catalog!\n");
@@ -459,7 +459,7 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
   for (i = 1; i <= stf->nstruct; i++)
   {
     fgets (buffer, LONG_LENGTH, f);
-    sscanf (buffer, "%d  %d", &tmpid, &nmatch);
+    sscanf (buffer, "%ld  %d", &tmpid, &nmatch);
     if (tmpid != i)
     {
       printf("Something weird is happening treefrog id and catalog doesn't match\n");
@@ -470,15 +470,15 @@ void stf_read_treefrog (Archive * tfrog, Catalog * stf)
 
     if (nmatch > 0)
     {
-      stf->strctProps[i].MatchIDs   = (int *)   malloc (nmatch * sizeof(int));
+      stf->strctProps[i].MatchIDs   = (long  *) malloc (nmatch * sizeof(long));
       stf->strctProps[i].MatchMrrts = (float *) malloc (nmatch * sizeof(float));
       stf->strctProps[i].iMatch     = 1;
       for (j = 0; j < nmatch; j++)
       {
         fgets  (buffer, LONG_LENGTH, f);
     //  sscanf (buffer, "%d", &stf->strctProps[i].MatchIDs[j]);
-        sscanf (buffer, "%d  %f", &stf->strctProps[i].MatchIDs[j],    \
-                                  &stf->strctProps[i].MatchMrrts[j]);
+        sscanf (buffer, "%ld  %f", &stf->strctProps[i].MatchIDs[j],    \
+                                   &stf->strctProps[i].MatchMrrts[j]);
       }
     }
   }

@@ -66,9 +66,9 @@ typedef struct Particle
   float       Chem;
   int         Type;
   int         dummyi;
-  int         HostID;
-  int         DirectHostID;
-  int         StructID;
+  long        HostID;
+  long        DirectHostID;
+  long        StructID;
   int         indx;
   float       Radius;
   float       U;      // Internal energy
@@ -210,7 +210,7 @@ typedef struct Structure
   // Matching structure/parent structure
   int        NumMatch;
   int        iMatch;
-  int      * MatchIDs;
+  long     * MatchIDs;
   float    * MatchMrrts;
 
   // Dummy variables
