@@ -13,7 +13,7 @@ but it also includes routines for [Ramses][Ramses website], as well as [HDF5][HD
 
 
 
-<!-- This is a comment-->
+<!-- This is a comment
 
 
 \*This text will be italic\*       *This text will be italic*
@@ -145,3 +145,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 * Hat tip to anyone who's code was used
 * Inspiration
 * etc
+-->
